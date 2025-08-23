@@ -1079,6 +1079,7 @@ function App() {
         onSave={handleSaveEdit}
         onCancel={handleCancelEdit}
         onItemUpdate={setEditingItem}
+        droppedItems={droppedItems}
       />
 
       {/* Warning Modal */}
