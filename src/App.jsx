@@ -12,6 +12,7 @@ import PreviewSection from './components/PreviewSection';
 import XmlLoader from './components/XmlLoader';
 import { generateOrderedXML } from './components/utils/xmlBuilder2Solution';
 import { exportXmlStructure } from './components/utils/xmlExporter';
+import UserGuideModal from './components/UserGuideModal';
 
 // The central state to represent the XML tree
 const initialXmlTree = {};
@@ -28,6 +29,7 @@ function App() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showNewXmlModal, setShowNewXmlModal] = useState(false);
   const [itemToRemove, setItemToRemove] = useState(null);
+  const [showUserGuide, setShowUserGuide] = useState(false);
 
   // Function to show warning modal
   const showWarning = useCallback((message) => {
@@ -965,6 +967,12 @@ function App() {
           <h1 className="m-0 text-2xl">Questionnaire XML Builder</h1>
           <div className="flex gap-3 items-center">
             <button
+              onClick={() => setShowUserGuide(true)}
+              className="px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded cursor-pointer text-base hover:bg-gray-100 transition-colors"
+            >
+              User Guide
+            </button>
+            <button
               onClick={handleNewXml}
               className="px-4 py-2 bg-red-600 text-white border-none rounded cursor-pointer text-base hover:bg-red-700 transition-colors"
             >
@@ -1102,6 +1110,12 @@ function App() {
         isOpen={showNewXmlModal}
         onConfirm={confirmNewXml}
         onCancel={cancelNewXml}
+      />
+
+      {/* User Guide Modal */}
+      <UserGuideModal
+        isOpen={showUserGuide}
+        onClose={() => setShowUserGuide(false)}
       />
     </DndContext>
   );
