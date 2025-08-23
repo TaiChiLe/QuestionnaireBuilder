@@ -1,5 +1,17 @@
 import { useState } from 'react';
 
+// Simple robust ID generator (per mount) to avoid collisions when parsing quickly
+const createIdGenerator = () => {
+  const counters = {};
+  return (type) => {
+    counters[type] = (counters[type] || 0) + 1;
+    // Include counter + random segment. Date.now left for chronological grouping only.
+    return `${type}-${Date.now()}-${counters[type]}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
+  };
+};
+
 const XmlLoader = ({ onLoadXml }) => {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -48,13 +60,15 @@ const XmlLoader = ({ onLoadXml }) => {
     }
   };
 
+  const generateId = createIdGenerator();
+
   const parseXmlToItems = (pagesElement) => {
     const items = [];
     const pageElements = pagesElement.querySelectorAll('Page');
 
     pageElements.forEach((pageEl) => {
       const pageItem = {
-        id: `page-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: generateId('page'),
         type: 'page',
         title: pageEl.getAttribute('title') || 'Page',
         label: pageEl.getAttribute('title') || 'Page',
@@ -86,14 +100,13 @@ const XmlLoader = ({ onLoadXml }) => {
     return items;
   };
 
-  const parseXmlElement = (element, index) => {
+  const parseXmlElement = (element /*, index */) => {
     const tagName = element.tagName;
-    const timestamp = Date.now() + index;
 
     switch (tagName) {
       case 'Question':
         const questionItem = {
-          id: `question-${timestamp}`,
+          id: generateId('question'),
           type: 'question',
           label: element.querySelector('Text')?.textContent || 'Question',
           dataType: convertXmlDataTypeToDisplay(
@@ -119,7 +132,7 @@ const XmlLoader = ({ onLoadXml }) => {
         const fieldTextContent = getTextContentExcludingVisibility(element);
 
         const fieldItem = {
-          id: `field-${timestamp}`,
+          id: generateId('field'),
           type: 'field',
           label: fieldTextContent || 'Field',
           dataType: convertXmlFieldDataTypeToDisplay(
@@ -141,7 +154,7 @@ const XmlLoader = ({ onLoadXml }) => {
 
       case 'Information':
         return {
-          id: `information-${timestamp}`,
+          id: generateId('information'),
           type: 'information',
           label: element.textContent || 'Information',
           children: [],
@@ -149,7 +162,7 @@ const XmlLoader = ({ onLoadXml }) => {
 
       case 'Table':
         const tableItem = {
-          id: `table-${timestamp}`,
+          id: generateId('table'),
           type: 'table',
           label: element.querySelector('Text')?.textContent || 'Table',
           keyField:
@@ -160,9 +173,9 @@ const XmlLoader = ({ onLoadXml }) => {
 
         // Parse table columns
         const columnElements = element.querySelectorAll('Column');
-        columnElements.forEach((columnEl, colIndex) => {
+        columnElements.forEach((columnEl) => {
           const columnItem = {
-            id: `table-field-${timestamp}-${colIndex}`,
+            id: generateId('table-field'),
             type: 'table-field',
             label: columnEl.getAttribute('header') || 'Column',
             dataType: convertXmlFieldDataTypeToDisplay(
@@ -189,13 +202,13 @@ const XmlLoader = ({ onLoadXml }) => {
   };
 
   const parseAnswers = (answersElement) => {
-    if (!answersElement)
-      return [{ id: `answer-${Date.now()}-1`, text: 'Option 1' }];
-
+    if (!answersElement) {
+      return [{ id: generateId('answer'), text: 'Option 1' }];
+    }
     const answerElements = answersElement.querySelectorAll('Answer');
-    return Array.from(answerElements).map((answerEl, index) => ({
-      id: `answer-${Date.now()}-${index + 1}`,
-      text: answerEl.textContent || `Option ${index + 1}`,
+    return Array.from(answerElements).map((answerEl) => ({
+      id: generateId('answer'),
+      text: answerEl.textContent || 'Option',
     }));
   };
 
@@ -223,8 +236,8 @@ const XmlLoader = ({ onLoadXml }) => {
     if (!conditionsContainer) return null;
 
     const conditionElements = conditionsContainer.querySelectorAll('Condition');
-    const conditions = Array.from(conditionElements).map((condEl, index) => ({
-      id: `condition-${Date.now()}-${index + 1}`,
+    const conditions = Array.from(conditionElements).map((condEl) => ({
+      id: generateId('condition'),
       record: condEl.getAttribute('record') || '',
       answer: condEl.getAttribute('answer') || '',
     }));
