@@ -1,33 +1,64 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
+import KeyPickerModal from './KeyPickerModal';
 
-const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
-  const [editFormData, setEditFormData] = useState({
-    questionText: '',
+const EditModal = ({
+  isOpen,
+  editingItem,
+  onSave,
+  onCancel,
+  onItemUpdate,
+  droppedItems = [],
+}) => {
+  const [keyPickerState, setKeyPickerState] = useState({
+    open: false,
+    conditionIndex: null,
   });
 
-  // Function to sanitize label for key field
-  const sanitizeForKey = (text) => {
-    return text
-      .toLowerCase() // Convert to lowercase
-      .replace(/\s+/g, '-') // Replace spaces with hyphens
-      .replace(/[^a-z0-9-]/g, '') // Remove all special characters except hyphens
-      .replace(/-+/g, '-') // Replace multiple consecutive hyphens with single hyphen
-      .replace(/^-+|-+$/g, ''); // Remove leading and trailing hyphens
-  };
+  const sanitizeForKey = (text) =>
+    (text || '')
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '');
 
-  useEffect(() => {
-    if (editingItem) {
-      setEditFormData({
-        questionText: editingItem.questionText || '',
+  const availableKeyOptions = useMemo(() => {
+    if (!droppedItems || droppedItems.length === 0) return [];
+    const results = [];
+    const walk = (items, pageTitle) => {
+      items.forEach((it) => {
+        const currentPage =
+          it.type === 'page' ? it.title || it.label || 'Page' : pageTitle;
+        if (
+          ['question', 'field'].includes(it.type) &&
+          it.id !== editingItem?.id
+        ) {
+          const keyVal = (it.keyField || '').trim();
+          if (keyVal)
+            results.push({
+              key: keyVal,
+              label: it.label || it.title || '(no label)',
+              type: it.type,
+              page: currentPage,
+            });
+        }
+        if (it.children && it.children.length) walk(it.children, currentPage);
       });
-    }
-  }, [editingItem]);
+    };
+    walk(droppedItems, null);
+    const seen = new Set();
+    return results
+      .filter((r) => {
+        if (seen.has(r.key)) return false;
+        seen.add(r.key);
+        return true;
+      })
+      .sort((a, b) => a.key.localeCompare(b.key));
+  }, [droppedItems, editingItem?.id]);
 
   if (!isOpen || !editingItem) return null;
 
-  const handleSave = () => {
-    onSave(editingItem);
-  };
+  const handleSave = () => onSave(editingItem);
 
   return (
     <div className="fixed inset-0 flex justify-center items-center z-[2000] bg-black/10">
@@ -50,9 +81,7 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
             : 'Question'}
           : {editingItem.label}
         </h2>
-
         <div className="flex flex-col space-y-4">
-          {/* Title Field - only for pages */}
           {editingItem.type === 'page' && (
             <div>
               <label className="block mb-1 font-semibold text-gray-700">
@@ -62,17 +91,12 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                 type="text"
                 value={editingItem.title || ''}
                 onChange={(e) =>
-                  onItemUpdate((prev) => ({
-                    ...prev,
-                    title: e.target.value,
-                  }))
+                  onItemUpdate((prev) => ({ ...prev, title: e.target.value }))
                 }
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
           )}
-
-          {/* Information-specific fields - only for information */}
           {editingItem.type === 'information' && (
             <div>
               <label className="block mb-1 font-semibold text-gray-700">
@@ -82,20 +106,14 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                 type="text"
                 value={editingItem.label || ''}
                 onChange={(e) =>
-                  onItemUpdate((prev) => ({
-                    ...prev,
-                    label: e.target.value,
-                  }))
+                  onItemUpdate((prev) => ({ ...prev, label: e.target.value }))
                 }
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
           )}
-
-          {/* Table-specific fields - only for tables */}
           {editingItem.type === 'table' && (
             <>
-              {/* Label Field - for tables */}
               <div>
                 <label className="block mb-1 font-semibold text-gray-700">
                   Label:
@@ -113,8 +131,6 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-
-              {/* Key Field - for tables */}
               <div>
                 <label className="block mb-1 font-semibold text-gray-700">
                   Key Field:
@@ -131,8 +147,6 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-
-              {/* Required Field - for tables */}
               <div>
                 <label className="flex items-center space-x-2">
                   <input
@@ -144,18 +158,15 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                         required: e.target.checked,
                       }))
                     }
-                    className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                    className="rounded border-gray-300 text-blue-600 shadow-sm"
                   />
                   <span className="font-semibold text-gray-700">Required</span>
                 </label>
               </div>
             </>
           )}
-
-          {/* Table-Field-specific fields - only for table-fields */}
           {editingItem.type === 'table-field' && (
             <>
-              {/* Label Field - for table-fields */}
               <div>
                 <label className="block mb-1 font-semibold text-gray-700">
                   Label:
@@ -164,16 +175,11 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                   type="text"
                   value={editingItem.label || ''}
                   onChange={(e) =>
-                    onItemUpdate((prev) => ({
-                      ...prev,
-                      label: e.target.value,
-                    }))
+                    onItemUpdate((prev) => ({ ...prev, label: e.target.value }))
                   }
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-
-              {/* Data Type Field - for table-fields */}
               <div>
                 <label className="block mb-1 font-semibold text-gray-700">
                   Data Type:
@@ -192,8 +198,6 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                   <option value="Date">Date</option>
                 </select>
               </div>
-
-              {/* Required Field - for table-fields */}
               <div>
                 <label className="flex items-center space-x-2">
                   <input
@@ -205,18 +209,15 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                         required: e.target.checked,
                       }))
                     }
-                    className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                    className="rounded border-gray-300 text-blue-600"
                   />
                   <span className="font-semibold text-gray-700">Required</span>
                 </label>
               </div>
             </>
           )}
-
-          {/* Field-specific fields - only for fields */}
           {editingItem.type === 'field' && (
             <>
-              {/* Label Field - for fields */}
               <div>
                 <label className="block mb-1 font-semibold text-gray-700">
                   Label:
@@ -230,7 +231,6 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                     onItemUpdate((prev) => ({
                       ...prev,
                       label: newLabel,
-                      // Auto-populate keyField only if it's empty or matches the previous sanitized label
                       keyField:
                         !prev.keyField ||
                         prev.keyField === sanitizeForKey(prev.label || '')
@@ -241,8 +241,6 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-
-              {/* Data Type Field - for fields */}
               <div>
                 <label className="block mb-1 font-semibold text-gray-700">
                   Data Type:
@@ -262,8 +260,6 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                   <option value="Date">Date</option>
                 </select>
               </div>
-
-              {/* Key Field - for fields */}
               <div>
                 <label className="block mb-1 font-semibold text-gray-700">
                   Key:
@@ -280,8 +276,6 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-
-              {/* Required Field - for fields */}
               <div>
                 <label className="flex items-center gap-2">
                   <input
@@ -293,7 +287,7 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                         required: e.target.checked,
                       }))
                     }
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 text-blue-600"
                   />
                   <span className="font-semibold text-gray-700">
                     Required Field
@@ -302,11 +296,8 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
               </div>
             </>
           )}
-
-          {/* Question-specific fields - only for questions */}
           {editingItem.type === 'question' && (
             <>
-              {/* Label Field - only for questions */}
               <div>
                 <label className="block mb-1 font-semibold text-gray-700">
                   Label:
@@ -320,7 +311,6 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                     onItemUpdate((prev) => ({
                       ...prev,
                       label: newLabel,
-                      // Auto-populate keyField only if it's empty or matches the previous sanitized label
                       keyField:
                         !prev.keyField ||
                         prev.keyField === sanitizeForKey(prev.label || '')
@@ -331,8 +321,6 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-
-              {/* Data Type Field */}
               <div>
                 <label className="block mb-1 font-semibold text-gray-700">
                   Data Type:
@@ -352,8 +340,6 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                   <option value="Radio Buttons">Radio Buttons</option>
                 </select>
               </div>
-
-              {/* Key Field */}
               <div>
                 <label className="block mb-1 font-semibold text-gray-700">
                   Key:
@@ -370,8 +356,6 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-
-              {/* Required Field */}
               <div>
                 <label className="flex items-center gap-2">
                   <input
@@ -383,15 +367,13 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                         required: e.target.checked,
                       }))
                     }
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 text-blue-600"
                   />
                   <span className="font-semibold text-gray-700">
                     Required Field
                   </span>
                 </label>
               </div>
-
-              {/* Answers List */}
               <div>
                 <label className="block mb-2 font-semibold text-gray-700">
                   Answer Options:
@@ -403,10 +385,7 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                       value={answer.text}
                       onChange={(e) => {
                         const newAnswers = [...(editingItem.answers || [])];
-                        newAnswers[index] = {
-                          ...answer,
-                          text: e.target.value,
-                        };
+                        newAnswers[index] = { ...answer, text: e.target.value };
                         onItemUpdate((prev) => ({
                           ...prev,
                           answers: newAnswers,
@@ -431,7 +410,6 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                     </button>
                   </div>
                 ))}
-
                 <button
                   onClick={() => {
                     const newAnswer = {
@@ -452,8 +430,6 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
               </div>
             </>
           )}
-
-          {/* Visibility Section - for pages, questions, fields, and tables */}
           {(editingItem.type === 'page' ||
             editingItem.type === 'question' ||
             editingItem.type === 'field' ||
@@ -462,8 +438,6 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
               <h3 className="text-lg font-semibold text-gray-700 mb-3">
                 Visibility Settings
               </h3>
-
-              {/* Visibility Type Dropdown */}
               <div className="mb-4">
                 <label className="block mb-1 font-semibold text-gray-700">
                   Visibility Type:
@@ -482,8 +456,6 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                   <option value="All">All</option>
                 </select>
               </div>
-
-              {/* Conditions List */}
               <div>
                 <label className="block mb-2 font-semibold text-gray-700">
                   Conditions:
@@ -497,25 +469,39 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                       <label className="block mb-1 text-sm font-medium text-gray-600">
                         Record Key:
                       </label>
-                      <input
-                        type="text"
-                        value={condition.record || ''}
-                        onChange={(e) => {
-                          const newConditions = [
-                            ...(editingItem.conditions || []),
-                          ];
-                          newConditions[index] = {
-                            ...condition,
-                            record: e.target.value,
-                          };
-                          onItemUpdate((prev) => ({
-                            ...prev,
-                            conditions: newConditions,
-                          }));
-                        }}
-                        className="w-full p-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Enter record name"
-                      />
+                      <div className="flex gap-2 items-start">
+                        <input
+                          type="text"
+                          value={condition.record || ''}
+                          onChange={(e) => {
+                            const newConditions = [
+                              ...(editingItem.conditions || []),
+                            ];
+                            newConditions[index] = {
+                              ...condition,
+                              record: e.target.value,
+                            };
+                            onItemUpdate((prev) => ({
+                              ...prev,
+                              conditions: newConditions,
+                            }));
+                          }}
+                          className="flex-1 p-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Enter or pick a key"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setKeyPickerState({
+                              open: true,
+                              conditionIndex: index,
+                            })
+                          }
+                          className="px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 cursor-pointer"
+                        >
+                          Browse
+                        </button>
+                      </div>
                     </div>
                     <div className="flex-1">
                       <label className="block mb-1 text-sm font-medium text-gray-600">
@@ -559,7 +545,6 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
                     </div>
                   </div>
                 ))}
-
                 <button
                   onClick={() => {
                     const newCondition = {
@@ -582,8 +567,6 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
             </div>
           )}
         </div>
-
-        {/* Modal Actions */}
         <div className="flex gap-3 mt-6 justify-end">
           <button
             onClick={onCancel}
@@ -599,6 +582,21 @@ const EditModal = ({ isOpen, editingItem, onSave, onCancel, onItemUpdate }) => {
           </button>
         </div>
       </div>
+      <KeyPickerModal
+        isOpen={keyPickerState.open}
+        options={availableKeyOptions}
+        onClose={() => setKeyPickerState({ open: false, conditionIndex: null })}
+        onSelect={(selectedKey) => {
+          if (keyPickerState.conditionIndex == null) return;
+          const idx = keyPickerState.conditionIndex;
+          const newConditions = [...(editingItem.conditions || [])];
+          newConditions[idx] = {
+            ...(newConditions[idx] || {}),
+            record: selectedKey,
+          };
+          onItemUpdate((prev) => ({ ...prev, conditions: newConditions }));
+        }}
+      />
     </div>
   );
 };
