@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import ErrorPreview from './ErrorPreview';
 
 const PreviewSection = ({
   droppedItems,
@@ -16,36 +17,25 @@ const PreviewSection = ({
       <div className="px-4 py-3 border-b border-gray-300 bg-gray-200 flex justify-between items-center">
         <h3 className="m-0 text-lg text-gray-700">Preview</h3>
         <div className="flex gap-2">
-          <button
-            onClick={() => setPreviewMode('structure')}
-            className={`px-3 py-1.5 border border-gray-300 rounded cursor-pointer text-sm ${
-              previewMode === 'structure'
-                ? 'bg-blue-500 text-white'
-                : 'bg-white text-gray-700'
-            }`}
-          >
-            Structure
-          </button>
-          <button
-            onClick={() => setPreviewMode('xml')}
-            className={`px-3 py-1.5 border border-gray-300 rounded cursor-pointer text-sm ${
-              previewMode === 'xml'
-                ? 'bg-blue-500 text-white'
-                : 'bg-white text-gray-700'
-            }`}
-          >
-            XML
-          </button>
-          <button
-            onClick={() => setPreviewMode('html')}
-            className={`px-3 py-1.5 border border-gray-300 rounded cursor-pointer text-sm ${
-              previewMode === 'html'
-                ? 'bg-blue-500 text-white'
-                : 'bg-white text-gray-700'
-            }`}
-          >
-            HTML
-          </button>
+          {['structure', 'xml', 'html', 'errors'].map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setPreviewMode(mode)}
+              className={`px-3 py-1.5 border border-gray-300 rounded cursor-pointer text-sm ${
+                previewMode === mode
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-white text-gray-700'
+              }`}
+            >
+              {mode === 'structure'
+                ? 'Structure'
+                : mode === 'xml'
+                ? 'XML'
+                : mode === 'html'
+                ? 'HTML'
+                : 'Errors'}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -105,6 +95,12 @@ const PreviewSection = ({
                   className="bg-white border border-gray-300 rounded p-5 text-sm leading-relaxed overflow-auto m-0 font-sans"
                   dangerouslySetInnerHTML={{ __html: currentHtmlString }}
                 />
+              </div>
+            )}
+            {previewMode === 'errors' && (
+              <div>
+                <h4 className="m-0 mb-3 text-gray-600">Error Check</h4>
+                <ErrorPreview droppedItems={droppedItems} />
               </div>
             )}
           </>
