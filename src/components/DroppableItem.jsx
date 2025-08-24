@@ -89,7 +89,7 @@ function DroppableItem({ item, onRemove, onEdit, children }) {
                   e.stopPropagation();
                   onEdit(item.id);
                 }}
-                className="px-2 py-1 bg-blue-50 text-blue-600 border border-blue-200 rounded text-xs font-bold relative z-10 cursor-pointer hover:bg-blue-100"
+                className="px-4 py-3 bg-blue-50 text-blue-600 border border-blue-200 rounded text-xs font-bold relative z-10 cursor-pointer hover:bg-blue-100"
                 onMouseDown={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
               >
@@ -104,7 +104,7 @@ function DroppableItem({ item, onRemove, onEdit, children }) {
               e.stopPropagation();
               onRemove(item.id);
             }}
-            className="px-2 py-1 bg-red-50 text-red-600 border border-red-200 rounded text-xs font-bold relative z-10 cursor-pointer hover:bg-red-100"
+            className="px-4 py- bg-red-50 text-red-600 border border-red-200 rounded text-xs font-bold relative z-10 cursor-pointer hover:bg-red-100"
             onMouseDown={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
           >
