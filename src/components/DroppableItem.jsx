@@ -1,21 +1,18 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 
 function DroppableItem({ item, onRemove, onEdit, children }) {
-  // Set up dragging
+  // Draggable (suppress keyboard activators later)
   const {
     attributes,
     listeners,
     setNodeRef: dragRef,
     transform,
     isDragging,
-  } = useDraggable({
-    id: item.id,
-  });
+  } = useDraggable({ id: item.id });
+  const { setNodeRef: dropRef, isOver } = useDroppable({ id: item.id });
 
-  // Set up dropping
-  const { setNodeRef: dropRef, isOver } = useDroppable({
-    id: item.id,
-  });
+  // Strip out potential onKeyDown from listeners to avoid keyboard drag
+  const { onKeyDown: _omit, ...restListeners } = listeners || {};
 
   const transformStyle = transform
     ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
@@ -27,8 +24,7 @@ function DroppableItem({ item, onRemove, onEdit, children }) {
         dragRef(node);
         dropRef(node);
       }}
-      className={`
-        my-1.5 p-2.5 rounded cursor-grab select-none relative w-full text-sm
+      className={`my-1.5 p-2.5 rounded cursor-grab select-none relative w-full text-sm
         ${
           isOver
             ? 'border-2 border-green-500 bg-green-50'
@@ -38,15 +34,20 @@ function DroppableItem({ item, onRemove, onEdit, children }) {
         ${!isDragging ? 'transition-all duration-200' : ''}
         ${isDragging ? 'z-[1000]' : 'z-[1]'}
       `}
-      style={{
-        transform: transformStyle,
-      }}
-      {...listeners}
+      style={{ transform: transformStyle }}
+      {...restListeners}
       {...attributes}
+      tabIndex={-1}
+      role="presentation"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }}
     >
       <div className="flex justify-between items-center">
         <span className="font-bold flex items-center">
-          {/* Eye icon for components with visibility conditions */}
           {item.conditions && item.conditions.length > 0 && (
             <svg
               className="w-4 h-4 text-gray-600 mr-2 inline"
@@ -75,7 +76,6 @@ function DroppableItem({ item, onRemove, onEdit, children }) {
           )}
         </span>
         <div className="flex gap-1">
-          {/* Edit button - show for questions, pages, fields, information, tables, and table-fields */}
           {(item.type === 'question' ||
             item.type === 'page' ||
             item.type === 'field' ||
@@ -96,8 +96,6 @@ function DroppableItem({ item, onRemove, onEdit, children }) {
                 Edit
               </button>
             )}
-
-          {/* Remove button */}
           <button
             onClick={(e) => {
               e.preventDefault();
@@ -117,9 +115,8 @@ function DroppableItem({ item, onRemove, onEdit, children }) {
           {children}
         </div>
       )}
-      {/* Add extra space at bottom for pages to make dropping easier */}
-      {item.type === 'page' && <div className="h-8 w-full"></div>}
-      {item.type === 'table' && <div className="h-8 w-full"></div>}
+      {item.type === 'page' && <div className="h-8 w-full" />}
+      {item.type === 'table' && <div className="h-8 w-full" />}
     </div>
   );
 }
