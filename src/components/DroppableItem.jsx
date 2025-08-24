@@ -104,7 +104,7 @@ function DroppableItem({ item, onRemove, onEdit, children }) {
               e.stopPropagation();
               onRemove(item.id);
             }}
-            className="px-4 py- bg-red-50 text-red-600 border border-red-200 rounded text-xs font-bold relative z-10 cursor-pointer hover:bg-red-100"
+            className="px-4 py-3 bg-red-50 text-red-600 border border-red-200 rounded text-xs font-bold relative z-10 cursor-pointer hover:bg-red-100"
             onMouseDown={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
           >
