@@ -10,12 +10,12 @@ const PreviewSection = ({
 
   return (
     <div
-      className="border-t border-gray-300 bg-gray-50 flex flex-col"
+      className="border-t border-gray-300 bg-[#f03741] flex flex-col"
       style={{ height: 'calc(50vh)' }}
     >
       {/* Preview Header */}
-      <div className="px-4 py-3 border-b border-gray-300 bg-gray-200 flex justify-between items-center">
-        <h3 className="m-0 text-lg text-gray-700">Preview</h3>
+      <div className="px-4 py-3 border-b border-gray-300 bg-[#f03741] flex justify-between items-center">
+        <h3 className="m-0 text-lg text-white">Preview</h3>
         <div className="flex gap-2">
           {['structure', 'xml', 'html', 'errors'].map((mode) => (
             <button
@@ -23,7 +23,7 @@ const PreviewSection = ({
               onClick={() => setPreviewMode(mode)}
               className={`px-3 py-1.5 border border-gray-300 rounded cursor-pointer text-sm ${
                 previewMode === mode
-                  ? 'bg-blue-500 text-white'
+                  ? 'bg-gray-400 text-white'
                   : 'bg-white text-gray-700'
               }`}
             >

@@ -1176,7 +1176,7 @@ function App() {
             </button>
             <button
               onClick={handleNewXml}
-              className="px-4 py-2 bg-red-600 text-white border-none rounded cursor-pointer text-base hover:bg-red-700 transition-colors"
+              className="px-4 py-2 bg-[#f03741] text-white border-none rounded cursor-pointer text-base hover:bg-red-700 transition-colors"
             >
               New XML
             </button>
@@ -1192,7 +1192,7 @@ function App() {
             </div>
             <button
               onClick={handleExportXml}
-              className="px-4 py-2 bg-blue-500 text-white border-none rounded cursor-pointer text-base disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-blue-500 text-white border-none rounded cursor-pointer text-base disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600"
               disabled={droppedItems.length === 0}
             >
               Export XML
