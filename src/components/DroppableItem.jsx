@@ -106,6 +106,9 @@ function DroppableItem({
               [Table]
             </span>
           )}
+          {item.type === 'information' && (
+            <span className="text-xs text-gray-500 ml-2 font-normal">[info]</span>
+          )}
         </span>
         <div className="flex gap-1">
           {(item.type === 'question' ||
