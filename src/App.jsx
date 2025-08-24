@@ -1165,7 +1165,7 @@ function App() {
     >
       <div className="flex flex-col h-screen w-screen m-0 p-0 overflow-hidden fixed top-0 left-0">
         {/* Header with export button */}
-        <div className="px-4 py-4 border-b border-gray-300 bg-gray-50 flex-shrink-0 flex justify-between items-center w-full">
+        <div className="px-4 py-2 border-b border-gray-300 bg-gray-50 flex-shrink-0 flex justify-between items-center w-full">
           <h1 className="m-0 text-2xl">Questionnaire XML Builder</h1>
           <div className="flex gap-3 items-center">
             <button
@@ -1202,7 +1202,7 @@ function App() {
 
         <div
           className="flex flex-1 w-full overflow-hidden"
-          style={{ height: 'calc(50vh - 80px)' }}
+          style={{ height: 'calc(55vh - 80px)' }}
         >
           {/* The Sidebar with Draggable items */}
           <div className="w-64 min-w-64 p-4 bg-gray-100 border-r border-gray-300 overflow-hidden h-full">

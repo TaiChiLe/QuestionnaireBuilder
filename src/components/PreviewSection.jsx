@@ -11,10 +11,10 @@ const PreviewSection = ({
   return (
     <div
       className="border-t border-gray-300 bg-[#f03741] flex flex-col"
-      style={{ height: 'calc(50vh)' }}
+      style={{ height: 'calc(45vh)' }}
     >
       {/* Preview Header */}
-      <div className="px-4 py-3 border-b border-gray-300 bg-[#f03741] flex justify-between items-center">
+      <div className="px-4 py-2 border-b border-gray-300 bg-[#f03741] flex justify-between items-center">
         <h3 className="m-0 text-lg text-white">Preview</h3>
         <div className="flex gap-2">
           {['structure', 'xml', 'html', 'errors'].map((mode) => (
