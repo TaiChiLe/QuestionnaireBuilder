@@ -26,6 +26,8 @@ const ErrorPreview = ({ droppedItems }) => {
       list.push({ ...ctx, errorType: 'missing-page-title' });
     const pushEmptyTable = (ctx) =>
       list.push({ ...ctx, errorType: 'empty-table' });
+    const pushBlankConditionRecord = (ctx) =>
+      list.push({ ...ctx, errorType: 'blank-condition-record' });
 
     const walk = (items, ancestorPages) => {
       items.forEach((item) => {
@@ -77,6 +79,24 @@ const ErrorPreview = ({ droppedItems }) => {
           }
         }
 
+        // Condition validation: blank record key
+        if (Array.isArray(item.conditions) && item.conditions.length > 0) {
+          item.conditions.forEach((cond, idx) => {
+            const rec = (cond.record || '').trim();
+            if (!rec) {
+              pushBlankConditionRecord({
+                id: `${item.id}-cond-${idx}`,
+                path: newAncestors.concat([
+                  (item.label || item.title || item.type || 'Component') +
+                    ` (Condition ${idx + 1})`,
+                ]),
+                label: '(blank record)',
+                type: 'condition',
+              });
+            }
+          });
+        }
+
         if (item.children && item.children.length > 0)
           walk(item.children, newAncestors);
       });
@@ -121,6 +141,7 @@ const ErrorPreview = ({ droppedItems }) => {
           const isInvalid = err.errorType === 'invalid-key-format';
           const isMissingTitle = err.errorType === 'missing-page-title';
           const isEmptyTable = err.errorType === 'empty-table';
+          const isBlankCond = err.errorType === 'blank-condition-record';
           return (
             <li
               key={err.id + '-' + err.errorType + '-' + idx}
@@ -132,6 +153,7 @@ const ErrorPreview = ({ droppedItems }) => {
                 {isInvalid && `Invalid Key (${err.key})`}
                 {isMissingTitle && 'Missing Page Title'}
                 {isEmptyTable && 'Empty Table (no fields)'}
+                {isBlankCond && 'Blank Condition Record'}
               </span>
               {isMissing && (
                 <span className="text-red-700">
@@ -157,6 +179,12 @@ const ErrorPreview = ({ droppedItems }) => {
               {isEmptyTable && (
                 <span className="text-red-700">
                   Add at least one table field (column) or remove the table.
+                </span>
+              )}
+              {isBlankCond && (
+                <span className="text-red-700">
+                  Each visibility condition must reference a record key. Enter
+                  or remove this condition.
                 </span>
               )}
             </li>
