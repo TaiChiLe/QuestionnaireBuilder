@@ -54,7 +54,7 @@ const XmlLoader = forwardRef(({ onLoadXml }, ref) => {
       }
 
       const parsedItems = parseXmlToItems(pages);
-      onLoadXml(parsedItems, text);
+      onLoadXml(parsedItems, text, file.name);
 
       // Reset the file input
       event.target.value = '';
