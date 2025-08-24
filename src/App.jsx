@@ -600,7 +600,7 @@ function App() {
 
   // Recursive function to render items and their children - memoized
   const renderItems = useCallback(
-    (items) => {
+    (items, parentType = 'root') => {
       return items.map((item) => {
         const isPageCollapsed =
           item.type === 'page' && collapsedPageIds.has(item.id);
@@ -616,11 +616,12 @@ function App() {
                 ? () => togglePageCollapse(item.id)
                 : undefined
             }
+            parentType={parentType}
           >
             {!isPageCollapsed &&
               item.children &&
               item.children.length > 0 &&
-              renderItems(item.children)}
+              renderItems(item.children, item.type)}
           </DroppableItem>
         );
       });

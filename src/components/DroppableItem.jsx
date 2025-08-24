@@ -7,6 +7,7 @@ function DroppableItem({
   children,
   isCollapsed,
   onToggleCollapse,
+  parentType = 'root',
 }) {
   // Draggable (suppress keyboard activators later)
   const {
@@ -35,7 +36,11 @@ function DroppableItem({
         ${
           isOver
             ? 'border-2 border-green-500 bg-green-50'
-            : 'border border-gray-300 bg-gray-50'
+            : `border border-gray-300 ${
+                parentType === 'page' && item.type !== 'page'
+                  ? 'bg-gray-50'
+                  : 'bg-gray-100'
+              }`
         }
         ${isDragging ? 'opacity-30 bg-blue-50' : ''}
         ${!isDragging ? 'transition-all duration-200' : ''}
@@ -90,7 +95,7 @@ function DroppableItem({
             </svg>
           )}
           {item.type === 'page' ? item.title || 'Page' : item.label}
-          {item.type === 'question' && item.required && (
+          {item.required && (
             <span className="text-red-500 ml-1" title="Required">
               *
             </span>
