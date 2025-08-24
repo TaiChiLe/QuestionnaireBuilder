@@ -13,6 +13,7 @@ import XmlLoader from './components/XmlLoader';
 import { generateOrderedXML } from './components/utils/xmlBuilder2Solution';
 import { exportXmlStructure } from './components/utils/xmlExporter';
 import UserGuideModal from './components/UserGuideModal';
+import { generateId } from './components/utils/id';
 
 // The central state to represent the XML tree
 const initialXmlTree = {};
@@ -30,6 +31,71 @@ function App() {
   const [showNewXmlModal, setShowNewXmlModal] = useState(false);
   const [itemToRemove, setItemToRemove] = useState(null);
   const [showUserGuide, setShowUserGuide] = useState(false);
+
+  // Move existing item to a new parent inserting before a specific sibling (used for table-field cross-table moves)
+  const moveItemToParentBefore = useCallback(
+    (items, itemId, newParentId, beforeSiblingId) => {
+      let itemToMove = null;
+      const remove = (list) =>
+        list.reduce((acc, itm) => {
+          if (itm.id === itemId) return acc; // drop it
+          if (itm.children && itm.children.length > 0) {
+            const newChildren = remove(itm.children);
+            if (newChildren !== itm.children) {
+              itm = { ...itm, children: newChildren };
+            }
+          }
+          return [...acc, itm];
+        }, []);
+
+      const without = remove(items);
+
+      if (!itemToMove) {
+        // Need to locate original item (second pass) since we discarded it; fetch from original tree first.
+        const find = (list) => {
+          for (const itm of list) {
+            if (itm.id === itemId) return itm;
+            if (itm.children && itm.children.length > 0) {
+              const f = find(itm.children);
+              if (f) return f;
+            }
+          }
+          return null;
+        };
+        itemToMove = find(items);
+      }
+      if (!itemToMove) return items; // nothing to do
+
+      const insert = (list) =>
+        list.map((itm) => {
+          if (itm.id === newParentId) {
+            const children = itm.children || [];
+            const existingIdx = children.findIndex((c) => c.id === itemId);
+            if (existingIdx !== -1) return itm; // already present
+            const beforeIdx = children.findIndex(
+              (c) => c.id === beforeSiblingId
+            );
+            let newChildren;
+            if (beforeIdx === -1) {
+              newChildren = [...children, itemToMove];
+            } else {
+              newChildren = [
+                ...children.slice(0, beforeIdx),
+                itemToMove,
+                ...children.slice(beforeIdx),
+              ];
+            }
+            return { ...itm, children: newChildren };
+          }
+          if (itm.children && itm.children.length > 0) {
+            return { ...itm, children: insert(itm.children) };
+          }
+          return itm;
+        });
+      return insert(without);
+    },
+    []
+  );
 
   // Function to show warning modal
   const showWarning = useCallback((message) => {
@@ -294,7 +360,7 @@ function App() {
     if (overItem) {
       const draggedContext = getParentContext(droppedItems, active.id);
       const overContext = getParentContext(droppedItems, over.id);
-      const sameParent = draggedContext?.parentType === overContext?.parentType;
+      const sameParent = draggedContext?.parentId === overContext?.parentId;
       if (sameParent) {
         setIsValidDrop(true);
         return;
@@ -319,6 +385,11 @@ function App() {
   const addChildToItem = useCallback((items, parentId, newChild) => {
     return items.map((item) => {
       if (item.id === parentId) {
+        const exists = item.children.some((c) => c.id === newChild.id);
+        if (exists) {
+          // Duplicate reference guard: don't add same object twice
+          return item;
+        }
         return {
           ...item,
           children: [...item.children, newChild],
@@ -533,26 +604,23 @@ function App() {
   );
 
   // Helper function to get the parent context (what items are at the same level)
-  const getParentContext = useCallback(
-    (items, targetId, parentItems = null) => {
-      // Check if targetId is in the current level
-      for (const item of items) {
-        if (item.id === targetId) {
-          return {
-            parentType: parentItems ? parentItems.type : 'root',
-            siblings: items,
-            target: item,
-          };
-        }
-        if (item.children && item.children.length > 0) {
-          const found = getParentContext(item.children, targetId, item);
-          if (found) return found;
-        }
+  const getParentContext = useCallback((items, targetId, parentItem = null) => {
+    for (const item of items) {
+      if (item.id === targetId) {
+        return {
+          parentType: parentItem ? parentItem.type : 'root',
+          parentId: parentItem ? parentItem.id : null,
+          siblings: items,
+          target: item,
+        };
       }
-      return null;
-    },
-    []
-  );
+      if (item.children && item.children.length > 0) {
+        const found = getParentContext(item.children, targetId, item);
+        if (found) return found;
+      }
+    }
+    return null;
+  }, []);
 
   // Validation rules for drag and drop
   const validateDrop = useCallback(
@@ -788,6 +856,28 @@ function App() {
     return walk(items);
   }, []);
 
+  // Extract (remove and return) an item anywhere in the tree
+  const extractItem = useCallback((items, targetId) => {
+    let removed = null;
+    const walk = (list) =>
+      list.reduce((acc, itm) => {
+        if (itm.id === targetId) {
+          removed = itm;
+          return acc; // skip
+        }
+        if (itm.children && itm.children.length > 0) {
+          const newChildren = walk(itm.children);
+          if (newChildren !== itm.children) {
+            itm = { ...itm, children: newChildren };
+          }
+        }
+        acc.push(itm);
+        return acc;
+      }, []);
+    const without = walk(items);
+    return { items: without, removed };
+  }, []);
+
   function handleDragEnd(event) {
     setActiveId(null);
     const { active, over } = event;
@@ -832,7 +922,7 @@ function App() {
         case 'form-tag':
           draggedType = 'page';
           newItem = {
-            id: `page-${Date.now()}`,
+            id: generateId('page'),
             type: 'page',
             label: 'Page',
             children: [],
@@ -841,7 +931,7 @@ function App() {
         case 'section-tag':
           draggedType = 'question';
           newItem = {
-            id: `question-${Date.now()}`,
+            id: generateId('question'),
             type: 'question',
             label: 'Question',
             children: [],
@@ -849,13 +939,13 @@ function App() {
             textRecord: '',
             keyField: '',
             required: false,
-            answers: [{ id: `answer-${Date.now()}-1`, text: 'Option 1' }],
+            answers: [{ id: generateId('answer'), text: 'Option 1' }],
           };
           break;
         case 'field-tag':
           draggedType = 'field';
           newItem = {
-            id: `field-${Date.now()}`,
+            id: generateId('field'),
             type: 'field',
             label: 'Field',
             children: [],
@@ -867,7 +957,7 @@ function App() {
         case 'information-tag':
           draggedType = 'information';
           newItem = {
-            id: `information-${Date.now()}`,
+            id: generateId('information'),
             type: 'information',
             label: 'New Information',
             children: [],
@@ -876,7 +966,7 @@ function App() {
         case 'table-tag':
           draggedType = 'table';
           newItem = {
-            id: `table-${Date.now()}`,
+            id: generateId('table'),
             type: 'table',
             label: 'New Table',
             children: [],
@@ -890,7 +980,7 @@ function App() {
         case 'table-field-tag':
           draggedType = 'table-field';
           newItem = {
-            id: `table-field-${Date.now()}`,
+            id: generateId('table-field'),
             type: 'table-field',
             label: 'New Table Field',
             children: [],
@@ -939,7 +1029,7 @@ function App() {
     if (overItem) {
       const draggedContext = getParentContext(droppedItems, draggedItemId);
       const overContext = getParentContext(droppedItems, overId);
-      const sameParent = draggedContext?.parentType === overContext?.parentType;
+      const sameParent = draggedContext?.parentId === overContext?.parentId;
       if (sameParent) {
         setDroppedItems((prev) => reorderItems(prev, draggedItemId, overId));
         return;
@@ -953,7 +1043,41 @@ function App() {
         const ctx = getParentContext(droppedItems, overId);
         if (ctx && canParentAccept(ctx.parentType, draggedItem.type)) {
           setDroppedItems((prev) => {
-            // remove dragged item from tree
+            const liveCtx = getParentContext(prev, overId); // recompute in current state
+            if (!liveCtx) return prev;
+            const siblings = liveCtx.siblings;
+            const alreadySibling = siblings.some((s) => s.id === draggedItemId);
+            if (alreadySibling) {
+              // Reorder instead of duplicate insert
+              const currentIndex = siblings.findIndex(
+                (s) => s.id === draggedItemId
+              );
+              const targetIndex = siblings.findIndex((s) => s.id === overId);
+              if (
+                currentIndex === -1 ||
+                targetIndex === -1 ||
+                currentIndex === targetIndex
+              )
+                return prev;
+              const newSiblings = arrayMove(
+                siblings,
+                currentIndex,
+                targetIndex
+              );
+              // helper to replace siblings
+              const replace = (list, parentId) => {
+                if (!parentId) return newSiblings; // root
+                return list.map((itm) =>
+                  itm.id === parentId
+                    ? { ...itm, children: newSiblings }
+                    : itm.children && itm.children.length > 0
+                    ? { ...itm, children: replace(itm.children, parentId) }
+                    : itm
+                );
+              };
+              return replace(prev, liveCtx.parentId);
+            }
+            // remove then insert before target
             const remove = (list) =>
               list.reduce((acc, itm) => {
                 if (itm.id === draggedItemId) return acc;
@@ -986,6 +1110,21 @@ function App() {
       }
       setDroppedItems((prev) => moveItemToTopLevel(prev, draggedItemId));
     } else if (existingItemIds.includes(overId)) {
+      // Prevent duplicating by dropping onto the same parent container (e.g., table) that already owns the dragged item
+      const draggedCtx = getParentContext(droppedItems, draggedItemId);
+      if (draggedCtx && draggedCtx.parentId === overId) {
+        // No change needed; optionally could move to end if desired.
+        return;
+      }
+      // Special handling: moving a table-field between tables should always detach then attach (never copy)
+      if (draggedItem.type === 'table-field') {
+        setDroppedItems((prev) => {
+          const { items: without, removed } = extractItem(prev, draggedItemId);
+          if (!removed) return prev;
+          return addChildToItem(without, overId, removed);
+        });
+        return;
+      }
       setDroppedItems((prev) => moveItemToParent(prev, draggedItemId, overId));
     }
   }
