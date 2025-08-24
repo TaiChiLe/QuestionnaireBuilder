@@ -35,11 +35,11 @@ const tips = [
   },
   {
     title: 'Exporting XML',
-    body: 'Use the Export XML button once your structure is complete. Fix any errors in the Errors tab before exporting.',
+    body: 'Use the Save button once your questionnaire is complete. Fix any errors in the Errors tab before exporting.',
   },
   {
     title: 'Loading XML',
-    body: 'Use Load XML to import a previously exported questionnaire and continue editing.',
+    body: 'Use Load to import or paste a saved questionnaire and continue editing.',
   },
 ];
 
