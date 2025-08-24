@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { DndContext, pointerWithin, DragOverlay } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import DraggableItem from './components/DraggableItem';
@@ -35,6 +35,9 @@ function App() {
   const [showPasteXml, setShowPasteXml] = useState(false);
   // Track collapsed page IDs for UI collapsing/expanding large forms
   const [collapsedPageIds, setCollapsedPageIds] = useState(() => new Set());
+  // XML dropdown state & ref to hidden file input component
+  const xmlLoaderRef = useRef(null);
+  const [xmlMenuOpen, setXmlMenuOpen] = useState(false);
 
   const togglePageCollapse = useCallback((pageId) => {
     setCollapsedPageIds((prev) => {
@@ -1170,32 +1173,82 @@ function App() {
           <div className="flex gap-3 items-center">
             <button
               onClick={() => setShowUserGuide(true)}
-              className="px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded cursor-pointer text-base hover:bg-gray-100 transition-colors"
+              className="relative pl-10 pr-4 py-2 bg-white text-gray-800 border border-blue-300 rounded cursor-pointer text-base hover:bg-gray-100 transition-colors text-left"
             >
+              <svg
+                className="absolute top-1.5 left-2 w-6 h-6 text-blue-500 pointer-events-none"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M4 4.5A2.5 2.5 0 0 1 6.5 7H20" />
+                <path d="M6.5 7A2.5 2.5 0 0 0 4 9.5v10A2.5 2.5 0 0 1 6.5 17" />
+                <path d="M6.5 7A2.5 2.5 0 0 1 9 4.5h11v15H9A2.5 2.5 0 0 0 6.5 22" />
+              </svg>
               User Guide
             </button>
             <button
               onClick={handleNewXml}
               className="px-4 py-2 bg-[#f03741] text-white border-none rounded cursor-pointer text-base hover:bg-red-700 transition-colors"
             >
-              New XML
+              New
             </button>
-            <button
-              onClick={() => setShowPasteXml(true)}
-              className="px-4 py-2 bg-orange-500 text-white border border-gray-300 rounded cursor-pointer text-base hover:bg-orange-600 transition-colors"
-            >
-              Paste XML
-            </button>
-
-            <div className="px-4 py-2 bg-green-600 text-white border-none rounded cursor-pointer text-base hover:bg-green-700 transition-colors">
-              <XmlLoader onLoadXml={handleLoadXml} />
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setXmlMenuOpen((o) => !o)}
+                className="px-4 py-2 bg-green-500 text-white border-none rounded cursor-pointer text-base hover:bg-green-600 transition-colors flex items-center gap-2"
+              >
+                Load
+                <span
+                  className={`transition-transform text-xs ${
+                    xmlMenuOpen ? 'rotate-180' : ''
+                  }`}
+                >
+                  ▾
+                </span>
+              </button>
+              {xmlMenuOpen && (
+                <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded shadow-lg z-50 text-sm overflow-hidden">
+                  <button
+                    className="block w-full text-left px-3 py-2 hover:bg-gray-100"
+                    onClick={() => {
+                      setXmlMenuOpen(false);
+                      xmlLoaderRef.current?.openFileDialog();
+                    }}
+                  >
+                    From File
+                  </button>
+                  <button
+                    className="block w-full text-left px-3 py-2 hover:bg-gray-100"
+                    onClick={() => {
+                      setXmlMenuOpen(false);
+                      setShowPasteXml(true);
+                    }}
+                  >
+                    Paste XML
+                  </button>
+                </div>
+              )}
+              <XmlLoader
+                ref={xmlLoaderRef}
+                onLoadXml={(items) => {
+                  setXmlMenuOpen(false);
+                  handleLoadXml(items);
+                }}
+              />
             </div>
             <button
               onClick={handleExportXml}
               className="px-4 py-2 bg-blue-500 text-white border-none rounded cursor-pointer text-base disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600"
               disabled={droppedItems.length === 0}
             >
-              Export XML
+              Save
             </button>
           </div>
         </div>

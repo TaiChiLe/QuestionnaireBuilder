@@ -6,7 +6,7 @@ const PreviewSection = ({
   currentXmlString,
   currentHtmlString,
 }) => {
-  const [previewMode, setPreviewMode] = useState('structure');
+  const [previewMode, setPreviewMode] = useState('html');
 
   return (
     <div

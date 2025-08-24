@@ -1,4 +1,9 @@
-import { useState } from 'react';
+import React, {
+  useState,
+  forwardRef,
+  useImperativeHandle,
+  useRef,
+} from 'react';
 
 // Simple robust ID generator (per mount) to avoid collisions when parsing quickly
 const createIdGenerator = () => {
@@ -12,8 +17,9 @@ const createIdGenerator = () => {
   };
 };
 
-const XmlLoader = ({ onLoadXml }) => {
+const XmlLoader = forwardRef(({ onLoadXml }, ref) => {
   const [isLoading, setIsLoading] = useState(false);
+  const inputRef = useRef(null);
 
   const handleFileSelect = async (event) => {
     const file = event.target.files[0];
@@ -284,22 +290,25 @@ const XmlLoader = ({ onLoadXml }) => {
     }
   };
 
+  useImperativeHandle(ref, () => ({
+    openFileDialog: () => {
+      if (inputRef.current && !isLoading) {
+        inputRef.current.click();
+      }
+    },
+    isLoading,
+  }));
+
   return (
-    <label
-      className={`inline-block cursor-pointer ${
-        isLoading ? 'opacity-50 cursor-not-allowed' : ''
-      }`}
-    >
-      <input
-        type="file"
-        accept=".xml"
-        onChange={handleFileSelect}
-        disabled={isLoading}
-        className="hidden"
-      />
-      <span>{isLoading ? 'Loading...' : 'Load XML'}</span>
-    </label>
+    <input
+      ref={inputRef}
+      type="file"
+      accept=".xml"
+      onChange={handleFileSelect}
+      disabled={isLoading}
+      className="hidden"
+    />
   );
-};
+});
 
 export default XmlLoader;
