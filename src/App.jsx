@@ -574,10 +574,35 @@ function App() {
     setEditingItem(null);
   }, []);
 
-  // Function to handle loading XML
-  const handleLoadXml = useCallback((parsedItems) => {
-    setDroppedItems(parsedItems);
-  }, []);
+  // Function to handle loading XML with destructive edit detection
+  const handleLoadXml = useCallback(
+    (parsedItems, rawXmlText) => {
+      setDroppedItems(parsedItems);
+      if (typeof rawXmlText === 'string') {
+        try {
+          const lowered = rawXmlText.toLowerCase();
+          const hasClinicalForms = /<clinicalforms\b/i.test(rawXmlText);
+          const hasStatuses = /<statuses\b/i.test(rawXmlText);
+          // sex attribute anywhere:  sex=" or sex='  (case-insensitive)
+          const hasSexAttr = /\bsex\s*=\s*['"]/i.test(rawXmlText);
+          if (hasClinicalForms || hasStatuses || hasSexAttr) {
+            const reasons = [];
+            if (hasClinicalForms) reasons.push('ClinicalForms tag detected');
+            if (hasStatuses) reasons.push('Statuses tag detected');
+            if (hasSexAttr) reasons.push('sex attribute detected');
+            showWarning(
+              `${reasons.join(
+                ' and '
+              )} - editing this questionnaire is destructive`
+            );
+          }
+        } catch (e) {
+          // Silent fail; detection is best-effort.
+        }
+      }
+    },
+    [showWarning]
+  );
 
   // Function to handle creating new XML (clear all)
   const handleNewXml = useCallback(() => {
@@ -1237,9 +1262,9 @@ function App() {
               )}
               <XmlLoader
                 ref={xmlLoaderRef}
-                onLoadXml={(items) => {
+                onLoadXml={(items, raw) => {
                   setXmlMenuOpen(false);
-                  handleLoadXml(items);
+                  handleLoadXml(items, raw);
                 }}
               />
             </div>
@@ -1382,7 +1407,7 @@ function App() {
       <PasteXmlModal
         isOpen={showPasteXml}
         onClose={() => setShowPasteXml(false)}
-        onLoadXml={handleLoadXml}
+        onLoadXml={(items, raw) => handleLoadXml(items, raw)}
       />
     </DndContext>
   );
