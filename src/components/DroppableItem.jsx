@@ -1,6 +1,13 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 
-function DroppableItem({ item, onRemove, onEdit, children }) {
+function DroppableItem({
+  item,
+  onRemove,
+  onEdit,
+  children,
+  isCollapsed,
+  onToggleCollapse,
+}) {
   // Draggable (suppress keyboard activators later)
   const {
     attributes,
@@ -48,6 +55,26 @@ function DroppableItem({ item, onRemove, onEdit, children }) {
     >
       <div className="flex justify-between items-center">
         <span className="font-bold flex items-center">
+          {item.type === 'page' && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggleCollapse && onToggleCollapse();
+              }}
+              className={`mr-2 w-6 h-6 flex items-center justify-center rounded border text-xs font-semibold transition-colors cursor-pointer ${
+                isCollapsed
+                  ? 'bg-gray-200 hover:bg-gray-300'
+                  : 'bg-white hover:bg-gray-100'
+              }`}
+              title={isCollapsed ? 'Expand Page' : 'Collapse Page'}
+              onMouseDown={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              {isCollapsed ? '+' : '−'}
+            </button>
+          )}
           {item.conditions && item.conditions.length > 0 && (
             <svg
               className="w-4 h-4 text-gray-600 mr-2 inline"
@@ -110,12 +137,12 @@ function DroppableItem({ item, onRemove, onEdit, children }) {
           </button>
         </div>
       </div>
-      {children && (
+      {!isCollapsed && children && (
         <div className="mt-2.5 pl-5 border-l-2 border-dashed border-gray-300">
           {children}
         </div>
       )}
-      {item.type === 'page' && <div className="h-8 w-full" />}
+      {item.type === 'page' && !isCollapsed && <div className="h-8 w-full" />}
       {item.type === 'table' && <div className="h-8 w-full" />}
     </div>
   );
