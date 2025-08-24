@@ -13,6 +13,7 @@ import XmlLoader from './components/XmlLoader';
 import { generateOrderedXML } from './components/utils/xmlBuilder2Solution';
 import { exportXmlStructure } from './components/utils/xmlExporter';
 import UserGuideModal from './components/UserGuideModal';
+import PasteXmlModal from './components/PasteXmlModal';
 import { generateId } from './components/utils/id';
 
 // The central state to represent the XML tree
@@ -31,6 +32,7 @@ function App() {
   const [showNewXmlModal, setShowNewXmlModal] = useState(false);
   const [itemToRemove, setItemToRemove] = useState(null);
   const [showUserGuide, setShowUserGuide] = useState(false);
+  const [showPasteXml, setShowPasteXml] = useState(false);
 
   // Move existing item to a new parent inserting before a specific sibling (used for table-field cross-table moves)
   const moveItemToParentBefore = useCallback(
@@ -1153,6 +1155,13 @@ function App() {
             >
               New XML
             </button>
+            <button
+              onClick={() => setShowPasteXml(true)}
+              className="px-4 py-2 bg-orange-500 text-white border border-gray-300 rounded cursor-pointer text-base hover:bg-orange-600 transition-colors"
+            >
+              Paste XML
+            </button>
+
             <div className="px-4 py-2 bg-green-600 text-white border-none rounded cursor-pointer text-base hover:bg-green-700 transition-colors">
               <XmlLoader onLoadXml={handleLoadXml} />
             </div>
@@ -1291,6 +1300,11 @@ function App() {
       <UserGuideModal
         isOpen={showUserGuide}
         onClose={() => setShowUserGuide(false)}
+      />
+      <PasteXmlModal
+        isOpen={showPasteXml}
+        onClose={() => setShowPasteXml(false)}
+        onLoadXml={handleLoadXml}
       />
     </DndContext>
   );
