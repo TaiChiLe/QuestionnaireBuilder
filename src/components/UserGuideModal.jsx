@@ -19,7 +19,7 @@ const tips = [
   },
   {
     title: 'Editing Items',
-    body: 'Click any item to edit its label, data type, required setting, answers (for questions), and visibility conditions.',
+    body: 'Click any item to edit its label, data type, required setting, answers (for questions), and visibility conditions. You can press Enter to save changes.',
   },
   {
     title: 'Keys',
