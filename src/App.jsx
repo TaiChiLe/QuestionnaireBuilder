@@ -1173,24 +1173,23 @@ function App() {
           <div className="flex gap-3 items-center">
             <button
               onClick={() => setShowUserGuide(true)}
-              className="relative pl-10 pr-4 py-2 bg-white text-gray-800 border border-blue-300 rounded cursor-pointer text-base hover:bg-gray-100 transition-colors text-left"
+              className="flex items-center gap-2 px-4 py-2 bg-white text-gray-800 border border-blue-300 rounded cursor-pointer text-base hover:bg-gray-100 transition-colors"
             >
               <svg
-                className="absolute top-1.5 left-2 w-6 h-6 text-blue-500 pointer-events-none"
+                className="w-5 h-5 text-blue-500"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2"
+                strokeWidth="1.6"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 aria-hidden="true"
+                focusable="false"
               >
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                <path d="M4 4.5A2.5 2.5 0 0 1 6.5 7H20" />
-                <path d="M6.5 7A2.5 2.5 0 0 0 4 9.5v10A2.5 2.5 0 0 1 6.5 17" />
-                <path d="M6.5 7A2.5 2.5 0 0 1 9 4.5h11v15H9A2.5 2.5 0 0 0 6.5 22" />
+                <path d="M5 5h5.5c1.2 0 2 .7 2.5 1.4.5-.7 1.3-1.4 2.5-1.4H21v14h-5.5c-1.2 0-2 .7-2.5 1.4-.5-.7-1.3-1.4-2.5-1.4H5z" />
+                <path d="M10.5 7.5v9M13.5 7.5v9" />
               </svg>
-              User Guide
+              <span>User Guide</span>
             </button>
             <button
               onClick={handleNewXml}
