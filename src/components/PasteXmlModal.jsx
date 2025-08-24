@@ -48,7 +48,7 @@ const PasteXmlModal = ({ isOpen, onClose, onLoadXml }) => {
       if (!pages) throw new Error('Missing <Pages> section');
 
       const parsedItems = parseXmlToItems(pages);
-      onLoadXml(parsedItems);
+      onLoadXml(parsedItems, text);
       reset();
       onClose();
     } catch (e) {
