@@ -107,7 +107,14 @@ function DroppableItem({
             </span>
           )}
           {item.type === 'information' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal">[info]</span>
+            <span className="text-xs text-gray-500 ml-2 font-normal">
+              [info]
+            </span>
+          )}
+          {item.type === 'table-field' && item.dataType && (
+            <span className="text-xs text-gray-500 ml-2 font-normal">
+              [{item.dataType.toLowerCase()}]
+            </span>
           )}
         </span>
         <div className="flex gap-1">
