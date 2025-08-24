@@ -38,6 +38,7 @@ function App() {
   // XML dropdown state & ref to hidden file input component
   const xmlLoaderRef = useRef(null);
   const [xmlMenuOpen, setXmlMenuOpen] = useState(false);
+  const [questionnaireName, setQuestionnaireName] = useState('');
 
   const togglePageCollapse = useCallback((pageId) => {
     setCollapsedPageIds((prev) => {
@@ -520,7 +521,7 @@ function App() {
 
   // Export XML using utility function
   function handleExportXml() {
-    exportXmlStructure(droppedItems);
+    exportXmlStructure(droppedItems, questionnaireName);
   }
   const findItemById = useCallback((items, itemId) => {
     for (const item of items) {
@@ -574,16 +575,39 @@ function App() {
     setEditingItem(null);
   }, []);
 
-  // Function to handle loading XML with destructive edit detection
+  // Function to handle creating new XML (clear all)
+  const handleNewXml = useCallback(() => {
+    if (droppedItems.length > 0) {
+      setShowNewXmlModal(true);
+    }
+  }, [droppedItems.length]);
+
+  // Function to confirm new XML creation
+  const confirmNewXml = useCallback(() => {
+    setDroppedItems([]);
+    setXmlTree(initialXmlTree);
+    setShowNewXmlModal(false);
+    // Clear questionnaire name when starting a brand new questionnaire
+    setQuestionnaireName('');
+  }, []);
+
+  // Function to cancel new XML creation
+  const cancelNewXml = useCallback(() => {
+    setShowNewXmlModal(false);
+  }, []);
+
+  // Function to handle loading XML with file name detection & destructive warnings
   const handleLoadXml = useCallback(
-    (parsedItems, rawXmlText) => {
+    (parsedItems, rawXmlText, fileName) => {
       setDroppedItems(parsedItems);
+      if (fileName) {
+        const base = fileName.replace(/\.xml$/i, '');
+        setQuestionnaireName(base);
+      }
       if (typeof rawXmlText === 'string') {
         try {
-          const lowered = rawXmlText.toLowerCase();
           const hasClinicalForms = /<clinicalforms\b/i.test(rawXmlText);
           const hasStatuses = /<statuses\b/i.test(rawXmlText);
-          // sex attribute anywhere:  sex=" or sex='  (case-insensitive)
           const hasSexAttr = /\bsex\s*=\s*['"]/i.test(rawXmlText);
           if (hasClinicalForms || hasStatuses || hasSexAttr) {
             const reasons = [];
@@ -597,66 +621,11 @@ function App() {
             );
           }
         } catch (e) {
-          // Silent fail; detection is best-effort.
+          // ignore parse errors
         }
       }
     },
     [showWarning]
-  );
-
-  // Function to handle creating new XML (clear all)
-  const handleNewXml = useCallback(() => {
-    if (droppedItems.length > 0) {
-      setShowNewXmlModal(true);
-    }
-  }, [droppedItems.length]);
-
-  // Function to confirm new XML creation
-  const confirmNewXml = useCallback(() => {
-    setDroppedItems([]);
-    setXmlTree(initialXmlTree);
-    setShowNewXmlModal(false);
-  }, []);
-
-  // Function to cancel new XML creation
-  const cancelNewXml = useCallback(() => {
-    setShowNewXmlModal(false);
-  }, []);
-
-  // Recursive function to render items and their children - memoized
-  const renderItems = useCallback(
-    (items, parentType = 'root') => {
-      return items.map((item) => {
-        const isPageCollapsed =
-          item.type === 'page' && collapsedPageIds.has(item.id);
-        return (
-          <DroppableItem
-            key={item.id}
-            item={item}
-            onRemove={showRemoveConfirmation}
-            onEdit={handleEditItem}
-            isCollapsed={isPageCollapsed}
-            onToggleCollapse={
-              item.type === 'page'
-                ? () => togglePageCollapse(item.id)
-                : undefined
-            }
-            parentType={parentType}
-          >
-            {!isPageCollapsed &&
-              item.children &&
-              item.children.length > 0 &&
-              renderItems(item.children, item.type)}
-          </DroppableItem>
-        );
-      });
-    },
-    [
-      showRemoveConfirmation,
-      handleEditItem,
-      collapsedPageIds,
-      togglePageCollapse,
-    ]
   );
 
   // Helper function to get the parent context (what items are at the same level)
@@ -877,6 +846,41 @@ function App() {
 
     return items;
   }, []);
+
+  // Recursive renderer (lost in refactor) to display items and nested children
+  const renderItems = useCallback(
+    (items, parentType = 'root') =>
+      items.map((item) => {
+        const isPageCollapsed =
+          item.type === 'page' && collapsedPageIds.has(item.id);
+        return (
+          <DroppableItem
+            key={item.id}
+            item={item}
+            onRemove={showRemoveConfirmation}
+            onEdit={handleEditItem}
+            isCollapsed={isPageCollapsed}
+            onToggleCollapse={
+              item.type === 'page'
+                ? () => togglePageCollapse(item.id)
+                : undefined
+            }
+            parentType={parentType}
+          >
+            {!isPageCollapsed &&
+              item.children &&
+              item.children.length > 0 &&
+              renderItems(item.children, item.type)}
+          </DroppableItem>
+        );
+      }),
+    [
+      collapsedPageIds,
+      showRemoveConfirmation,
+      handleEditItem,
+      togglePageCollapse,
+    ]
+  );
 
   // === Slot Insertion Helpers ===
   const canParentAccept = useCallback((parentType, childType) => {
@@ -1195,8 +1199,20 @@ function App() {
       <div className="flex flex-col h-screen w-screen m-0 p-0 overflow-hidden fixed top-0 left-0">
         {/* Header with export button */}
         <div className="px-4 py-2 border-b border-gray-300 bg-gray-50 flex-shrink-0 flex justify-between items-center w-full">
-          <h1 className="m-0 text-2xl">Questionnaire XML Builder</h1>
-          <div className="flex gap-3 items-center">
+          <h1 className="m-0 text-2xl flex items-center gap-4 flex-1 justify-start whitespace-nowrap">
+            <span>Questionnaire XML Builder</span>
+          </h1>
+          <div className="flex items-center gap-3 justify-center">
+            <h1>Questionnaire Name:</h1>
+            <input
+              type="text"
+              value={questionnaireName}
+              onChange={(e) => setQuestionnaireName(e.target.value)}
+              placeholder="Untitled Questionnaire"
+              className="text-base px-3 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white min-w-[200px]"
+            />
+          </div>
+          <div className="flex gap-3 items-center  flex-1 justify-end whitespace-nowrap">
             <button
               onClick={() => setShowUserGuide(true)}
               className="flex items-center gap-2 px-4 py-2 bg-white text-gray-800 border border-blue-300 rounded cursor-pointer text-base hover:bg-gray-100 transition-colors"
@@ -1262,9 +1278,9 @@ function App() {
               )}
               <XmlLoader
                 ref={xmlLoaderRef}
-                onLoadXml={(items, raw) => {
+                onLoadXml={(items, raw, fileName) => {
                   setXmlMenuOpen(false);
-                  handleLoadXml(items, raw);
+                  handleLoadXml(items, raw, fileName);
                 }}
               />
             </div>

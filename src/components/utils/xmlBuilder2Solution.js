@@ -5,10 +5,10 @@ export function generateOrderedXML(droppedItems) {
 
     try {
         // Create XML document with xmlbuilder2
-        const root = create({ version: '1.0', encoding: 'utf-16' })
+        const rootQuestionnaire = create({ version: '1.0', encoding: 'utf-16' })
             .ele('Questionnaire')
-            .att('xmlns', 'QuestionnaireSchema.xsd')
-            .ele('Pages');
+            .att('xmlns', 'QuestionnaireSchema.xsd');
+        const root = rootQuestionnaire.ele('Pages');
 
         // Recursive function to add items in order
         const addItemsToXml = (parentNode, items) => {
@@ -107,7 +107,7 @@ export function generateOrderedXML(droppedItems) {
         addItemsToXml(root, droppedItems);
 
         // Generate the XML string
-        let xmlString = root.end({ prettyPrint: true, indent: '  ' });
+        let xmlString = rootQuestionnaire.end({ prettyPrint: true, indent: '  ' });
 
         // Post-process to make Field elements single-line
         xmlString = xmlString.replace(
