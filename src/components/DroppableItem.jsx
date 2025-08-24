@@ -90,6 +90,11 @@ function DroppableItem({
             </svg>
           )}
           {item.type === 'page' ? item.title || 'Page' : item.label}
+          {item.type === 'question' && item.required && (
+            <span className="text-red-500 ml-1" title="Required">
+              *
+            </span>
+          )}
           {(item.type === 'question' || item.type === 'field') &&
             item.dataType && (
               <span className="text-xs text-gray-500 ml-2 font-normal">
