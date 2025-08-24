@@ -33,6 +33,17 @@ function App() {
   const [itemToRemove, setItemToRemove] = useState(null);
   const [showUserGuide, setShowUserGuide] = useState(false);
   const [showPasteXml, setShowPasteXml] = useState(false);
+  // Track collapsed page IDs for UI collapsing/expanding large forms
+  const [collapsedPageIds, setCollapsedPageIds] = useState(() => new Set());
+
+  const togglePageCollapse = useCallback((pageId) => {
+    setCollapsedPageIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(pageId)) next.delete(pageId);
+      else next.add(pageId);
+      return next;
+    });
+  }, []);
 
   // Move existing item to a new parent inserting before a specific sibling (used for table-field cross-table moves)
   const moveItemToParentBefore = useCallback(
@@ -588,21 +599,35 @@ function App() {
   const renderItems = useCallback(
     (items) => {
       return items.map((item) => {
+        const isPageCollapsed =
+          item.type === 'page' && collapsedPageIds.has(item.id);
         return (
           <DroppableItem
             key={item.id}
             item={item}
             onRemove={showRemoveConfirmation}
             onEdit={handleEditItem}
+            isCollapsed={isPageCollapsed}
+            onToggleCollapse={
+              item.type === 'page'
+                ? () => togglePageCollapse(item.id)
+                : undefined
+            }
           >
-            {item.children &&
+            {!isPageCollapsed &&
+              item.children &&
               item.children.length > 0 &&
               renderItems(item.children)}
           </DroppableItem>
         );
       });
     },
-    [showRemoveConfirmation, handleEditItem]
+    [
+      showRemoveConfirmation,
+      handleEditItem,
+      collapsedPageIds,
+      togglePageCollapse,
+    ]
   );
 
   // Helper function to get the parent context (what items are at the same level)
