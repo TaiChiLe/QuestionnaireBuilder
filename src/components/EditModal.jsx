@@ -451,6 +451,7 @@ const EditModal = ({
                         placeholder={`Option ${index + 1}`}
                       />
                       <button
+                        type="button"
                         onClick={() => {
                           const newAnswers = (editingItem.answers || []).filter(
                             (_, i) => i !== index
@@ -467,6 +468,7 @@ const EditModal = ({
                     </div>
                   ))}
                   <button
+                    type="button"
                     onClick={() => {
                       const newAnswer = {
                         id: `answer-${Date.now()}-${
@@ -587,6 +589,7 @@ const EditModal = ({
                       </div>
                       <div className="flex items-end">
                         <button
+                          type="button"
                           onClick={() => {
                             const newConditions = (
                               editingItem.conditions || []
@@ -604,6 +607,7 @@ const EditModal = ({
                     </div>
                   ))}
                   <button
+                    type="button"
                     onClick={() => {
                       const newCondition = {
                         id: `condition-${Date.now()}-${
