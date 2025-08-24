@@ -250,7 +250,6 @@ function App() {
       return;
     }
 
-    // Check if this is a sidebar item being dragged
     const isSidebarItem = [
       'form-tag',
       'section-tag',
@@ -261,8 +260,7 @@ function App() {
     ].includes(active.id);
 
     if (isSidebarItem) {
-      // For sidebar items, use normal validation
-      let draggedType = 'page'; // default
+      let draggedType = 'page';
       if (active.id === 'section-tag') draggedType = 'question';
       if (active.id === 'field-tag') draggedType = 'field';
       if (active.id === 'information-tag') draggedType = 'information';
@@ -270,11 +268,22 @@ function App() {
       if (active.id === 'table-field-tag') draggedType = 'table-field';
 
       const validation = validateDrop(draggedType, over.id, droppedItems);
-      setIsValidDrop(validation.valid);
+      if (!validation.valid) {
+        const targetItem = findItemById(droppedItems, over.id);
+        if (targetItem) {
+          const ctx = getParentContext(droppedItems, over.id);
+          if (ctx && canParentAccept(ctx.parentType, draggedType)) {
+            setIsValidDrop(true);
+            return;
+          }
+        }
+        setIsValidDrop(false);
+      } else {
+        setIsValidDrop(true);
+      }
       return;
     }
 
-    // For existing items being moved, check if this is reordering
     const draggedItem = findItemById(droppedItems, active.id);
     if (!draggedItem) {
       setIsValidDrop(false);
@@ -283,22 +292,27 @@ function App() {
 
     const overItem = findItemById(droppedItems, over.id);
     if (overItem) {
-      // Check if both items are at the same level (reordering)
       const draggedContext = getParentContext(droppedItems, active.id);
       const overContext = getParentContext(droppedItems, over.id);
-
       const sameParent = draggedContext?.parentType === overContext?.parentType;
-
       if (sameParent) {
-        // This is reordering within the same parent - always valid
         setIsValidDrop(true);
         return;
       }
     }
 
-    // For moving to different parent, use normal validation
     const validation = validateDrop(draggedItem.type, over.id, droppedItems);
-    setIsValidDrop(validation.valid);
+    if (!validation.valid) {
+      // Allow slot insertion for existing item drag
+      const ctx = getParentContext(droppedItems, over.id);
+      if (ctx && canParentAccept(ctx.parentType, draggedItem.type)) {
+        setIsValidDrop(true);
+      } else {
+        setIsValidDrop(false);
+      }
+    } else {
+      setIsValidDrop(true);
+    }
   }
 
   // Helper function to add a child to an item - memoized
@@ -707,7 +721,6 @@ function App() {
     const activeResult = findItemAndParent(items, activeId);
     const overResult = findItemAndParent(items, overId);
 
-    // Check if both items are in the same parent container
     if (
       activeResult.parent?.id === overResult.parent?.id ||
       (!activeResult.parent && !overResult.parent)
@@ -722,7 +735,6 @@ function App() {
         const reorderedArray = arrayMove(targetArray, activeIndex, overIndex);
 
         if (activeResult.parent) {
-          // Update parent's children
           return items.map((item) =>
             item.id === activeResult.parent.id
               ? { ...item, children: reorderedArray }
@@ -734,7 +746,6 @@ function App() {
               : item
           );
         } else {
-          // Root level reordering
           return reorderedArray;
         }
       }
@@ -743,12 +754,43 @@ function App() {
     return items;
   }, []);
 
-  // Enhanced handleDragEnd to support reordering within same parent
+  // === Slot Insertion Helpers ===
+  const canParentAccept = useCallback((parentType, childType) => {
+    const rules = {
+      root: ['page'],
+      page: ['question', 'field', 'information', 'table'],
+      question: ['field'],
+      field: [],
+      information: [],
+      table: ['table-field'],
+      'table-field': [],
+    };
+    return (rules[parentType] || []).includes(childType);
+  }, []);
+
+  const insertItemBefore = useCallback((items, targetId, newItem) => {
+    const walk = (list) => {
+      const result = [];
+      for (let itm of list) {
+        if (itm.id === targetId) {
+          result.push(newItem); // insert before target
+        }
+        if (itm.children && itm.children.length > 0) {
+          const newChildren = walk(itm.children);
+          if (newChildren !== itm.children) {
+            itm = { ...itm, children: newChildren };
+          }
+        }
+        result.push(itm);
+      }
+      return result;
+    };
+    return walk(items);
+  }, []);
+
   function handleDragEnd(event) {
     setActiveId(null);
     const { active, over } = event;
-
-    // If no valid drop target, do nothing
     if (!over) {
       console.log('Item not dropped on any valid target');
       return;
@@ -756,8 +798,6 @@ function App() {
 
     const draggedItemId = active.id;
     const overId = over.id;
-
-    // Check if dragging from sidebar (original draggable items)
     const isSidebarItem = [
       'form-tag',
       'section-tag',
@@ -767,7 +807,6 @@ function App() {
       'table-field-tag',
     ].includes(draggedItemId);
 
-    // Get all existing item IDs for validation
     const getAllItemIds = (items) => {
       let ids = [];
       items.forEach((item) => {
@@ -781,18 +820,14 @@ function App() {
 
     const existingItemIds = getAllItemIds(droppedItems);
     const validDropTargets = ['main-canvas', ...existingItemIds];
-
-    // Validate that the drop target is actually valid
     if (!validDropTargets.includes(overId)) {
       console.log('Item dropped on invalid target:', overId);
       return;
     }
 
     if (isSidebarItem) {
-      // Handle sidebar items with validation
       let newItem;
       let draggedType;
-
       switch (draggedItemId) {
         case 'form-tag':
           draggedType = 'page';
@@ -810,8 +845,7 @@ function App() {
             type: 'question',
             label: 'Question',
             children: [],
-            // Question-specific attributes
-            dataType: 'List Box', // 'List Box', 'Multi Select', 'Radio Buttons'
+            dataType: 'List Box',
             textRecord: '',
             keyField: '',
             required: false,
@@ -825,8 +859,7 @@ function App() {
             type: 'field',
             label: 'Field',
             children: [],
-            // Field-specific attributes
-            dataType: 'Text Box', // Default to Text Box
+            dataType: 'Text Box',
             keyField: '',
             required: false,
           };
@@ -861,7 +894,7 @@ function App() {
             type: 'table-field',
             label: 'New Table Field',
             children: [],
-            dataType: 'Text Box', // Default to Text Box
+            dataType: 'Text Box',
             required: false,
           };
           break;
@@ -870,11 +903,17 @@ function App() {
           return;
       }
 
-      // Validate the drop before proceeding
       const validation = validateDrop(draggedType, overId, droppedItems);
       if (!validation.valid) {
+        if (overId !== 'main-canvas') {
+          const ctx = getParentContext(droppedItems, overId);
+          if (ctx && canParentAccept(ctx.parentType, draggedType)) {
+            setDroppedItems((prev) => insertItemBefore(prev, overId, newItem));
+            setXmlTree((prev) => ({ ...prev, [newItem.id]: newItem }));
+            return;
+          }
+        }
         console.log('Invalid drop:', validation.message);
-        // You could show a toast notification here
         showWarning(`Cannot drop here: ${validation.message}`);
         return;
       }
@@ -884,73 +923,70 @@ function App() {
       } else if (existingItemIds.includes(overId)) {
         setDroppedItems((prev) => addChildToItem(prev, overId, newItem));
       }
+      setXmlTree((prev) => ({ ...prev, [newItem.id]: newItem }));
+      return;
+    }
 
-      setXmlTree((prev) => ({
-        ...prev,
-        [newItem.id]: newItem,
-      }));
-    } else {
-      // Handle reordering/moving existing items with validation
-      if (!existingItemIds.includes(draggedItemId)) {
-        console.log('Cannot move non-existing item:', draggedItemId);
+    // Existing item move
+    if (!existingItemIds.includes(draggedItemId)) return;
+    if (draggedItemId === overId) return;
+
+    const draggedItem = findItemById(droppedItems, draggedItemId);
+    if (!draggedItem) return;
+
+    // Reordering within same parent (drop on sibling) handled earlier; here we attempt slot insertion first if standard drop invalid
+    const overItem = findItemById(droppedItems, overId);
+    if (overItem) {
+      const draggedContext = getParentContext(droppedItems, draggedItemId);
+      const overContext = getParentContext(droppedItems, overId);
+      const sameParent = draggedContext?.parentType === overContext?.parentType;
+      if (sameParent) {
+        setDroppedItems((prev) => reorderItems(prev, draggedItemId, overId));
         return;
       }
+    }
 
-      if (draggedItemId === overId) {
-        console.log('Cannot drop item on itself');
-        return;
-      }
-
-      // Get the type of the item being dragged
-      const draggedItem = findItemById(droppedItems, draggedItemId);
-      if (!draggedItem) {
-        console.log('Dragged item not found');
-        return;
-      }
-
-      // Check if this is a reordering operation (dropping on another existing item)
-      if (existingItemIds.includes(overId)) {
-        const overItem = findItemById(droppedItems, overId);
-        if (overItem) {
-          // Check if both items are at the same level (have same parent)
-          const draggedContext = getParentContext(droppedItems, draggedItemId);
-          const overContext = getParentContext(droppedItems, overId);
-
-          const sameParent =
-            draggedContext?.parentType === overContext?.parentType;
-
-          if (sameParent) {
-            // This is a reordering operation
-            console.log('Reordering items');
-            setDroppedItems((prev) =>
-              reorderItems(prev, draggedItemId, overId)
-            );
-            return;
-          }
-        }
-      }
-
-      // Validate the move before proceeding (for non-reordering moves)
-      const validation = validateDrop(draggedItem.type, overId, droppedItems);
-      if (!validation.valid) {
-        console.log('Invalid move:', validation.message);
-        showWarning(`Cannot move here: ${validation.message}`);
-        return;
-      }
-
-      if (overId === 'main-canvas') {
-        // Move to top level - only pages allowed
-        if (draggedItem.type !== 'page') {
-          showWarning('Only pages can be moved to the root level');
+    const validation = validateDrop(draggedItem.type, overId, droppedItems);
+    if (!validation.valid) {
+      // Try slot insertion (insert before overId among siblings of overId)
+      if (overId !== 'main-canvas') {
+        const ctx = getParentContext(droppedItems, overId);
+        if (ctx && canParentAccept(ctx.parentType, draggedItem.type)) {
+          setDroppedItems((prev) => {
+            // remove dragged item from tree
+            const remove = (list) =>
+              list.reduce((acc, itm) => {
+                if (itm.id === draggedItemId) return acc;
+                if (itm.children && itm.children.length > 0) {
+                  const newChildren = remove(itm.children);
+                  return [
+                    ...acc,
+                    newChildren === itm.children
+                      ? itm
+                      : { ...itm, children: newChildren },
+                  ];
+                }
+                return [...acc, itm];
+              }, []);
+            const without = remove(prev);
+            return insertItemBefore(without, overId, draggedItem);
+          });
           return;
         }
-        setDroppedItems((prev) => moveItemToTopLevel(prev, draggedItemId));
-      } else if (existingItemIds.includes(overId)) {
-        // Moving to different parent - validate and move
-        setDroppedItems((prev) =>
-          moveItemToParent(prev, draggedItemId, overId)
-        );
       }
+      console.log('Invalid move:', validation.message);
+      showWarning(`Cannot move here: ${validation.message}`);
+      return;
+    }
+
+    if (overId === 'main-canvas') {
+      if (draggedItem.type !== 'page') {
+        showWarning('Only pages can be moved to the root level');
+        return;
+      }
+      setDroppedItems((prev) => moveItemToTopLevel(prev, draggedItemId));
+    } else if (existingItemIds.includes(overId)) {
+      setDroppedItems((prev) => moveItemToParent(prev, draggedItemId, overId));
     }
   }
 
