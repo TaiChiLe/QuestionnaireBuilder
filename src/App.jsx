@@ -1620,6 +1620,26 @@ function App() {
         <div className="px-4 py-2 border-b border-gray-300 bg-gray-50 flex-shrink-0 flex justify-between items-center w-full">
           <h1 className="m-0 text-2xl flex items-center gap-4 flex-1 justify-start whitespace-nowrap">
             <span>Questionnaire XML Builder</span>
+            <button
+              type="button"
+              onClick={() => setShowUserGuide(true)}
+              className="w-6 h-6 flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 text-[#f03741] transition-colors"
+              title="User Guide"
+              aria-label="Open user guide"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="w-4 h-4"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM8.94 6.94a.75.75 0 11-1.061-1.061 3 3 0 112.871 5.026v.345a.75.75 0 01-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 108.94 6.94zM10 15a1 1 0 100-2 1 1 0 000 2z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
           </h1>
           <div className="flex items-center gap-3 justify-center">
             <h1>Questionnaire Name:</h1>
@@ -1722,15 +1742,6 @@ function App() {
               </button>
               {xmlMenuOpen && (
                 <div className="absolute right-0 mt-1 w-56 bg-white border border-gray-200 rounded shadow-lg z-50 text-sm py-1">
-                  <button
-                    className="flex w-full justify-between items-center text-left px-3 py-2 hover:bg-gray-100"
-                    onClick={() => {
-                      setXmlMenuOpen(false);
-                      setShowUserGuide(true);
-                    }}
-                  >
-                    <span>User Guide</span>
-                  </button>
                   <button
                     className="flex w-full justify-between items-center text-left px-3 py-2 hover:bg-gray-100"
                     onClick={() => {
