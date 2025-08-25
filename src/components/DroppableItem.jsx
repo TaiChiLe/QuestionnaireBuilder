@@ -8,6 +8,8 @@ function DroppableItem({
   isCollapsed,
   onToggleCollapse,
   parentType = 'root',
+  selected = false,
+  onSelect,
 }) {
   // Draggable (suppress keyboard activators later)
   const {
@@ -43,28 +45,17 @@ function DroppableItem({
         ${isDragging ? 'opacity-30 bg-blue-50' : ''}
         ${!isDragging ? 'transition-all duration-200' : ''}
         ${isDragging ? 'z-[1000]' : 'z-[1]'}
+  ${selected && !isDragging ? 'outline outline-blue-400' : ''}
       `}
       style={{ transform: transformStyle }}
       tabIndex={-1}
       role="presentation"
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect && onSelect(e, item);
+      }}
     >
-      <div
-        className="flex justify-between items-center rounded-md -m-1.5 p-1.5 border border-transparent hover:border-blue-400 hover:shadow-sm transition-colors"
-        onClick={(e) => {
-          e.stopPropagation();
-          if (
-            onEdit &&
-            (item.type === 'question' ||
-              item.type === 'page' ||
-              item.type === 'field' ||
-              item.type === 'information' ||
-              item.type === 'table' ||
-              item.type === 'table-field')
-          ) {
-            onEdit(item.id);
-          }
-        }}
-      >
+      <div className="flex justify-between items-center rounded-md -m-1.5 p-1.5 border border-transparent hover:border-blue-400 hover:shadow-sm transition-colors">
         <span className="font-bold flex items-center">
           {/* Fixed-width control column (drag handle + optional collapse) */}
           <span className="flex items-center gap-1 w-14 shrink-0">
@@ -162,6 +153,29 @@ function DroppableItem({
           )}
         </span>
         <div className="flex gap-1">
+          {onEdit && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (
+                  item.type === 'question' ||
+                  item.type === 'page' ||
+                  item.type === 'field' ||
+                  item.type === 'information' ||
+                  item.type === 'table' ||
+                  item.type === 'table-field'
+                ) {
+                  onEdit(item.id);
+                }
+              }}
+              className="px-4 py-3 bg-blue-50 text-blue-600 border border-blue-200 rounded text-xs font-bold relative z-10 cursor-pointer hover:bg-blue-100"
+              onMouseDown={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              Edit
+            </button>
+          )}
           <button
             onClick={(e) => {
               e.preventDefault();

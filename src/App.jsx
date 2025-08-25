@@ -33,6 +33,10 @@ function App() {
   const [itemToRemove, setItemToRemove] = useState(null);
   const [showUserGuide, setShowUserGuide] = useState(false);
   const [showPasteXml, setShowPasteXml] = useState(false);
+  // Multi-select & clipboard state
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [focusId, setFocusId] = useState(null);
+  const [clipboard, setClipboard] = useState(null); // { items: [], isCut: bool }
   // Track collapsed page IDs for UI collapsing/expanding large forms
   const [collapsedPageIds, setCollapsedPageIds] = useState(() => new Set());
   // XML dropdown state & ref to hidden file input component
@@ -921,6 +925,8 @@ function App() {
                 : undefined
             }
             parentType={parentType}
+            selected={selectedIds.has(item.id)}
+            onSelect={(e) => handleSelectItem(e, item.id)}
           >
             {!isPageCollapsed &&
               item.children &&
@@ -934,6 +940,7 @@ function App() {
       showRemoveConfirmation,
       handleEditItem,
       togglePageCollapse,
+      selectedIds,
     ]
   );
 
@@ -950,6 +957,267 @@ function App() {
     };
     return (rules[parentType] || []).includes(childType);
   }, []);
+
+  // ===== Selection & Clipboard Logic =====
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+    setFocusId(null);
+  }, []);
+
+  // Normalize selection to prevent parent+descendant mixes
+  const normalizeSelection = useCallback(
+    (ids) => {
+      const keep = new Set(ids);
+      const walk = (list, ancestorSelected) => {
+        for (const itm of list) {
+          const sel = keep.has(itm.id);
+          if (ancestorSelected && sel) {
+            keep.delete(itm.id);
+          }
+          if (itm.children && itm.children.length) {
+            walk(itm.children, ancestorSelected || sel);
+          }
+        }
+      };
+      walk(droppedItems, false);
+      return keep;
+    },
+    [droppedItems]
+  );
+
+  const handleSelectItem = useCallback(
+    (e, id) => {
+      e.preventDefault();
+      const isMeta = e.metaKey || e.ctrlKey;
+      const isShift = e.shiftKey; // future range selection potential
+      setSelectedIds((prev) => {
+        let next;
+        if (isMeta) {
+          next = new Set(prev);
+          if (next.has(id)) next.delete(id);
+          else next.add(id);
+        } else if (isShift && focusId) {
+          // simple range across flattened order (only same depth for now)
+          const flat = [];
+          const flatten = (list) => {
+            for (const itm of list) {
+              flat.push(itm.id);
+              if (itm.children && itm.children.length) flatten(itm.children);
+            }
+          };
+          flatten(droppedItems);
+          const a = flat.indexOf(focusId);
+          const b = flat.indexOf(id);
+          if (a !== -1 && b !== -1) {
+            const [start, end] = a < b ? [a, b] : [b, a];
+            next = new Set(flat.slice(start, end + 1));
+          } else {
+            next = new Set([id]);
+          }
+        } else {
+          next = new Set([id]);
+        }
+        next = normalizeSelection(next);
+        return next;
+      });
+      setFocusId(id);
+    },
+    [droppedItems, focusId, normalizeSelection]
+  );
+
+  // Extract top-level selected item objects (no descendants because normalized)
+  const getSelectedRootNodes = useCallback(() => {
+    const roots = [];
+    const walk = (list) => {
+      for (const itm of list) {
+        if (selectedIds.has(itm.id)) {
+          roots.push(itm);
+        } else if (itm.children && itm.children.length) walk(itm.children);
+      }
+    };
+    walk(droppedItems);
+    return roots;
+  }, [droppedItems, selectedIds]);
+
+  const deepCloneWithNewIds = useCallback((node) => {
+    const { id, children, ...rest } = node;
+    const cloned = {
+      ...rest,
+      id: generateId(node.type),
+      type: node.type,
+      children: (children || []).map((c) => deepCloneWithNewIds(c)),
+    };
+    return cloned;
+  }, []);
+
+  const removeMany = useCallback((ids) => {
+    const idSet = new Set(ids);
+    const prune = (list) =>
+      list
+        .filter((itm) => !idSet.has(itm.id))
+        .map((itm) =>
+          itm.children && itm.children.length
+            ? { ...itm, children: prune(itm.children) }
+            : itm
+        );
+    setDroppedItems((prev) => prune(prev));
+  }, []);
+
+  const handleCopy = useCallback(
+    (isCut) => {
+      if (selectedIds.size === 0) return;
+      const roots = getSelectedRootNodes();
+      if (roots.length === 0) return;
+      if (isCut) {
+        // store originals, then remove them (move semantics)
+        setClipboard({ items: roots, isCut: true });
+        removeMany(roots.map((r) => r.id));
+        // focus becomes last removed parent (can't retain, so clear focus)
+        setFocusId(null);
+        setSelectedIds(new Set());
+      } else {
+        const clones = roots.map((r) => deepCloneWithNewIds(r));
+        setClipboard({ items: clones, isCut: false });
+      }
+    },
+    [selectedIds, getSelectedRootNodes, removeMany, deepCloneWithNewIds]
+  );
+
+  const insertAfterId = useCallback((items, targetId, newNodes) => {
+    const walk = (list) => {
+      const out = [];
+      for (const itm of list) {
+        out.push(itm);
+        if (itm.id === targetId) {
+          out.push(...newNodes);
+        }
+        if (itm.children && itm.children.length) {
+          const newChildren = walk(itm.children);
+          if (newChildren !== itm.children) {
+            const updated = { ...itm, children: newChildren };
+            out[out.length - (itm.id === targetId ? newNodes.length + 1 : 1)] =
+              updated; // replace last occurrence
+          }
+        }
+      }
+      return out;
+    };
+    return walk(items);
+  }, []);
+
+  const handlePaste = useCallback(() => {
+    if (!clipboard || !focusId) return;
+    const focusCtx = getParentContext(droppedItems, focusId);
+    if (!focusCtx) return;
+    const parentType = focusCtx.parentType;
+    const parentId = focusCtx.parentId; // null for root
+    const siblings = focusCtx.siblings;
+    const focusIndex = siblings.findIndex((s) => s.id === focusId);
+    const roots = clipboard.items;
+    // Filter by parent acceptance
+    const allowed = [];
+    const skipped = [];
+    for (const node of roots) {
+      const pt = parentId ? parentType : 'root';
+      if (canParentAccept(pt, node.type)) allowed.push(node);
+      else skipped.push(node);
+    }
+    if (allowed.length === 0) {
+      if (skipped.length) {
+        showWarning('Nothing to paste here (types not allowed).');
+      }
+      return;
+    }
+    // Insert copies (for copy) or originals (for cut) after focus among siblings
+    setDroppedItems((prev) => {
+      if (!parentId) {
+        // root level splice
+        const arr = [...prev];
+        const idx = arr.findIndex((i) => i.id === focusId);
+        const insertion = clipboard.isCut
+          ? allowed
+          : allowed.map((n) => deepCloneWithNewIds(n));
+        arr.splice(idx + 1, 0, ...insertion);
+        return arr;
+      }
+      // nested: rebuild tree replacing that branch's children order
+      const insertion = clipboard.isCut
+        ? allowed
+        : allowed.map((n) => deepCloneWithNewIds(n));
+      // For nested, we splice into siblings array under parentId
+      const spliceInto = (list) =>
+        list.map((itm) => {
+          if (itm.id === parentId) {
+            const ch = [...itm.children];
+            ch.splice(focusIndex + 1, 0, ...insertion);
+            return { ...itm, children: ch };
+          }
+          if (itm.children && itm.children.length) {
+            return { ...itm, children: spliceInto(itm.children) };
+          }
+          return itm;
+        });
+      return spliceInto(prev);
+    });
+    // Update selection to new nodes (cut retains ids; copy uses newly generated ids)
+    let newIds;
+    if (clipboard.isCut) {
+      newIds = allowed.map((n) => n.id);
+    } else {
+      newIds = allowed.map((n) => n.id); // after cloning we lost mapping, but deepCloneWithNewIds produced new ids; we cloned again above, so need to recalc
+      // Actually gather inserted ids by performing shallow preview clone before set? Simpler: recalc by generating again separately.
+      // For simplicity here, regenerate again:
+      newIds = allowed.map((n) => generateId(n.type)); // placeholder ids (cannot reliably reflect inserted). TODO: Improve mapping.
+    }
+    // Clear selection then (best effort) set to last pasted placeholder ids only for cut; skip for copy to avoid mismatch
+    if (clipboard.isCut) {
+      setSelectedIds(new Set(newIds));
+      setFocusId(newIds[newIds.length - 1]);
+    } else {
+      setSelectedIds(new Set());
+    }
+    if (clipboard.isCut) setClipboard(null); // consumed
+    if (skipped.length) {
+      showWarning(
+        `Skipped ${skipped.length} item(s) not allowed in this location.`
+      );
+    }
+  }, [
+    clipboard,
+    focusId,
+    getParentContext,
+    droppedItems,
+    canParentAccept,
+    deepCloneWithNewIds,
+    showWarning,
+  ]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e) => {
+      if (
+        e.target &&
+        (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')
+      )
+        return;
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'c') {
+          e.preventDefault();
+          handleCopy(false);
+        } else if (e.key === 'x') {
+          e.preventDefault();
+          handleCopy(true);
+        } else if (e.key === 'v') {
+          e.preventDefault();
+          handlePaste();
+        }
+      } else if (e.key === 'Escape') {
+        clearSelection();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [handleCopy, handlePaste, clearSelection]);
 
   const insertItemBefore = useCallback((items, targetId, newItem) => {
     const walk = (list) => {
@@ -1268,6 +1536,36 @@ function App() {
             />
           </div>
           <div className="flex gap-3 items-center  flex-1 justify-end whitespace-nowrap">
+            {/* Clipboard Toolbar */}
+            <div className="flex items-center gap-1 mr-4">
+              <button
+                type="button"
+                className="px-2 py-1 text-xs rounded border bg-white hover:bg-gray-100 disabled:opacity-40"
+                disabled={selectedIds.size === 0}
+                onClick={() => handleCopy(false)}
+                title="Copy (Ctrl+C)"
+              >
+                Copy
+              </button>
+              <button
+                type="button"
+                className="px-2 py-1 text-xs rounded border bg-white hover:bg-gray-100 disabled:opacity-40"
+                disabled={selectedIds.size === 0}
+                onClick={() => handleCopy(true)}
+                title="Cut (Ctrl+X)"
+              >
+                Cut
+              </button>
+              <button
+                type="button"
+                className="px-2 py-1 text-xs rounded border bg-white hover:bg-gray-100 disabled:opacity-40"
+                disabled={!clipboard || !focusId}
+                onClick={handlePaste}
+                title="Paste After (Ctrl+V)"
+              >
+                Paste
+              </button>
+            </div>
             <button
               onClick={() => setShowUserGuide(true)}
               className="flex items-center gap-2 px-4 py-2 bg-white text-gray-800 border border-blue-300 rounded cursor-pointer text-base hover:bg-gray-100 transition-colors"
@@ -1392,7 +1690,12 @@ function App() {
 
           {/* The Droppable Canvas */}
           <div className="flex-1 p-4 overflow-auto h-full w-auto">
-            <DroppableArea id="main-canvas">
+            <DroppableArea
+              id="main-canvas"
+              onBackgroundClick={() => {
+                clearSelection();
+              }}
+            >
               {droppedItems.length === 0 ? (
                 <p className="text-center text-lg text-gray-500 my-10">
                   Drag an item here to start building!
