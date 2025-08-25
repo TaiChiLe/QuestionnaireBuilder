@@ -40,7 +40,9 @@ function App() {
   const [xmlMenuOpen, setXmlMenuOpen] = useState(false);
   const [questionnaireName, setQuestionnaireName] = useState('');
   // Preview panel sizing & collapse
-  const [previewHeight, setPreviewHeight] = useState( Math.round(window.innerHeight * 0.40) );
+  const [previewHeight, setPreviewHeight] = useState(
+    Math.round(window.innerHeight * 0.4)
+  );
   const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(false);
   const isResizingRef = useRef(false);
   const lastYRef = useRef(0);
@@ -57,12 +59,15 @@ function App() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  const startResize = useCallback((e) => {
-    if (isPreviewCollapsed) return;
-    isResizingRef.current = true;
-    lastYRef.current = e.clientY;
-    document.body.style.userSelect = 'none';
-  }, [isPreviewCollapsed]);
+  const startResize = useCallback(
+    (e) => {
+      if (isPreviewCollapsed) return;
+      isResizingRef.current = true;
+      lastYRef.current = e.clientY;
+      document.body.style.userSelect = 'none';
+    },
+    [isPreviewCollapsed]
+  );
 
   const stopResize = useCallback(() => {
     if (isResizingRef.current) {
@@ -1401,7 +1406,9 @@ function App() {
 
         {/* Resize Handle & Preview Section */}
         <div
-          className={`relative w-full flex-shrink-0 ${isPreviewCollapsed ? 'h-9' : ''}`}
+          className={`relative w-full flex-shrink-0 ${
+            isPreviewCollapsed ? 'h-9' : ''
+          }`}
           style={{ height: isPreviewCollapsed ? 36 : previewHeight }}
         >
           {/* Drag handle */}
