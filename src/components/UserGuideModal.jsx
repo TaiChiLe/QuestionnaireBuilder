@@ -19,11 +19,15 @@ const tips = [
   },
   {
     title: 'Editing Items',
-    body: 'Click any item to edit its label, data type, required setting, answers (for questions), and visibility conditions. You can press Enter to save changes.',
+    body: 'Click on edit to edit items and its label, data type, required setting, answers (for questions), and visibility conditions. You can press Enter to save changes.',
   },
   {
-    title: 'Copying Items',
-    body: 'Ctrl Left Click to select multiple items, then Ctrl C to copy. You can paste them by selecting another item you want it under and Ctrl V to paste.',
+    title: 'Copying Items and Cutting Items',
+    body: 'Ctrl Left Click to select multiple items, then Ctrl C to copy. You can paste them by selecting another item you want it under and Ctrl V to paste. Similarly you can do this with cut.',
+  },
+  {
+    title: 'Reordering Items',
+    body: 'You can reorder items by dragging the handle with the 6 dots to drag them to a new position.',
   },
   {
     title: 'Keys',
@@ -36,6 +40,10 @@ const tips = [
   {
     title: 'Tables & Table Fields',
     body: 'Add a Table, then drag Table Field components into it. Each table field can have its own data type and required flag.',
+  },
+  {
+    title: 'Adjusting the view',
+    body: 'You can use the handle to expand / reduce the height of the preview panel. You can also collapse it by clicking on the arrow key to the left of the panel.',
   },
   {
     title: 'Exporting XML',
