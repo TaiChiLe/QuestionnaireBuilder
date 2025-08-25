@@ -1962,7 +1962,7 @@ function App() {
                 onClick={() => setAutoEdit(!autoEdit)}
                 className="w-full px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200"
                 style={{
-                  backgroundColor: autoEdit ? '#10b981' : '#e5e7eb',
+                  backgroundColor: autoEdit ? '#f03741' : '#e5e7eb',
                   color: autoEdit ? 'white' : '#374151',
                 }}
                 title={
