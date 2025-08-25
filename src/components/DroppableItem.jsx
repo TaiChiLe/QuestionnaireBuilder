@@ -18,9 +18,7 @@ function DroppableItem({
     isDragging,
   } = useDraggable({ id: item.id });
   const { setNodeRef: dropRef, isOver } = useDroppable({ id: item.id });
-
-  // Strip out potential onKeyDown from listeners to avoid keyboard drag
-  const { onKeyDown: _omit, ...restListeners } = listeners || {};
+  // We'll only apply drag listeners to the dedicated handle button
 
   const transformStyle = transform
     ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
@@ -32,7 +30,7 @@ function DroppableItem({
         dragRef(node);
         dropRef(node);
       }}
-      className={`my-1.5 p-2.5 rounded cursor-grab select-none relative w-full text-sm
+      className={`group my-1.5 p-2.5 rounded cursor-default select-none relative w-full text-sm
         ${
           isOver
             ? 'border-2 border-green-500 bg-green-50'
@@ -47,19 +45,54 @@ function DroppableItem({
         ${isDragging ? 'z-[1000]' : 'z-[1]'}
       `}
       style={{ transform: transformStyle }}
-      {...restListeners}
-      {...attributes}
       tabIndex={-1}
       role="presentation"
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          e.stopPropagation();
+      onClick={(e) => {
+        // Prevent edit when clicking inner control buttons
+        if (
+          onEdit &&
+          (item.type === 'question' ||
+            item.type === 'page' ||
+            item.type === 'field' ||
+            item.type === 'information' ||
+            item.type === 'table' ||
+            item.type === 'table-field')
+        ) {
+          onEdit(item.id);
         }
       }}
     >
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center rounded-md -m-1.5 p-1.5 border border-transparent hover:border-blue-400 hover:shadow-sm transition-colors">
         <span className="font-bold flex items-center">
+          {/* Drag handle button */}
+          <button
+            type="button"
+            className={`mr-2 w-6 h-6 flex items-center justify-center rounded border text-xs font-semibold cursor-grab active:cursor-grabbing transition-colors ${
+              isDragging ? 'bg-gray-300' : 'bg-white hover:bg-gray-100'
+            }`}
+            aria-label="Drag item"
+            onMouseDown={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              // prevent triggering edit when clicking handle
+              e.stopPropagation();
+            }}
+            {...listeners}
+            {...attributes}
+          >
+            <svg
+              className="w-3 h-3 text-gray-600"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <circle cx="5" cy="5" r="1.5" />
+              <circle cx="10" cy="5" r="1.5" />
+              <circle cx="15" cy="5" r="1.5" />
+              <circle cx="5" cy="10" r="1.5" />
+              <circle cx="10" cy="10" r="1.5" />
+              <circle cx="15" cy="10" r="1.5" />
+            </svg>
+          </button>
           {item.type === 'page' && (
             <button
               type="button"
@@ -123,26 +156,6 @@ function DroppableItem({
           )}
         </span>
         <div className="flex gap-1">
-          {(item.type === 'question' ||
-            item.type === 'page' ||
-            item.type === 'field' ||
-            item.type === 'information' ||
-            item.type === 'table' ||
-            item.type === 'table-field') &&
-            onEdit && (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onEdit(item.id);
-                }}
-                className="px-4 py-3 bg-blue-50 text-blue-600 border border-blue-200 rounded text-xs font-bold relative z-10 cursor-pointer hover:bg-blue-100"
-                onMouseDown={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-              >
-                Edit
-              </button>
-            )}
           <button
             onClick={(e) => {
               e.preventDefault();

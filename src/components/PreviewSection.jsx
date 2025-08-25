@@ -29,29 +29,31 @@ const PreviewSection = ({
           >
             {collapsed ? '▴' : '▾'}
           </button>
-          <h3 className="m-0 text-sm font-medium text-white tracking-wide">Preview</h3>
+          <h3 className="m-0 text-sm font-medium text-white tracking-wide">
+            Preview
+          </h3>
         </div>
         {!collapsed && (
           <div className="flex gap-2">
-          {['structure', 'xml', 'html', 'errors'].map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setPreviewMode(mode)}
-              className={`px-3 py-1.5 border border-gray-300 rounded cursor-pointer text-sm ${
-                previewMode === mode
-                  ? 'bg-gray-400 text-white'
-                  : 'bg-white text-gray-700'
-              }`}
-            >
-              {mode === 'structure'
-                ? 'Structure'
-                : mode === 'xml'
-                ? 'XML'
-                : mode === 'html'
-                ? 'HTML'
-                : 'Errors'}
-            </button>
-          ))}
+            {['structure', 'xml', 'html', 'errors'].map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setPreviewMode(mode)}
+                className={`px-3 py-1.5 border border-gray-300 rounded cursor-pointer text-sm ${
+                  previewMode === mode
+                    ? 'bg-gray-400 text-white'
+                    : 'bg-white text-gray-700'
+                }`}
+              >
+                {mode === 'structure'
+                  ? 'Structure'
+                  : mode === 'xml'
+                  ? 'XML'
+                  : mode === 'html'
+                  ? 'HTML'
+                  : 'Errors'}
+              </button>
+            ))}
           </div>
         )}
       </div>
@@ -77,15 +79,20 @@ const PreviewSection = ({
                             {item.children.map((child) => (
                               <div key={child.id} className="mb-1">
                                 ↳ <strong>{child.type}</strong>: {child.label}
-                                {child.children && child.children.length > 0 && (
-                                  <div className="ml-5 mt-0.5">
-                                    {child.children.map((grandchild) => (
-                                      <div key={grandchild.id} className="mb-0.5">
-                                        ↳ <strong>{grandchild.type}</strong>: {grandchild.label}
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
+                                {child.children &&
+                                  child.children.length > 0 && (
+                                    <div className="ml-5 mt-0.5">
+                                      {child.children.map((grandchild) => (
+                                        <div
+                                          key={grandchild.id}
+                                          className="mb-0.5"
+                                        >
+                                          ↳ <strong>{grandchild.type}</strong>:{' '}
+                                          {grandchild.label}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
                               </div>
                             ))}
                           </div>
