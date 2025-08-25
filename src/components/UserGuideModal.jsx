@@ -3,55 +3,81 @@ import React from 'react';
 const tips = [
   {
     title: 'Getting Started',
-    body: 'Drag a Page onto the canvas first. All other components must live inside a Page.',
+    body: 'Start by dragging a Page onto the canvas. All other components must be placed inside a Page to create your questionnaire structure.',
   },
   {
-    title: 'Adding Questions & Fields',
-    body: 'Drag Question, Field, Information, or Table items into a Page (or into a Table for Table Fields).',
+    title: 'Basic vs Advanced Mode',
+    body: 'Toggle between Basic and Advanced modes using the button above the components. Basic mode shows pre-configured components with fixed data types, while Advanced mode shows generic components that require manual configuration.',
   },
   {
-    title: 'Questions',
-    body: 'Can contain multiple answers. Like Dropdowns, checkboxes, and radio buttons.',
+    title: 'Basic Components',
+    body: 'In Basic mode, use pre-configured components: List Box, Multi Select, Radio Buttons (for questions), Text Box, Notes, Date (for fields), plus Page, Information, Table, and Table Field. These have their data types already set.',
   },
   {
-    title: 'Fields',
-    body: 'Fields are single or multi-line text inputs and dates.',
+    title: 'Adding Components',
+    body: 'Drag components from the sidebar into Pages. Table Fields must be placed inside Tables. The sidebar is scrollable if you have many components.',
   },
   {
     title: 'Editing Items',
-    body: 'Double click to edit, or click on edit to edit items and its label, data type, required setting, answers (for questions), and visibility conditions. You can press Enter to save changes.',
+    body: 'Double-click any item to edit its properties. You can also use the edit button. Press Enter to save changes quickly.',
   },
   {
-    title: 'Copying Items and Cutting Items',
-    body: 'Ctrl Left Click to select multiple items, then Ctrl C to copy. You can paste them by selecting another item you want it under and Ctrl V to paste. Similarly you can do this with cut.',
+    title: 'Copy, Cut & Paste',
+    body: 'Ctrl+Click to select multiple items, then Ctrl+C to copy or Ctrl+X to cut. Select a target item and Ctrl+V to paste underneath it.',
   },
   {
     title: 'Reordering Items',
-    body: 'You can reorder items by dragging the handle with the 6 dots to drag them to a new position.',
+    body: 'Drag items by their handle (6 dots icon) to reorder them within their parent container.',
   },
   {
-    title: 'Keys',
-    body: 'Keys are used to reference items in visibility conditions and XML. They must be unique, contain only letters, numbers, and hyphens, and no spaces.',
+    title: 'Questions vs Fields',
+    body: 'Questions have multiple answer options (List Box, Multi Select, Radio Buttons). Fields are for single inputs (Text Box, Notes, Date).',
+  },
+  {
+    title: 'Tables',
+    body: 'Add a Table component, then drag Table Field components into it to create columns. Each Table Field can have different data types.',
+  },
+  {
+    title: 'Answer Management',
+    body: 'For questions, click the chevron to expand and see answer options. Use the global "Expand All" / "Collapse All" buttons to control all questions at once.',
+  },
+  {
+    title: 'Preview & Errors',
+    body: 'Use the preview panel to see your questionnaire. Check the Errors tab to identify any issues before exporting. Resize the panel by dragging the handle.',
+  },
+  {
+    title: 'Saving & Loading',
+    body: 'Use Save to export your completed questionnaire as XML. Use Load to import existing questionnaires for editing.',
+  },
+  {
+    title: '--- Advanced Features ---',
+    body: 'The following features require enabling "Show Advanced" in the edit modal or using Advanced mode:',
+    isAdvanced: true,
+  },
+  {
+    title: 'Data Type Customization',
+    body: 'In Advanced mode or with "Show Advanced" enabled, you can modify data types for Questions and Fields instead of using pre-configured types.',
+    isAdvanced: true,
+  },
+  {
+    title: 'Key Fields',
+    body: 'Keys are unique identifiers for components, used in visibility conditions and XML export. They should contain only letters, numbers, and hyphens.',
+    isAdvanced: true,
   },
   {
     title: 'Visibility Conditions',
-    body: 'Use conditions to show an item only when other items have specific answers. Browse existing keys via the Browse button in the Edit modal.',
+    body: 'Make components appear only when other components have specific answers. Set conditions in the Advanced section of the edit modal. Use "Browse" to select existing keys.',
+    isAdvanced: true,
   },
   {
-    title: 'Tables & Table Fields',
-    body: 'Add a Table, then drag Table Field components into it. Each table field can have its own data type and required flag.',
+    title: 'Visibility Types',
+    body: 'Choose "Any" (show if any condition is met) or "All" (show only if all conditions are met) for components with multiple visibility conditions.',
+    isAdvanced: true,
   },
   {
-    title: 'Adjusting the view',
-    body: 'You can use the handle to expand / reduce the height of the preview panel. You can also collapse it by clicking on the arrow key to the left of the panel.',
-  },
-  {
-    title: 'Exporting XML',
-    body: 'Use the Save button once your questionnaire is complete. Fix any errors in the Errors tab before exporting.',
-  },
-  {
-    title: 'Loading XML',
-    body: 'Use Load to import or paste a saved questionnaire and continue editing.',
+    title: 'Advanced Components',
+    body: 'In Advanced mode, use generic Question and Field components that require manual data type selection.',
+    isAdvanced: true,
   },
 ];
 
@@ -78,11 +104,28 @@ function UserGuideModal({ isOpen, onClose }) {
         </div>
         <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto text-sm leading-relaxed">
           {tips.map((t) => (
-            <div key={t.title}>
-              <h4 className="m-0 mb-1 text-base font-semibold text-gray-700">
+            <div
+              key={t.title}
+              className={
+                t.isAdvanced
+                  ? 'border-l-4 border-red-400 pl-4 bg-red-50 py-2 rounded-r'
+                  : ''
+              }
+            >
+              <h4
+                className={`m-0 mb-1 text-base font-semibold ${
+                  t.isAdvanced ? 'text-red-700' : 'text-gray-700'
+                }`}
+              >
                 {t.title}
               </h4>
-              <p className="m-0 text-gray-600">{t.body}</p>
+              <p
+                className={`m-0 ${
+                  t.isAdvanced ? 'text-red-600' : 'text-gray-600'
+                }`}
+              >
+                {t.body}
+              </p>
             </div>
           ))}
           <div className="pt-2 text-gray-500 text-xs">

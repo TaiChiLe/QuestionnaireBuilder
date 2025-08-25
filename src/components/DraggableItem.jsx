@@ -29,7 +29,7 @@ function DraggableItem(props) {
         ${getBackgroundClass()}
         ${
           isDragging
-            ? 'opacity-50 shadow-lg z-[1000]'
+            ? 'opacity-0 shadow-lg z-[1000]'
             : 'border-gray-300 shadow-sm z-[1] hover:shadow-md'
         }
         ${!isDragging ? 'transition-all duration-200 ease-in-out' : ''}
