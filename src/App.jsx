@@ -2145,11 +2145,11 @@ function App() {
                 }}
                 title={
                   autoEdit
-                    ? 'Auto-edit enabled: Edit modal opens immediately when dropping components'
-                    : 'Auto-edit disabled: Click components to edit them'
+                    ? 'Edit on Drop enabled: Edit modal opens immediately when dropping components'
+                    : 'Edit on Drop disabled: Click components to edit them'
                 }
               >
-                Auto-Edit
+                Edit on Drop
               </button>
             </div>
 
