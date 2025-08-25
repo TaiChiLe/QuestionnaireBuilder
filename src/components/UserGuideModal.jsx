@@ -22,6 +22,10 @@ const tips = [
     body: 'Click any item to edit its label, data type, required setting, answers (for questions), and visibility conditions. You can press Enter to save changes.',
   },
   {
+    title: 'Copying Items',
+    body: 'Ctrl Left Click to select multiple items, then Ctrl C to copy. You can paste them by selecting another item you want it under and Ctrl V to paste.',
+  },
+  {
     title: 'Keys',
     body: 'Keys are used to reference items in visibility conditions and XML. They must be unique, contain only letters, numbers, and hyphens, and no spaces.',
   },

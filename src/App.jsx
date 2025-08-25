@@ -1050,6 +1050,21 @@ function App() {
     return cloned;
   }, []);
 
+  // Deep clone collecting new ids (used for selection after paste when copying)
+  const deepCloneWithNewIdsAndCollect = useCallback((node, collected) => {
+    const { id, children, ...rest } = node;
+    const newId = generateId(node.type);
+    collected.push(newId);
+    return {
+      ...rest,
+      id: newId,
+      type: node.type,
+      children: (children || []).map((c) =>
+        deepCloneWithNewIdsAndCollect(c, collected)
+      ),
+    };
+  }, []);
+
   const removeMany = useCallback((ids) => {
     const idSet = new Set(ids);
     const prune = (list) =>
@@ -1109,12 +1124,71 @@ function App() {
     if (!clipboard || !focusId) return;
     const focusCtx = getParentContext(droppedItems, focusId);
     if (!focusCtx) return;
+    const targetNode = focusCtx.target; // the focused item itself
     const parentType = focusCtx.parentType;
-    const parentId = focusCtx.parentId; // null for root
+    const parentId = focusCtx.parentId; // null if root
     const siblings = focusCtx.siblings;
     const focusIndex = siblings.findIndex((s) => s.id === focusId);
     const roots = clipboard.items;
-    // Filter by parent acceptance
+
+    // Determine if we should paste inside the focused container (page/question/table)
+    const isContainer = ['page', 'question', 'table'].includes(targetNode.type);
+    let mode = 'sibling';
+    if (isContainer) {
+      // Check if any clipboard item can be a child of this container
+      const allowedInside = roots.filter((n) =>
+        canParentAccept(targetNode.type, n.type)
+      );
+      if (allowedInside.length > 0) {
+        mode = 'append-children';
+      }
+    }
+
+    const collectedIds = [];
+
+    if (mode === 'append-children') {
+      // Paste as children at end of container
+      const allowed = [];
+      const skipped = [];
+      for (const node of roots) {
+        if (canParentAccept(targetNode.type, node.type)) allowed.push(node);
+        else skipped.push(node);
+      }
+      if (allowed.length === 0) {
+        showWarning('Nothing to paste into this container.');
+        return;
+      }
+      setDroppedItems((prev) => {
+        const update = (list) =>
+          list.map((itm) => {
+            if (itm.id === targetNode.id) {
+              const insertion = clipboard.isCut
+                ? allowed
+                : allowed.map((n) =>
+                    deepCloneWithNewIdsAndCollect(n, collectedIds)
+                  );
+              return { ...itm, children: [...itm.children, ...insertion] };
+            }
+            if (itm.children && itm.children.length) {
+              return { ...itm, children: update(itm.children) };
+            }
+            return itm;
+          });
+        return update(prev);
+      });
+      const newIds = clipboard.isCut ? allowed.map((n) => n.id) : collectedIds;
+      setSelectedIds(new Set(newIds));
+      setFocusId(newIds[newIds.length - 1]);
+      if (clipboard.isCut) setClipboard(null);
+      if (skipped.length) {
+        showWarning(
+          `Skipped ${skipped.length} item(s) not allowed inside ${targetNode.type}.`
+        );
+      }
+      return;
+    }
+
+    // Fallback: sibling insertion after focus
     const allowed = [];
     const skipped = [];
     for (const node of roots) {
@@ -1123,28 +1197,22 @@ function App() {
       else skipped.push(node);
     }
     if (allowed.length === 0) {
-      if (skipped.length) {
-        showWarning('Nothing to paste here (types not allowed).');
-      }
+      if (skipped.length) showWarning('Nothing to paste here (types invalid).');
       return;
     }
-    // Insert copies (for copy) or originals (for cut) after focus among siblings
     setDroppedItems((prev) => {
       if (!parentId) {
-        // root level splice
         const arr = [...prev];
         const idx = arr.findIndex((i) => i.id === focusId);
         const insertion = clipboard.isCut
           ? allowed
-          : allowed.map((n) => deepCloneWithNewIds(n));
+          : allowed.map((n) => deepCloneWithNewIdsAndCollect(n, collectedIds));
         arr.splice(idx + 1, 0, ...insertion);
         return arr;
       }
-      // nested: rebuild tree replacing that branch's children order
       const insertion = clipboard.isCut
         ? allowed
-        : allowed.map((n) => deepCloneWithNewIds(n));
-      // For nested, we splice into siblings array under parentId
+        : allowed.map((n) => deepCloneWithNewIdsAndCollect(n, collectedIds));
       const spliceInto = (list) =>
         list.map((itm) => {
           if (itm.id === parentId) {
@@ -1159,24 +1227,10 @@ function App() {
         });
       return spliceInto(prev);
     });
-    // Update selection to new nodes (cut retains ids; copy uses newly generated ids)
-    let newIds;
-    if (clipboard.isCut) {
-      newIds = allowed.map((n) => n.id);
-    } else {
-      newIds = allowed.map((n) => n.id); // after cloning we lost mapping, but deepCloneWithNewIds produced new ids; we cloned again above, so need to recalc
-      // Actually gather inserted ids by performing shallow preview clone before set? Simpler: recalc by generating again separately.
-      // For simplicity here, regenerate again:
-      newIds = allowed.map((n) => generateId(n.type)); // placeholder ids (cannot reliably reflect inserted). TODO: Improve mapping.
-    }
-    // Clear selection then (best effort) set to last pasted placeholder ids only for cut; skip for copy to avoid mismatch
-    if (clipboard.isCut) {
-      setSelectedIds(new Set(newIds));
-      setFocusId(newIds[newIds.length - 1]);
-    } else {
-      setSelectedIds(new Set());
-    }
-    if (clipboard.isCut) setClipboard(null); // consumed
+    const newIds = clipboard.isCut ? allowed.map((n) => n.id) : collectedIds;
+    setSelectedIds(new Set(newIds));
+    setFocusId(newIds[newIds.length - 1]);
+    if (clipboard.isCut) setClipboard(null);
     if (skipped.length) {
       showWarning(
         `Skipped ${skipped.length} item(s) not allowed in this location.`
@@ -1188,7 +1242,7 @@ function App() {
     getParentContext,
     droppedItems,
     canParentAccept,
-    deepCloneWithNewIds,
+    deepCloneWithNewIdsAndCollect,
     showWarning,
   ]);
 
