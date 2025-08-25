@@ -48,7 +48,7 @@ function App() {
   const [expandedAnswerIds, setExpandedAnswerIds] = useState(() => new Set());
   // Preview panel sizing & collapse
   const [previewHeight, setPreviewHeight] = useState(
-    Math.round(window.innerHeight * 0.4)
+    Math.round(window.innerHeight * 0.3)
   );
   const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(false);
   const [isBasicMode, setIsBasicMode] = useState(true);
