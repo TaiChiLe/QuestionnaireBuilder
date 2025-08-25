@@ -42,8 +42,8 @@ function App() {
   const [collapsedPageIds, setCollapsedPageIds] = useState(() => new Set());
   // XML dropdown state & ref to hidden file input component
   const xmlLoaderRef = useRef(null);
-  const [xmlMenuOpen, setXmlMenuOpen] = useState(false);
-  const menuRef = useRef(null);
+  const [uploadMenuOpen, setUploadMenuOpen] = useState(false);
+  const uploadMenuRef = useRef(null);
   const [questionnaireName, setQuestionnaireName] = useState('');
   // Central set of question IDs whose answers are expanded
   const [expandedAnswerIds, setExpandedAnswerIds] = useState(() => new Set());
@@ -236,12 +236,12 @@ function App() {
     };
   }, [onMouseMove, stopResize]);
 
-  // Close menu when clicking outside
+  // Close menus when clicking outside
   useEffect(() => {
-    if (!xmlMenuOpen) return;
+    if (!uploadMenuOpen) return;
     const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setXmlMenuOpen(false);
+      if (uploadMenuRef.current && !uploadMenuRef.current.contains(e.target)) {
+        setUploadMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside, true);
@@ -250,7 +250,7 @@ function App() {
       document.removeEventListener('mousedown', handleClickOutside, true);
       document.removeEventListener('touchstart', handleClickOutside, true);
     };
-  }, [xmlMenuOpen]);
+  }, [uploadMenuOpen]);
 
   const togglePageCollapse = useCallback((pageId) => {
     setCollapsedPageIds((prev) => {
@@ -1960,42 +1960,66 @@ function App() {
               className="text-base px-3 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white min-w-[200px]"
             />
           </div>
-          <div className="flex gap-3 items-center  flex-1 justify-end whitespace-nowrap">
-            {/* Consolidated Menu Button */}
-            <div className="relative" ref={menuRef}>
+          <div className="flex gap-2 items-center flex-1 justify-end whitespace-nowrap">
+            {/* New Button */}
+            <button
+              type="button"
+              onClick={handleNewXml}
+              className="px-3 py-2 bg-[#f03741] text-white border border-gray-300 rounded cursor-pointer text-sm hover:bg-red-600 transition-colors flex items-center gap-2"
+              title="New Questionnaire"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              New
+            </button>
+
+            {/* Upload Button with Dropdown */}
+            <div className="relative" ref={uploadMenuRef}>
               <button
                 type="button"
-                onClick={() => setXmlMenuOpen((o) => !o)}
-                className="px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded cursor-pointer text-base hover:bg-gray-100 transition-colors flex items-center gap-2"
+                onClick={() => setUploadMenuOpen((o) => !o)}
+                className="px-3 py-2 bg-white text-gray-800 border border-gray-300 rounded cursor-pointer text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                title="Upload Questionnaire"
               >
-                Menu
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                  />
+                </svg>
+                Upload
                 <span
                   className={`transition-transform text-xs ${
-                    xmlMenuOpen ? 'rotate-180' : ''
+                    uploadMenuOpen ? 'rotate-180' : ''
                   }`}
                 >
                   ▾
                 </span>
               </button>
-              {xmlMenuOpen && (
-                <div className="absolute right-0 mt-1 w-56 bg-white border border-gray-200 rounded shadow-lg z-50 text-sm py-1">
+              {uploadMenuOpen && (
+                <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded shadow-lg z-50 text-sm py-1">
                   <button
                     className="flex w-full justify-between items-center text-left px-3 py-2 hover:bg-gray-100"
                     onClick={() => {
-                      setXmlMenuOpen(false);
-                      handleNewXml();
-                    }}
-                  >
-                    <span>New Questionnaire</span>
-                  </button>
-                  <div className="border-t my-1" />
-                  <div className="px-3 py-1 text-[11px] uppercase tracking-wide text-gray-500">
-                    Load
-                  </div>
-                  <button
-                    className="flex w-full justify-between items-center text-left px-3 py-2 hover:bg-gray-100"
-                    onClick={() => {
-                      setXmlMenuOpen(false);
+                      setUploadMenuOpen(false);
                       xmlLoaderRef.current?.openFileDialog();
                     }}
                   >
@@ -2004,33 +2028,47 @@ function App() {
                   <button
                     className="flex w-full justify-between items-center text-left px-3 py-2 hover:bg-gray-100"
                     onClick={() => {
-                      setXmlMenuOpen(false);
+                      setUploadMenuOpen(false);
                       setShowPasteXml(true);
                     }}
                   >
                     <span>Paste XML...</span>
                   </button>
-                  <div className="border-t my-1" />
-                  <button
-                    className="flex w-full justify-between items-center text-left px-3 py-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={droppedItems.length === 0}
-                    onClick={() => {
-                      setXmlMenuOpen(false);
-                      handleExportXml();
-                    }}
-                  >
-                    <span>Save XML</span>
-                  </button>
                 </div>
               )}
-              <XmlLoader
-                ref={xmlLoaderRef}
-                onLoadXml={(items, raw, fileName) => {
-                  setXmlMenuOpen(false);
-                  handleLoadXml(items, raw, fileName);
-                }}
-              />
             </div>
+
+            {/* Save Button */}
+            <button
+              type="button"
+              onClick={handleExportXml}
+              disabled={droppedItems.length === 0}
+              className="px-3 py-2 bg-white text-gray-800 border border-gray-300 rounded cursor-pointer text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Save XML"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12"
+                />
+              </svg>
+              Save
+            </button>
+
+            <XmlLoader
+              ref={xmlLoaderRef}
+              onLoadXml={(items, raw, fileName) => {
+                setUploadMenuOpen(false);
+                handleLoadXml(items, raw, fileName);
+              }}
+            />
           </div>
         </div>
 

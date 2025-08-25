@@ -20,8 +20,7 @@ const RemoveConfirmationModal = ({
         </div>
 
         <p className="m-0 mb-5 text-gray-600 leading-relaxed">
-          Are you sure you want to remove this item? This action cannot be
-          undone.
+          Are you sure you want to remove this item?
         </p>
 
         <div className="flex justify-end gap-3">
