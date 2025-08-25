@@ -59,7 +59,6 @@ const XmlLoader = forwardRef(({ onLoadXml }, ref) => {
       // Reset the file input
       event.target.value = '';
     } catch (error) {
-      console.error('Error loading XML:', error);
       alert(`Error loading XML: ${error.message}`);
     } finally {
       setIsLoading(false);

@@ -52,8 +52,26 @@ function App() {
   );
   const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(false);
   const [isBasicMode, setIsBasicMode] = useState(true);
+  // Auto-edit toggle - open edit modal immediately when dropping components
+  const [autoEdit, setAutoEdit] = useState(() => {
+    try {
+      const stored = localStorage.getItem('qb_auto_edit');
+      return stored !== null ? stored === 'true' : true; // default to true
+    } catch (_) {
+      return true;
+    }
+  });
   const isResizingRef = useRef(false);
   const lastYRef = useRef(0);
+
+  // Save auto-edit preference to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('qb_auto_edit', autoEdit ? 'true' : 'false');
+    } catch (_) {
+      /* noop */
+    }
+  }, [autoEdit]);
 
   // Clamp height on window resize so it doesn't exceed viewport
   useEffect(() => {
@@ -1400,7 +1418,6 @@ function App() {
     setActiveId(null);
     const { active, over } = event;
     if (!over) {
-      console.log('Item not dropped on any valid target');
       return;
     }
 
@@ -1436,7 +1453,6 @@ function App() {
     const existingItemIds = getAllItemIds(droppedItems);
     const validDropTargets = ['main-canvas', ...existingItemIds];
     if (!validDropTargets.includes(overId)) {
-      console.log('Item dropped on invalid target:', overId);
       return;
     }
 
@@ -1594,7 +1610,6 @@ function App() {
           };
           break;
         default:
-          console.log('Unknown sidebar item:', draggedItemId);
           return;
       }
 
@@ -1605,10 +1620,16 @@ function App() {
           if (ctx && canParentAccept(ctx.parentType, draggedType)) {
             setDroppedItems((prev) => insertItemBefore(prev, overId, newItem));
             setXmlTree((prev) => ({ ...prev, [newItem.id]: newItem }));
+
+            // Automatically open edit modal for the newly created item (if enabled)
+            setEditingItem({ ...newItem });
+            if (autoEdit) {
+              setShowEditModal(true);
+            }
+
             return;
           }
         }
-        console.log('Invalid drop:', validation.message);
         showWarning(`Cannot drop here: ${validation.message}`);
         return;
       }
@@ -1619,6 +1640,13 @@ function App() {
         setDroppedItems((prev) => addChildToItem(prev, overId, newItem));
       }
       setXmlTree((prev) => ({ ...prev, [newItem.id]: newItem }));
+
+      // Automatically open edit modal for the newly created item (if enabled)
+      setEditingItem({ ...newItem });
+      if (autoEdit) {
+        setShowEditModal(true);
+      }
+
       return;
     }
 
@@ -1703,7 +1731,6 @@ function App() {
           return;
         }
       }
-      console.log('Invalid move:', validation.message);
       showWarning(`Cannot move here: ${validation.message}`);
       return;
     }
@@ -1940,6 +1967,25 @@ function App() {
                 }}
               >
                 {isBasicMode ? 'Show Advanced' : 'Show Basic'}
+              </button>
+            </div>
+
+            {/* Toggle Button for Auto-Edit */}
+            <div className="mb-4">
+              <button
+                onClick={() => setAutoEdit(!autoEdit)}
+                className="w-full px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200"
+                style={{
+                  backgroundColor: autoEdit ? '#10b981' : '#e5e7eb',
+                  color: autoEdit ? 'white' : '#374151',
+                }}
+                title={
+                  autoEdit
+                    ? 'Auto-edit enabled: Edit modal opens immediately when dropping components'
+                    : 'Auto-edit disabled: Click components to edit them'
+                }
+              >
+                {autoEdit ? 'Auto-Edit ON' : 'Auto-Edit OFF'}
               </button>
             </div>
 
