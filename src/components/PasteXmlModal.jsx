@@ -52,7 +52,6 @@ const PasteXmlModal = ({ isOpen, onClose, onLoadXml }) => {
       reset();
       onClose();
     } catch (e) {
-      console.error('Paste XML parse error:', e);
       setError(e.message || 'Failed to parse XML');
     } finally {
       setIsParsing(false);

@@ -80,18 +80,23 @@ const EditModal = ({
 
   useEffect(() => {
     if (isOpen && editingItem) {
-      // Delay focus slightly to ensure element is mounted
-      const id = requestAnimationFrame(() => {
+      // Use a small timeout to ensure modal animation completes and input is ready
+      const timer = setTimeout(() => {
         if (firstFieldRef.current) {
           try {
             firstFieldRef.current.focus();
-            firstFieldRef.current.select?.();
+            firstFieldRef.current.select();
+            // Ensure the input is ready for typing
+            firstFieldRef.current.setSelectionRange(
+              0,
+              firstFieldRef.current.value.length
+            );
           } catch (_) {
             /* noop */
           }
         }
-      });
-      return () => cancelAnimationFrame(id);
+      }, 100); // Small delay to ensure modal is fully rendered
+      return () => clearTimeout(timer);
     }
   }, [isOpen, editingItem?.id, editingItem?.type]);
 
