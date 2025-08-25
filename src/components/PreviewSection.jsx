@@ -8,8 +8,62 @@ const PreviewSection = ({
   height,
   collapsed,
   onToggleCollapse,
+  onXmlEdit, // New prop for handling XML edits
 }) => {
   const [previewMode, setPreviewMode] = useState('html');
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedXml, setEditedXml] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleUnlockEdit = () => {
+    setEditedXml(currentXmlString);
+    setIsEditMode(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+    setEditedXml('');
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editedXml.trim()) {
+      alert('XML content cannot be empty');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // Parse XML to validate it
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(editedXml, 'text/xml');
+
+      // Check for parsing errors
+      const parserError = xmlDoc.querySelector('parsererror');
+      if (parserError) {
+        throw new Error('Invalid XML format: ' + parserError.textContent);
+      }
+
+      // Check if it's a valid questionnaire structure
+      const questionnaire = xmlDoc.querySelector('Questionnaire');
+      if (!questionnaire) {
+        throw new Error(
+          'Invalid questionnaire XML: Missing Questionnaire root element'
+        );
+      }
+
+      // Call the parent handler to update the data
+      if (onXmlEdit) {
+        await onXmlEdit(editedXml);
+      }
+
+      setIsEditMode(false);
+      setEditedXml('');
+    } catch (error) {
+      alert(`Error saving XML: ${error.message}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div
@@ -105,10 +159,85 @@ const PreviewSection = ({
 
               {previewMode === 'xml' && (
                 <div>
-                  <h4 className="m-0 mb-3 text-gray-600">Generated XML</h4>
-                  <pre className="bg-gray-100 border border-gray-300 rounded p-3 text-xs leading-relaxed overflow-auto m-0 whitespace-pre-wrap">
-                    {currentXmlString}
-                  </pre>
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="m-0 text-gray-600">Generated XML</h4>
+                    {isEditMode ? (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleCancelEdit}
+                          disabled={isSaving}
+                          className="px-3 py-1.5 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors disabled:opacity-50"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveEdit}
+                          disabled={isSaving || !editedXml.trim()}
+                          className="px-3 py-1.5 text-xs bg-green-500 text-white rounded hover:bg-green-600 transition-colors disabled:opacity-50 flex items-center gap-2"
+                        >
+                          {isSaving ? (
+                            <>
+                              <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <svg
+                                className="w-3 h-3"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                              Save Changes
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    ) : (
+                      droppedItems.length > 0 && (
+                        <button
+                          onClick={handleUnlockEdit}
+                          className="px-3 py-1.5 text-xs bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors flex items-center gap-2"
+                          title="Edit XML directly"
+                        >
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                            />
+                          </svg>
+                          Unlock to Edit
+                        </button>
+                      )
+                    )}
+                  </div>
+
+                  {isEditMode ? (
+                    <textarea
+                      value={editedXml}
+                      onChange={(e) => setEditedXml(e.target.value)}
+                      className="w-full h-96 p-3 border border-gray-300 rounded font-mono text-xs leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      placeholder="Edit XML content here..."
+                    />
+                  ) : (
+                    <pre className="bg-gray-100 border border-gray-300 rounded p-3 text-xs leading-relaxed overflow-auto m-0 whitespace-pre-wrap">
+                      {currentXmlString}
+                    </pre>
+                  )}
                 </div>
               )}
 

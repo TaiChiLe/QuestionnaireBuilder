@@ -12,6 +12,10 @@ import PreviewSection from './components/PreviewSection';
 import XmlLoader from './components/XmlLoader';
 import { generateOrderedXML } from './components/utils/xmlBuilder2Solution';
 import { exportXmlStructure } from './components/utils/xmlExporter';
+import {
+  parseXmlToItems,
+  extractQuestionnaireName,
+} from './components/utils/xmlParser';
 import UserGuideModal from './components/UserGuideModal';
 import PasteXmlModal from './components/PasteXmlModal';
 import { generateId } from './components/utils/id';
@@ -876,6 +880,58 @@ function App() {
       }
     },
     [showWarning, saveToHistory]
+  );
+
+  // Function to handle direct XML editing
+  const handleXmlEdit = useCallback(
+    async (editedXmlString) => {
+      try {
+        // Parse the edited XML to validate and convert to items
+        const parsedItems = parseXmlToItems(editedXmlString);
+
+        // Extract questionnaire name if it exists
+        const newQuestionnaireName = extractQuestionnaireName(editedXmlString);
+
+        // Save current state to history before making changes
+        saveToHistory();
+
+        // Rebuild xmlTree from parsed items
+        const rebuildXmlTree = (items) => {
+          const newTree = {};
+          const processItems = (itemsList) => {
+            itemsList.forEach((item) => {
+              newTree[item.id] = item;
+              if (item.children && item.children.length > 0) {
+                processItems(item.children);
+              }
+            });
+          };
+          processItems(items);
+          return newTree;
+        };
+
+        // Update the state with the new data
+        setDroppedItems(parsedItems);
+        setXmlTree(rebuildXmlTree(parsedItems));
+
+        // Update questionnaire name if it was found in the XML
+        if (
+          newQuestionnaireName &&
+          newQuestionnaireName !== questionnaireName
+        ) {
+          setQuestionnaireName(newQuestionnaireName);
+        }
+
+        // Clear any selections that might not be valid anymore
+        setSelectedIds(new Set());
+        setFocusId(null);
+
+        return Promise.resolve();
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    },
+    [saveToHistory, questionnaireName]
   );
 
   // Helper function to get the parent context (what items are at the same level)
@@ -2503,6 +2559,7 @@ function App() {
             height={isPreviewCollapsed ? 36 : previewHeight}
             collapsed={isPreviewCollapsed}
             onToggleCollapse={() => setIsPreviewCollapsed((c) => !c)}
+            onXmlEdit={handleXmlEdit}
           />
         </div>
       </div>

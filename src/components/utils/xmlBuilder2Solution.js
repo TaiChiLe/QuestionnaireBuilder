@@ -17,7 +17,8 @@ export function generateOrderedXML(droppedItems) {
 
                 // Create the appropriate XML element
                 if (item.type === 'page') {
-                    elementNode = parentNode.ele('Page').att('title', item.title || '');
+                    const pageTitle = item.title || item.label || 'Page';
+                    elementNode = parentNode.ele('Page').att('title', pageTitle);
                 } else if (item.type === 'question') {
                     elementNode = parentNode.ele('Question')
                         .att('record', item.keyField || '')
