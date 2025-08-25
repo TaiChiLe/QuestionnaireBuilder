@@ -1,4 +1,5 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core';
+import { useState, useEffect } from 'react';
 
 function DroppableItem({
   item,
@@ -10,6 +11,7 @@ function DroppableItem({
   parentType = 'root',
   selected = false,
   onSelect,
+  expandedAnswerIds,
 }) {
   // Draggable (suppress keyboard activators later)
   const {
@@ -25,6 +27,16 @@ function DroppableItem({
   const transformStyle = transform
     ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
     : undefined;
+
+  // Local toggle state for showing question answers
+  const [showAnswers, setShowAnswers] = useState(false);
+  // Keep local state in sync if central set changes externally (only for questions)
+  useEffect(() => {
+    if (item.type === 'question') {
+      const shouldBeOpen = expandedAnswerIds?.has(item.id) || false;
+      setShowAnswers(shouldBeOpen);
+    }
+  }, [expandedAnswerIds, item]);
 
   return (
     <div
@@ -136,6 +148,37 @@ function DroppableItem({
                 [{item.dataType}]
               </span>
             )}
+          {item.type === 'question' &&
+            item.answers &&
+            item.answers.length > 0 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  // Toggle locally and rely on parent to update central set through a callback (future enhancement)
+                  setShowAnswers((s) => !s);
+                }}
+                className="ml-1 w-6 h-6 flex items-center justify-center rounded border border-gray-300 bg-white hover:bg-gray-100 cursor-pointer"
+                title={showAnswers ? 'Hide Answers' : 'Show Answers'}
+                aria-expanded={showAnswers}
+              >
+                <svg
+                  className={`w-3.5 h-3.5 transition-transform duration-150 ${
+                    showAnswers ? 'rotate-90' : ''
+                  }`}
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="#f03741"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M7 4l6 6-6 6" />
+                </svg>
+              </button>
+            )}
           {item.type === 'table' && (
             <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
               [Table]
@@ -190,6 +233,23 @@ function DroppableItem({
           </button>
         </div>
       </div>
+      {showAnswers &&
+        item.type === 'question' &&
+        item.answers &&
+        item.answers.length > 0 && (
+          <div className="mt-2 ml-14 mb-1 p-2 bg-white border border-gray-200 rounded shadow-inner">
+            <div className="text-xs font-semibold text-gray-600 mb-1">
+              Answers ({item.answers.length})
+            </div>
+            <ul className="list-disc ml-4 space-y-0.5">
+              {item.answers.map((ans) => (
+                <li key={ans.id} className="text-xs text-gray-700 break-all">
+                  {ans.text || '(empty)'}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       {!isCollapsed && children && (
         <div className="mt-2.5 pl-5 border-l-2 border-dashed border-gray-300">
           {children}
