@@ -24,7 +24,8 @@ function DraggableItem(props) {
     <div
       ref={setNodeRef}
       className={`
-        p-2.5 my-1 border rounded cursor-grab select-none text-sm text-center min-w-20 w-full relative
+        p-2.5 my-1 border rounded cursor-grab select-none text-sm min-w-20 w-full relative
+        flex items-center gap-2 text-gray-800
         ${getBackgroundClass()}
         ${
           isDragging
