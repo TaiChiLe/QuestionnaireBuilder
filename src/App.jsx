@@ -1142,7 +1142,28 @@ function App() {
   }, []);
 
   const handlePaste = useCallback(() => {
-    if (!clipboard || !focusId) return;
+    if (!clipboard) return;
+
+    // Root-level paste fallback: if no focus and clipboard contains only pages, append at root
+    if (!focusId) {
+      const roots = clipboard.items;
+      if (roots.length === 0) return;
+      const allPages = roots.every((n) => n.type === 'page');
+      if (!allPages) return; // need a focus context for non-page types
+      const collectedIds = [];
+      setDroppedItems((prev) => {
+        const insertion = clipboard.isCut
+          ? roots
+          : roots.map((n) => deepCloneWithNewIdsAndCollect(n, collectedIds));
+        return [...prev, ...insertion];
+      });
+      const newIds = clipboard.isCut ? roots.map((r) => r.id) : collectedIds;
+      setSelectedIds(new Set(newIds));
+      setFocusId(newIds[newIds.length - 1] || null);
+      if (clipboard.isCut) setClipboard(null);
+      return;
+    }
+
     const focusCtx = getParentContext(droppedItems, focusId);
     if (!focusCtx) return;
     const targetNode = focusCtx.target; // the focused item itself
@@ -1634,7 +1655,11 @@ function App() {
               <button
                 type="button"
                 className="px-2 py-1 text-xs rounded border bg-white hover:bg-gray-100 disabled:opacity-40"
-                disabled={!clipboard || !focusId}
+                disabled={
+                  !clipboard ||
+                  (!focusId &&
+                    !(clipboard.items || []).every((i) => i.type === 'page'))
+                }
                 onClick={handlePaste}
                 title="Paste After (Ctrl+V)"
               >
