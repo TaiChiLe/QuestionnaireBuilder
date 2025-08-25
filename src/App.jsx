@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { DndContext, pointerWithin, DragOverlay } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import DraggableItem from './components/DraggableItem';
@@ -39,6 +39,56 @@ function App() {
   const xmlLoaderRef = useRef(null);
   const [xmlMenuOpen, setXmlMenuOpen] = useState(false);
   const [questionnaireName, setQuestionnaireName] = useState('');
+  // Preview panel sizing & collapse
+  const [previewHeight, setPreviewHeight] = useState( Math.round(window.innerHeight * 0.40) );
+  const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(false);
+  const isResizingRef = useRef(false);
+  const lastYRef = useRef(0);
+
+  // Clamp height on window resize so it doesn't exceed viewport
+  useEffect(() => {
+    const onResize = () => {
+      setPreviewHeight((h) => {
+        const max = window.innerHeight - 180; // leave space for header & content
+        return Math.min(Math.max(h, 100), Math.max(max, 100));
+      });
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  const startResize = useCallback((e) => {
+    if (isPreviewCollapsed) return;
+    isResizingRef.current = true;
+    lastYRef.current = e.clientY;
+    document.body.style.userSelect = 'none';
+  }, [isPreviewCollapsed]);
+
+  const stopResize = useCallback(() => {
+    if (isResizingRef.current) {
+      isResizingRef.current = false;
+      document.body.style.userSelect = '';
+    }
+  }, []);
+
+  const onMouseMove = useCallback((e) => {
+    if (!isResizingRef.current) return;
+    const delta = lastYRef.current - e.clientY; // dragging upward increases delta
+    lastYRef.current = e.clientY;
+    setPreviewHeight((h) => {
+      const next = h + delta;
+      return Math.min(Math.max(next, 120), window.innerHeight - 220);
+    });
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', stopResize);
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', stopResize);
+    };
+  }, [onMouseMove, stopResize]);
 
   const togglePageCollapse = useCallback((pageId) => {
     setCollapsedPageIds((prev) => {
@@ -1296,7 +1346,7 @@ function App() {
 
         <div
           className="flex flex-1 w-full overflow-hidden"
-          style={{ height: 'calc(55vh - 80px)' }}
+          style={{ height: `calc(100vh - ${previewHeight + 56}px)` }}
         >
           {/* The Sidebar with Draggable items */}
           <div className="w-64 min-w-64 p-4 bg-gray-100 border-r border-gray-300 overflow-hidden h-full">
@@ -1349,12 +1399,29 @@ function App() {
           </div>
         </div>
 
-        {/* Preview Section */}
-        <PreviewSection
-          droppedItems={droppedItems}
-          currentXmlString={currentXmlString}
-          currentHtmlString={currentHtmlString}
-        />
+        {/* Resize Handle & Preview Section */}
+        <div
+          className={`relative w-full flex-shrink-0 ${isPreviewCollapsed ? 'h-9' : ''}`}
+          style={{ height: isPreviewCollapsed ? 36 : previewHeight }}
+        >
+          {/* Drag handle */}
+          <div
+            onMouseDown={startResize}
+            className={`absolute -top-1 left-0 right-0 h-2 cursor-row-resize group z-20 flex items-center justify-center ${
+              isPreviewCollapsed ? 'pointer-events-none opacity-0' : ''
+            }`}
+          >
+            <div className="w-40 h-1 rounded bg-gray-400 group-hover:bg-gray-600 transition-colors" />
+          </div>
+          <PreviewSection
+            droppedItems={droppedItems}
+            currentXmlString={currentXmlString}
+            currentHtmlString={currentHtmlString}
+            height={isPreviewCollapsed ? 36 : previewHeight}
+            collapsed={isPreviewCollapsed}
+            onToggleCollapse={() => setIsPreviewCollapsed((c) => !c)}
+          />
+        </div>
       </div>
 
       <DragOverlay className="z-[1000]">
