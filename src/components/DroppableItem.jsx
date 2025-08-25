@@ -66,6 +66,20 @@ function DroppableItem({
         e.stopPropagation();
         onSelect && onSelect(e, item);
       }}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        if (
+          onEdit &&
+          (item.type === 'question' ||
+            item.type === 'page' ||
+            item.type === 'field' ||
+            item.type === 'information' ||
+            item.type === 'table' ||
+            item.type === 'table-field')
+        ) {
+          onEdit(item.id);
+        }
+      }}
     >
       <div className="flex justify-between items-center rounded-md -m-1.5 p-1.5 border border-transparent hover:border-blue-400 hover:shadow-sm transition-colors">
         <span className="font-bold flex items-center">

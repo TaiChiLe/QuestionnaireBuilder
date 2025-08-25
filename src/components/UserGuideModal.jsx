@@ -19,7 +19,7 @@ const tips = [
   },
   {
     title: 'Editing Items',
-    body: 'Click on edit to edit items and its label, data type, required setting, answers (for questions), and visibility conditions. You can press Enter to save changes.',
+    body: 'Double click to edit, or click on edit to edit items and its label, data type, required setting, answers (for questions), and visibility conditions. You can press Enter to save changes.',
   },
   {
     title: 'Copying Items and Cutting Items',
