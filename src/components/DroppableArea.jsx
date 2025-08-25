@@ -16,10 +16,21 @@ function DroppableArea(props) {
         min-h-screen p-4 rounded-lg transition-all duration-200 w-full relative
       `}
       style={{ minHeight: 'calc(100vh - 160px)' }}
+      onClick={(e) => {
+        // clicking blank canvas clears selection
+        if (e.currentTarget === e.target && props.onBackgroundClick) {
+          props.onBackgroundClick();
+        }
+      }}
     >
       {props.children}
       {/* Add spacer at the bottom for dropping new components */}
-      <div className="h-24 w-full"></div>
+      <div
+        className="h-24 w-full"
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
+      ></div>
     </div>
   );
 }
