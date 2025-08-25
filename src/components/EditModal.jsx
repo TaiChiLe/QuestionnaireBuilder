@@ -144,8 +144,8 @@ const EditModal = ({
               onClick={() => setShowAdvanced((v) => !v)}
               className={`px-3 py-1.5 rounded text-xs font-semibold border transition-colors ${
                 showAdvanced
-                  ? 'bg-purple-600 text-white border-purple-600 hover:bg-purple-700'
-                  : 'bg-white text-purple-700 border-purple-300 hover:bg-purple-50'
+                  ? 'bg-[#f03741] text-white border-[#f03741] hover:bg-[#d82f36]'
+                  : 'bg-white text-[#f03741] border-[#fbc5c8] hover:bg-[#fff5f5]'
               }`}
             >
               {showAdvanced ? 'Hide Advanced' : 'Show Advanced'}
