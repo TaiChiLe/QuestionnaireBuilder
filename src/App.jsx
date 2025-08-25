@@ -1620,39 +1620,14 @@ function App() {
                 Paste
               </button>
             </div>
-            <button
-              onClick={() => setShowUserGuide(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-white text-gray-800 border border-blue-300 rounded cursor-pointer text-base hover:bg-gray-100 transition-colors"
-            >
-              <svg
-                className="w-5 h-5 text-blue-500"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-                focusable="false"
-              >
-                <path d="M5 5h5.5c1.2 0 2 .7 2.5 1.4.5-.7 1.3-1.4 2.5-1.4H21v14h-5.5c-1.2 0-2 .7-2.5 1.4-.5-.7-1.3-1.4-2.5-1.4H5z" />
-                <path d="M10.5 7.5v9M13.5 7.5v9" />
-              </svg>
-              <span>User Guide</span>
-            </button>
-            <button
-              onClick={handleNewXml}
-              className="px-4 py-2 bg-[#f03741] text-white border-none rounded cursor-pointer text-base hover:bg-red-700 transition-colors"
-            >
-              New
-            </button>
+            {/* Consolidated Menu Button */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setXmlMenuOpen((o) => !o)}
-                className="px-4 py-2 bg-green-500 text-white border-none rounded cursor-pointer text-base hover:bg-green-600 transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-white text-gray-800 border border-gray-300 rounded cursor-pointer text-base hover:bg-gray-100 transition-colors flex items-center gap-2"
               >
-                Load
+                Menu
                 <span
                   className={`transition-transform text-xs ${
                     xmlMenuOpen ? 'rotate-180' : ''
@@ -1662,24 +1637,57 @@ function App() {
                 </span>
               </button>
               {xmlMenuOpen && (
-                <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded shadow-lg z-50 text-sm overflow-hidden">
+                <div className="absolute right-0 mt-1 w-56 bg-white border border-gray-200 rounded shadow-lg z-50 text-sm py-1">
                   <button
-                    className="block w-full text-left px-3 py-2 hover:bg-gray-100"
+                    className="flex w-full justify-between items-center text-left px-3 py-2 hover:bg-gray-100"
+                    onClick={() => {
+                      setXmlMenuOpen(false);
+                      setShowUserGuide(true);
+                    }}
+                  >
+                    <span>User Guide</span>
+                  </button>
+                  <button
+                    className="flex w-full justify-between items-center text-left px-3 py-2 hover:bg-gray-100"
+                    onClick={() => {
+                      setXmlMenuOpen(false);
+                      handleNewXml();
+                    }}
+                  >
+                    <span>New Questionnaire</span>
+                  </button>
+                  <div className="border-t my-1" />
+                  <div className="px-3 py-1 text-[11px] uppercase tracking-wide text-gray-500">
+                    Load
+                  </div>
+                  <button
+                    className="flex w-full justify-between items-center text-left px-3 py-2 hover:bg-gray-100"
                     onClick={() => {
                       setXmlMenuOpen(false);
                       xmlLoaderRef.current?.openFileDialog();
                     }}
                   >
-                    From File
+                    <span>From File...</span>
                   </button>
                   <button
-                    className="block w-full text-left px-3 py-2 hover:bg-gray-100"
+                    className="flex w-full justify-between items-center text-left px-3 py-2 hover:bg-gray-100"
                     onClick={() => {
                       setXmlMenuOpen(false);
                       setShowPasteXml(true);
                     }}
                   >
-                    Paste XML
+                    <span>Paste XML...</span>
+                  </button>
+                  <div className="border-t my-1" />
+                  <button
+                    className="flex w-full justify-between items-center text-left px-3 py-2 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={droppedItems.length === 0}
+                    onClick={() => {
+                      setXmlMenuOpen(false);
+                      handleExportXml();
+                    }}
+                  >
+                    <span>Save XML</span>
                   </button>
                 </div>
               )}
@@ -1691,13 +1699,6 @@ function App() {
                 }}
               />
             </div>
-            <button
-              onClick={handleExportXml}
-              className="px-4 py-2 bg-blue-500 text-white border-none rounded cursor-pointer text-base disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600"
-              disabled={droppedItems.length === 0}
-            >
-              Save
-            </button>
           </div>
         </div>
 
@@ -1707,36 +1708,132 @@ function App() {
         >
           {/* The Sidebar with Draggable items */}
           <div className="w-64 min-w-64 p-4 bg-gray-100 border-r border-gray-300 overflow-hidden h-full">
-            <h3 className="m-0 mb-4 text-xl">Components</h3>
             <div className="block">
               <div className="mb-2">
                 <DraggableItem id="form-tag" isValidDrop={isValidDrop}>
-                  Page
+                  <span className="inline-flex items-center gap-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-5 h-5 text-gray-600"
+                    >
+                      <rect x="3" y="4" width="18" height="16" rx="2" ry="2" />
+                      <path d="M3 10h18" />
+                      <path d="M7 14h6" />
+                    </svg>
+                    <span>Page</span>
+                  </span>
                 </DraggableItem>
               </div>
               <div className="mb-2">
                 <DraggableItem id="section-tag" isValidDrop={isValidDrop}>
-                  Question
+                  <span className="inline-flex items-center gap-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-5 h-5 text-gray-600"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M8 10h8" />
+                      <path d="M8 14h5" />
+                    </svg>
+                    <span>Question</span>
+                  </span>
                 </DraggableItem>
               </div>
               <div className="mb-2">
                 <DraggableItem id="field-tag" isValidDrop={isValidDrop}>
-                  Field
+                  <span className="inline-flex items-center gap-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-5 h-5 text-gray-600"
+                    >
+                      <rect x="4" y="5" width="16" height="14" rx="2" />
+                      <path d="M8 9h8" />
+                      <path d="M8 13h5" />
+                    </svg>
+                    <span>Field</span>
+                  </span>
                 </DraggableItem>
               </div>
               <div className="mb-2">
                 <DraggableItem id="information-tag" isValidDrop={isValidDrop}>
-                  Information
+                  <span className="inline-flex items-center gap-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-5 h-5 text-gray-600"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M12 8h.01" />
+                      <path d="M10.5 12h1.5v4h1.5" />
+                    </svg>
+                    <span>Information</span>
+                  </span>
                 </DraggableItem>
               </div>
               <div className="mb-2">
                 <DraggableItem id="table-tag" isValidDrop={isValidDrop}>
-                  Table
+                  <span className="inline-flex items-center gap-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-5 h-5 text-gray-600"
+                    >
+                      <rect x="3" y="6" width="18" height="12" rx="2" />
+                      <path d="M3 10h18" />
+                      <path d="M9 6v12" />
+                      <path d="M15 6v12" />
+                    </svg>
+                    <span>Table</span>
+                  </span>
                 </DraggableItem>
               </div>
               <div className="mb-2">
                 <DraggableItem id="table-field-tag" isValidDrop={isValidDrop}>
-                  Table Field
+                  <span className="inline-flex items-center gap-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-5 h-5 text-gray-600"
+                    >
+                      <rect x="4" y="4" width="16" height="16" rx="2" />
+                      <path d="M4 9h16" />
+                      <path d="M9 4v16" />
+                    </svg>
+                    <span>Table Field</span>
+                  </span>
                 </DraggableItem>
               </div>
             </div>
@@ -1791,25 +1888,149 @@ function App() {
       <DragOverlay className="z-[1000]">
         {activeId ? (
           <div
-            className={`p-2.5 border-2 rounded shadow-2xl text-sm font-bold opacity-90 ${
+            className={`p-2.5 my-1 border rounded text-sm flex items-center gap-2 min-w-20 shadow-2xl opacity-90 ${
               isValidDrop === false
-                ? 'bg-red-50 border-red-500 text-red-700'
-                : 'bg-white border-blue-500'
+                ? 'bg-red-50 border-red-300 text-red-700'
+                : 'bg-blue-50 border-blue-300 text-gray-800'
             }`}
           >
-            {activeId === 'form-tag'
-              ? 'Page'
-              : activeId === 'section-tag'
-              ? 'Question'
-              : activeId === 'field-tag'
-              ? 'Field'
-              : activeId === 'information-tag'
-              ? 'Information'
-              : activeId === 'table-tag'
-              ? 'Table'
-              : activeId === 'table-field-tag'
-              ? 'Table Field'
-              : 'Moving Item'}
+            {/* Icon + Label mimic sidebar */}
+            {(() => {
+              const common = 'w-5 h-5 text-gray-600 flex-shrink-0';
+              switch (activeId) {
+                case 'form-tag':
+                  return (
+                    <>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className={common}
+                      >
+                        <rect
+                          x="3"
+                          y="4"
+                          width="18"
+                          height="16"
+                          rx="2"
+                          ry="2"
+                        />
+                        <path d="M3 10h18" />
+                        <path d="M7 14h6" />
+                      </svg>
+                      <span>Page</span>
+                    </>
+                  );
+                case 'section-tag':
+                  return (
+                    <>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className={common}
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M8 10h8" />
+                        <path d="M8 14h5" />
+                      </svg>
+                      <span>Question</span>
+                    </>
+                  );
+                case 'field-tag':
+                  return (
+                    <>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className={common}
+                      >
+                        <rect x="4" y="5" width="16" height="14" rx="2" />
+                        <path d="M8 9h8" />
+                        <path d="M8 13h5" />
+                      </svg>
+                      <span>Field</span>
+                    </>
+                  );
+                case 'information-tag':
+                  return (
+                    <>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className={common}
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 8h.01" />
+                        <path d="M10.5 12h1.5v4h1.5" />
+                      </svg>
+                      <span>Information</span>
+                    </>
+                  );
+                case 'table-tag':
+                  return (
+                    <>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className={common}
+                      >
+                        <rect x="3" y="6" width="18" height="12" rx="2" />
+                        <path d="M3 10h18" />
+                        <path d="M9 6v12" />
+                        <path d="M15 6v12" />
+                      </svg>
+                      <span>Table</span>
+                    </>
+                  );
+                case 'table-field-tag':
+                  return (
+                    <>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className={common}
+                      >
+                        <rect x="4" y="4" width="16" height="16" rx="2" />
+                        <path d="M4 9h16" />
+                        <path d="M9 4v16" />
+                      </svg>
+                      <span>Table Field</span>
+                    </>
+                  );
+                default:
+                  // Existing item drag - just show its type text
+                  return <span>Moving Item</span>;
+              }
+            })()}
           </div>
         ) : null}
       </DragOverlay>
