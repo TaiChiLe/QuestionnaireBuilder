@@ -6,10 +6,6 @@ const tips = [
     body: 'Start by dragging a Page onto the canvas. All other components must be placed inside a Page to create your questionnaire structure.',
   },
   {
-    title: 'More or Less Option',
-    body: 'In More mode, use pre-configured components: List Box, Multi Select, Radio Buttons (for questions), Text Box, Notes, Date (for fields), plus Page, Information, Table, and Table Field. These have their data types already set.',
-  },
-  {
     title: 'Auto-Edit',
     body: 'In Auto-Edit mode, the edit modal opens automatically when you drop a component onto the canvas.',
   },
