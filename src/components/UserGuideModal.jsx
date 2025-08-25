@@ -11,7 +11,7 @@ const tips = [
   },
   {
     title: 'Adding Components',
-    body: 'Drag components from the sidebar into Pages. Table Fields must be placed inside Tables. The sidebar is scrollable if you have many components.',
+    body: 'Drag components from the sidebar into Pages. Table Fields must be placed inside Tables.',
   },
   {
     title: 'Editing Items',
@@ -26,24 +26,16 @@ const tips = [
     body: 'Drag items by their handle (6 dots icon) to reorder them within their parent container.',
   },
   {
-    title: 'Questions vs Fields',
-    body: 'Questions have multiple answer options (List Box, Multi Select, Radio Buttons). Fields are for single inputs (Text Box, Notes, Date).',
-  },
-  {
     title: 'Tables',
     body: 'Add a Table component, then drag Table Field components into it to create columns. Each Table Field can have different data types.',
   },
   {
     title: 'Answer Management',
-    body: 'For questions, click the chevron to expand and see answer options. Use the global "Expand All" / "Collapse All" buttons to control all questions at once.',
+    body: 'For List Boxes, Multi Select and Radio Buttons, click the chevron to expand and see answer options. Use the global "Expand All" / "Collapse All" buttons to control all questions at once.',
   },
   {
     title: 'Preview & Errors',
-    body: 'Use the preview panel to see your questionnaire. Check the Errors tab to identify any issues before exporting. Resize the panel by dragging the handle.',
-  },
-  {
-    title: 'Saving & Loading',
-    body: 'Use Save to export your completed questionnaire as XML. Use Load to import existing questionnaires for editing.',
+    body: 'Use the preview panel to see your questionnaire. Check the Errors tab to identify any issues before exporting. Resize the panel by dragging the handle, or use the buttons to collapse/expand it.',
   },
   {
     title: '--- Advanced Features ---',
@@ -52,7 +44,7 @@ const tips = [
   },
   {
     title: 'Data Type Customization',
-    body: 'In Advanced mode or with "Show Advanced" enabled, you can modify data types for Questions and Fields instead of using pre-configured types.',
+    body: 'In Advanced mode or with "Show Advanced" enabled, you can modify data types for different components.',
     isAdvanced: true,
   },
   {

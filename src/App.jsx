@@ -25,6 +25,7 @@ function App() {
   const [activeId, setActiveId] = useState(null);
   const [isValidDrop, setIsValidDrop] = useState(true); // Track if current drag is valid
   const [editingItem, setEditingItem] = useState(null);
+  const [isNewlyCreatedItem, setIsNewlyCreatedItem] = useState(false); // Track if current editing item was just created
   const [showEditModal, setShowEditModal] = useState(false);
   const [warningMessage, setWarningMessage] = useState('');
   const [showWarningModal, setShowWarningModal] = useState(false);
@@ -61,8 +62,90 @@ function App() {
       return true;
     }
   });
+
+  // Undo/Redo functionality
+  const [historyStack, setHistoryStack] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const maxHistorySize = 50;
+
   const isResizingRef = useRef(false);
   const lastYRef = useRef(0);
+
+  // Initialize history with the current state
+  useEffect(() => {
+    if (historyStack.length === 0 && historyIndex === -1) {
+      const initialState = {
+        droppedItems: JSON.parse(JSON.stringify(droppedItems)),
+        xmlTree: JSON.parse(JSON.stringify(xmlTree)),
+      };
+      setHistoryStack([initialState]);
+      setHistoryIndex(0);
+    }
+  }, [droppedItems, xmlTree, historyStack.length, historyIndex]);
+
+  // Manual save to history function - called before making changes
+  const saveToHistory = useCallback(() => {
+    const currentState = {
+      droppedItems: JSON.parse(JSON.stringify(droppedItems)),
+      xmlTree: JSON.parse(JSON.stringify(xmlTree)),
+    };
+
+    // Calculate new values synchronously to avoid stale closures
+    const currentIndex = historyIndex;
+    const currentStack = historyStack;
+
+    // Remove any future history if we're not at the end
+    const newStack = currentStack.slice(0, currentIndex + 1);
+    newStack.push(currentState);
+
+    let newIndex;
+    let finalStack;
+
+    // Limit history size
+    if (newStack.length > maxHistorySize) {
+      finalStack = newStack.slice(1); // Remove first item
+      newIndex = maxHistorySize - 1;
+    } else {
+      finalStack = newStack;
+      newIndex = currentIndex + 1;
+    }
+
+    // Update both states
+    setHistoryStack(finalStack);
+    setHistoryIndex(newIndex);
+  }, [droppedItems, xmlTree, historyIndex, historyStack, maxHistorySize]);
+
+  // Save to history after drag operations complete
+  const [pendingHistorySave, setPendingHistorySave] = useState(false);
+
+  useEffect(() => {
+    if (pendingHistorySave && historyStack.length > 0) {
+      const currentState = {
+        droppedItems: JSON.parse(JSON.stringify(droppedItems)),
+        xmlTree: JSON.parse(JSON.stringify(xmlTree)),
+      };
+
+      setHistoryStack((prevStack) => {
+        const newStack = prevStack.slice(0, historyIndex + 1);
+        newStack.push(currentState);
+
+        if (newStack.length > maxHistorySize) {
+          return newStack.slice(1);
+        }
+        return newStack;
+      });
+
+      setHistoryIndex((prev) => Math.min(prev + 1, maxHistorySize - 1));
+      setPendingHistorySave(false);
+    }
+  }, [
+    droppedItems,
+    xmlTree,
+    pendingHistorySave,
+    historyStack.length,
+    historyIndex,
+    maxHistorySize,
+  ]);
 
   // Save auto-edit preference to localStorage
   useEffect(() => {
@@ -72,6 +155,38 @@ function App() {
       /* noop */
     }
   }, [autoEdit]);
+
+  const handleUndo = useCallback(() => {
+    if (historyIndex > 0) {
+      const targetIndex = historyIndex - 1;
+      const targetState = historyStack[targetIndex];
+
+      if (targetState) {
+        setDroppedItems(targetState.droppedItems);
+        setXmlTree(targetState.xmlTree);
+        setHistoryIndex(targetIndex);
+        // Clear any selections that might not exist in the previous state
+        setSelectedIds(new Set());
+        setFocusId(null);
+      }
+    }
+  }, [historyIndex, historyStack]);
+
+  const handleRedo = useCallback(() => {
+    if (historyIndex < historyStack.length - 1) {
+      const targetIndex = historyIndex + 1;
+      const targetState = historyStack[targetIndex];
+
+      if (targetState) {
+        setDroppedItems(targetState.droppedItems);
+        setXmlTree(targetState.xmlTree);
+        setHistoryIndex(targetIndex);
+        // Clear any selections that might not exist in the future state
+        setSelectedIds(new Set());
+        setFocusId(null);
+      }
+    }
+  }, [historyIndex, historyStack]);
 
   // Clamp height on window resize so it doesn't exceed viewport
   useEffect(() => {
@@ -604,28 +719,34 @@ function App() {
   }, []);
 
   // Function to remove an item - memoized
-  const removeItem = useCallback((itemId) => {
-    const removeFromItems = (items) => {
-      return items.reduce((acc, item) => {
-        if (item.id === itemId) {
-          return acc;
-        } else if (item.children && item.children.length > 0) {
-          return [
-            ...acc,
-            { ...item, children: removeFromItems(item.children) },
-          ];
-        }
-        return [...acc, item];
-      }, []);
-    };
+  const removeItem = useCallback(
+    (itemId) => {
+      // Save current state to history before removal
+      saveToHistory();
 
-    setDroppedItems((prev) => removeFromItems(prev));
-    setXmlTree((prev) => {
-      const newTree = { ...prev };
-      delete newTree[itemId];
-      return newTree;
-    });
-  }, []);
+      const removeFromItems = (items) => {
+        return items.reduce((acc, item) => {
+          if (item.id === itemId) {
+            return acc;
+          } else if (item.children && item.children.length > 0) {
+            return [
+              ...acc,
+              { ...item, children: removeFromItems(item.children) },
+            ];
+          }
+          return [...acc, item];
+        }, []);
+      };
+
+      setDroppedItems((prev) => removeFromItems(prev));
+      setXmlTree((prev) => {
+        const newTree = { ...prev };
+        delete newTree[itemId];
+        return newTree;
+      });
+    },
+    [saveToHistory]
+  );
 
   // Function to confirm remove
   const confirmRemove = useCallback(() => {
@@ -658,6 +779,7 @@ function App() {
       const item = findItemById(droppedItems, itemId);
       if (item) {
         setEditingItem({ ...item }); // Create a copy for editing
+        setIsNewlyCreatedItem(false); // This is an existing item, not newly created
         setShowEditModal(true);
       }
     },
@@ -665,30 +787,40 @@ function App() {
   );
 
   // Function to save edited item
-  const handleSaveEdit = useCallback((editedItem) => {
-    const updateItemInArray = (items) => {
-      return items.map((item) => {
-        if (item.id === editedItem.id) {
-          return editedItem;
-        } else if (item.children && item.children.length > 0) {
-          return {
-            ...item,
-            children: updateItemInArray(item.children),
-          };
-        }
-        return item;
-      });
-    };
+  const handleSaveEdit = useCallback(
+    (editedItem) => {
+      // Only save to history if this isn't a newly created item being auto-edited
+      if (!isNewlyCreatedItem) {
+        saveToHistory();
+      }
 
-    setDroppedItems((prev) => updateItemInArray(prev));
-    setShowEditModal(false);
-    setEditingItem(null);
-  }, []);
+      const updateItemInArray = (items) => {
+        return items.map((item) => {
+          if (item.id === editedItem.id) {
+            return editedItem;
+          } else if (item.children && item.children.length > 0) {
+            return {
+              ...item,
+              children: updateItemInArray(item.children),
+            };
+          }
+          return item;
+        });
+      };
+
+      setDroppedItems((prev) => updateItemInArray(prev));
+      setShowEditModal(false);
+      setEditingItem(null);
+      setIsNewlyCreatedItem(false); // Reset the flag
+    },
+    [saveToHistory, isNewlyCreatedItem]
+  );
 
   // Function to cancel edit
   const handleCancelEdit = useCallback(() => {
     setShowEditModal(false);
     setEditingItem(null);
+    setIsNewlyCreatedItem(false); // Reset the flag
   }, []);
 
   // Function to handle creating new XML (clear all)
@@ -700,12 +832,13 @@ function App() {
 
   // Function to confirm new XML creation
   const confirmNewXml = useCallback(() => {
+    saveToHistory();
     setDroppedItems([]);
     setXmlTree(initialXmlTree);
     setShowNewXmlModal(false);
     // Clear questionnaire name when starting a brand new questionnaire
     setQuestionnaireName('');
-  }, []);
+  }, [saveToHistory]);
 
   // Function to cancel new XML creation
   const cancelNewXml = useCallback(() => {
@@ -715,6 +848,7 @@ function App() {
   // Function to handle loading XML with file name detection & destructive warnings
   const handleLoadXml = useCallback(
     (parsedItems, rawXmlText, fileName) => {
+      saveToHistory();
       setDroppedItems(parsedItems);
       if (fileName) {
         const base = fileName.replace(/\.xml$/i, '');
@@ -741,7 +875,7 @@ function App() {
         }
       }
     },
-    [showWarning]
+    [showWarning, saveToHistory]
   );
 
   // Helper function to get the parent context (what items are at the same level)
@@ -1143,18 +1277,22 @@ function App() {
     };
   }, []);
 
-  const removeMany = useCallback((ids) => {
-    const idSet = new Set(ids);
-    const prune = (list) =>
-      list
-        .filter((itm) => !idSet.has(itm.id))
-        .map((itm) =>
-          itm.children && itm.children.length
-            ? { ...itm, children: prune(itm.children) }
-            : itm
-        );
-    setDroppedItems((prev) => prune(prev));
-  }, []);
+  const removeMany = useCallback(
+    (ids) => {
+      const idSet = new Set(ids);
+      const prune = (list) =>
+        list
+          .filter((itm) => !idSet.has(itm.id))
+          .map((itm) =>
+            itm.children && itm.children.length
+              ? { ...itm, children: prune(itm.children) }
+              : itm
+          );
+      saveToHistory();
+      setDroppedItems((prev) => prune(prev));
+    },
+    [saveToHistory]
+  );
 
   const handleCopy = useCallback(
     (isCut) => {
@@ -1208,6 +1346,7 @@ function App() {
       const allPages = roots.every((n) => n.type === 'page');
       if (!allPages) return; // need a focus context for non-page types
       const collectedIds = [];
+      saveToHistory();
       setDroppedItems((prev) => {
         const insertion = clipboard.isCut
           ? roots
@@ -1257,6 +1396,7 @@ function App() {
         showWarning('Nothing to paste into this container.');
         return;
       }
+      saveToHistory();
       setDroppedItems((prev) => {
         const update = (list) =>
           list.map((itm) => {
@@ -1299,6 +1439,7 @@ function App() {
       if (skipped.length) showWarning('Nothing to paste here (types invalid).');
       return;
     }
+    saveToHistory();
     setDroppedItems((prev) => {
       if (!parentId) {
         const arr = [...prev];
@@ -1343,6 +1484,7 @@ function App() {
     canParentAccept,
     deepCloneWithNewIdsAndCollect,
     showWarning,
+    saveToHistory,
   ]);
 
   // Keyboard shortcuts
@@ -1363,6 +1505,12 @@ function App() {
         } else if (e.key === 'v') {
           e.preventDefault();
           handlePaste();
+        } else if (e.key === 'z' && !e.shiftKey) {
+          e.preventDefault();
+          handleUndo();
+        } else if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) {
+          e.preventDefault();
+          handleRedo();
         }
       } else if (e.key === 'Escape') {
         clearSelection();
@@ -1370,7 +1518,7 @@ function App() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [handleCopy, handlePaste, clearSelection]);
+  }, [handleCopy, handlePaste, clearSelection, handleUndo, handleRedo]);
 
   const insertItemBefore = useCallback((items, targetId, newItem) => {
     const walk = (list) => {
@@ -1457,6 +1605,9 @@ function App() {
     }
 
     if (isSidebarItem) {
+      // Mark that we need to save to history after this operation
+      setPendingHistorySave(true);
+
       let newItem;
       let draggedType;
       switch (draggedItemId) {
@@ -1623,6 +1774,7 @@ function App() {
 
             // Automatically open edit modal for the newly created item (if enabled)
             setEditingItem({ ...newItem });
+            setIsNewlyCreatedItem(true); // Mark as newly created
             if (autoEdit) {
               setShowEditModal(true);
             }
@@ -1643,6 +1795,7 @@ function App() {
 
       // Automatically open edit modal for the newly created item (if enabled)
       setEditingItem({ ...newItem });
+      setIsNewlyCreatedItem(true); // Mark as newly created
       if (autoEdit) {
         setShowEditModal(true);
       }
@@ -1656,6 +1809,9 @@ function App() {
 
     const draggedItem = findItemById(droppedItems, draggedItemId);
     if (!draggedItem) return;
+
+    // Mark that we need to save to history after this operation
+    setPendingHistorySave(true);
 
     // Reordering within same parent (drop on sibling) handled earlier; here we attempt slot insertion first if standard drop invalid
     const overItem = findItemById(droppedItems, overId);
@@ -1805,78 +1961,6 @@ function App() {
             />
           </div>
           <div className="flex gap-3 items-center  flex-1 justify-end whitespace-nowrap">
-            {/* Clipboard Toolbar */}
-            <div className="flex items-center gap-1 mr-4">
-              <button
-                type="button"
-                className="px-2 py-1 text-xs rounded border bg-white hover:bg-gray-100 disabled:opacity-40"
-                disabled={selectedIds.size === 0}
-                onClick={() => handleCopy(false)}
-                title="Copy (Ctrl+C)"
-              >
-                Copy
-              </button>
-              <button
-                type="button"
-                className="px-2 py-1 text-xs rounded border bg-white hover:bg-gray-100 disabled:opacity-40"
-                disabled={selectedIds.size === 0}
-                onClick={() => handleCopy(true)}
-                title="Cut (Ctrl+X)"
-              >
-                Cut
-              </button>
-              <button
-                type="button"
-                className="px-2 py-1 text-xs rounded border bg-white hover:bg-gray-100 disabled:opacity-40"
-                disabled={
-                  !clipboard ||
-                  (!focusId &&
-                    !(clipboard.items || []).every((i) => i.type === 'page'))
-                }
-                onClick={handlePaste}
-                title="Paste After (Ctrl+V)"
-              >
-                Paste
-              </button>
-              <div className="mx-2 h-5 w-px bg-gray-300" />
-              {(() => {
-                // compute button label based on expandedAnswerIds
-                const allQuestionIds = [];
-                const walk = (list) => {
-                  for (const itm of list) {
-                    if (itm.type === 'question') allQuestionIds.push(itm.id);
-                    if (itm.children && itm.children.length) walk(itm.children);
-                  }
-                };
-                walk(droppedItems);
-                const allCount = allQuestionIds.length;
-                const alreadyAllOpen =
-                  allCount > 0 &&
-                  allQuestionIds.every((id) => expandedAnswerIds.has(id));
-                const label = alreadyAllOpen
-                  ? 'Collapse Answers'
-                  : 'Expand Answers';
-                const title = alreadyAllOpen
-                  ? 'Collapse all question answers'
-                  : 'Expand all question answers';
-                return (
-                  <button
-                    type="button"
-                    className="px-2 py-1 text-xs rounded border bg-white hover:bg-gray-100"
-                    onClick={() => {
-                      if (alreadyAllOpen) {
-                        setExpandedAnswerIds(new Set());
-                      } else {
-                        setExpandedAnswerIds(new Set(allQuestionIds));
-                      }
-                    }}
-                    title={title}
-                  >
-                    {label}
-                  </button>
-                );
-              })()}
-            </div>
             {/* Consolidated Menu Button */}
             <div className="relative" ref={menuRef}>
               <button
@@ -2237,7 +2321,110 @@ function App() {
           </div>
 
           {/* The Droppable Canvas */}
-          <div className="flex-1 p-4 overflow-auto h-full w-auto">
+          <div className="flex-1 p-4 overflow-auto h-full w-auto relative">
+            {/* Floating Toolbar */}
+            <div className="sticky top-0 z-10 mb-4 bg-white/50 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg px-4 py-1.5">
+              <div className="flex items-center gap-2">
+                {/* Copy/Cut/Paste Buttons */}
+                <button
+                  type="button"
+                  className="px-3 py-1.5 text-xs rounded border bg-white hover:bg-gray-100 disabled:opacity-40 transition-colors"
+                  disabled={selectedIds.size === 0}
+                  onClick={() => handleCopy(false)}
+                  title="Copy (Ctrl+C)"
+                >
+                  Copy
+                </button>
+                <button
+                  type="button"
+                  className="px-3 py-1.5 text-xs rounded border bg-white hover:bg-gray-100 disabled:opacity-40 transition-colors"
+                  disabled={selectedIds.size === 0}
+                  onClick={() => handleCopy(true)}
+                  title="Cut (Ctrl+X)"
+                >
+                  Cut
+                </button>
+                <button
+                  type="button"
+                  className="px-3 py-1.5 text-xs rounded border bg-white hover:bg-gray-100 disabled:opacity-40 transition-colors"
+                  disabled={
+                    !clipboard ||
+                    (!focusId &&
+                      !(clipboard.items || []).every((i) => i.type === 'page'))
+                  }
+                  onClick={handlePaste}
+                  title="Paste After (Ctrl+V)"
+                >
+                  Paste
+                </button>
+
+                {/* Separator */}
+                <div className="mx-2 h-4 w-px bg-gray-300" />
+
+                <button
+                  type="button"
+                  className="px-3 py-1.5 text-xs rounded border bg-white hover:bg-gray-100 disabled:opacity-40 transition-colors"
+                  disabled={historyIndex <= 0}
+                  onClick={handleUndo}
+                  title="Undo (Ctrl+Z)"
+                >
+                  Undo
+                </button>
+                <button
+                  type="button"
+                  className="px-3 py-1.5 text-xs rounded border bg-white hover:bg-gray-100 disabled:opacity-40 transition-colors"
+                  disabled={historyIndex >= historyStack.length - 1}
+                  onClick={handleRedo}
+                  title="Redo (Ctrl+Y)"
+                >
+                  Redo
+                </button>
+
+                {/* Separator */}
+                <div className="mx-2 h-4 w-px bg-gray-300" />
+
+                {/* Expand/Collapse Answers Button */}
+                {(() => {
+                  // compute button label based on expandedAnswerIds
+                  const allQuestionIds = [];
+                  const walk = (list) => {
+                    for (const itm of list) {
+                      if (itm.type === 'question') allQuestionIds.push(itm.id);
+                      if (itm.children && itm.children.length)
+                        walk(itm.children);
+                    }
+                  };
+                  walk(droppedItems);
+                  const allCount = allQuestionIds.length;
+                  const alreadyAllOpen =
+                    allCount > 0 &&
+                    allQuestionIds.every((id) => expandedAnswerIds.has(id));
+                  const label = alreadyAllOpen
+                    ? 'Collapse Answers'
+                    : 'Expand Answers';
+                  const title = alreadyAllOpen
+                    ? 'Collapse all question answers'
+                    : 'Expand all question answers';
+                  return (
+                    <button
+                      type="button"
+                      className="px-3 py-1.5 text-xs rounded border bg-white hover:bg-gray-100 transition-colors"
+                      onClick={() => {
+                        if (alreadyAllOpen) {
+                          setExpandedAnswerIds(new Set());
+                        } else {
+                          setExpandedAnswerIds(new Set(allQuestionIds));
+                        }
+                      }}
+                      title={title}
+                    >
+                      {label}
+                    </button>
+                  );
+                })()}
+              </div>
+            </div>
+
             <DroppableArea
               id="main-canvas"
               onBackgroundClick={() => {
