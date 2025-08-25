@@ -1966,7 +1966,7 @@ function App() {
                   color: isBasicMode ? 'white' : '#374151',
                 }}
               >
-                {isBasicMode ? 'Show Advanced' : 'Show Basic'}
+                {isBasicMode ? 'Advanced' : 'Basic'}
               </button>
             </div>
 
@@ -1985,7 +1985,7 @@ function App() {
                     : 'Auto-edit disabled: Click components to edit them'
                 }
               >
-                {autoEdit ? 'Auto-Edit ON' : 'Auto-Edit OFF'}
+                {autoEdit ? 'Auto-Edit' : 'Auto-Edit'}
               </button>
             </div>
 
