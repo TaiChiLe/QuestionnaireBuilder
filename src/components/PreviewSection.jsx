@@ -19,7 +19,7 @@ const PreviewSection = ({
       style={{ height: collapsed ? 36 : height }}
     >
       {/* Preview Header */}
-      <div className="px-3 py-1.5 border-b border-gray-300 bg-[#f03741] flex justify-between items-center h-9">
+      <div className="px-3 py-1.5 border-b border-gray-300 bg-[#f03741] flex justify-between items-center h-11">
         <div className="flex items-center gap-2">
           <button
             type="button"
