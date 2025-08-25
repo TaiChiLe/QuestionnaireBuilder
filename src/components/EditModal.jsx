@@ -139,17 +139,19 @@ const EditModal = ({
                 : 'Question'}
               : {editingItem.label}
             </h2>
-            <button
-              type="button"
-              onClick={() => setShowAdvanced((v) => !v)}
-              className={`px-3 py-1.5 rounded text-xs font-semibold border transition-colors ${
-                showAdvanced
-                  ? 'bg-[#f03741] text-white border-[#f03741] hover:bg-[#d82f36]'
-                  : 'bg-white text-[#f03741] border-[#fbc5c8] hover:bg-[#fff5f5]'
-              }`}
-            >
-              {showAdvanced ? 'Hide Advanced' : 'Show Advanced'}
-            </button>
+            {editingItem.type !== 'table-field' && (
+              <button
+                type="button"
+                onClick={() => setShowAdvanced((v) => !v)}
+                className={`px-3 py-1.5 rounded text-xs font-semibold border transition-colors ${
+                  showAdvanced
+                    ? 'bg-white text-[#f03741] border-[#fbc5c8] hover:bg-[#fff5f5]'
+                    : 'bg-[#f03741] text-white border-[#f03741] hover:bg-[#d82f36]'
+                }`}
+              >
+                {showAdvanced ? 'Hide Advanced' : 'Show Advanced'}
+              </button>
+            )}
           </div>
           <div className="px-2">
             <div className="flex flex-col space-y-4">
@@ -330,25 +332,27 @@ const EditModal = ({
                       className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
-                  <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
-                      Data Type:
-                    </label>
-                    <select
-                      value={editingItem.dataType || 'Text Box'}
-                      onChange={(e) =>
-                        onItemUpdate((prev) => ({
-                          ...prev,
-                          dataType: e.target.value,
-                        }))
-                      }
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="Text Box">Text Box</option>
-                      <option value="Text Area">Text Area</option>
-                      <option value="Date">Date</option>
-                    </select>
-                  </div>
+                  {showAdvanced && (
+                    <div>
+                      <label className="block mb-1 font-semibold text-gray-700">
+                        Data Type:
+                      </label>
+                      <select
+                        value={editingItem.dataType || 'Text Box'}
+                        onChange={(e) =>
+                          onItemUpdate((prev) => ({
+                            ...prev,
+                            dataType: e.target.value,
+                          }))
+                        }
+                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="Text Box">Text Box</option>
+                        <option value="Text Area">Text Area</option>
+                        <option value="Date">Date</option>
+                      </select>
+                    </div>
+                  )}
                   <div>
                     <label className="block mb-1 font-semibold text-gray-700">
                       Key:
@@ -411,25 +415,27 @@ const EditModal = ({
                       className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
-                  <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
-                      Data Type:
-                    </label>
-                    <select
-                      value={editingItem.dataType || 'List Box'}
-                      onChange={(e) =>
-                        onItemUpdate((prev) => ({
-                          ...prev,
-                          dataType: e.target.value,
-                        }))
-                      }
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="List Box">List Box</option>
-                      <option value="Multi Select">Multi Select</option>
-                      <option value="Radio Buttons">Radio Buttons</option>
-                    </select>
-                  </div>
+                  {showAdvanced && (
+                    <div>
+                      <label className="block mb-1 font-semibold text-gray-700">
+                        Data Type:
+                      </label>
+                      <select
+                        value={editingItem.dataType || 'List Box'}
+                        onChange={(e) =>
+                          onItemUpdate((prev) => ({
+                            ...prev,
+                            dataType: e.target.value,
+                          }))
+                        }
+                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="List Box">List Box</option>
+                        <option value="Multi Select">Multi Select</option>
+                        <option value="Radio Buttons">Radio Buttons</option>
+                      </select>
+                    </div>
+                  )}
                   <div>
                     <label className="block mb-1 font-semibold text-gray-700">
                       Key:
