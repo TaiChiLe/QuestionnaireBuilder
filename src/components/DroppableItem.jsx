@@ -66,55 +66,59 @@ function DroppableItem({
         }}
       >
         <span className="font-bold flex items-center">
-          {/* Drag handle button */}
-          <button
-            type="button"
-            className={`mr-2 w-6 h-6 flex items-center justify-center rounded border text-xs font-semibold cursor-grab active:cursor-grabbing transition-colors ${
-              isDragging ? 'bg-gray-300' : 'bg-white hover:bg-gray-100'
-            }`}
-            aria-label="Drag item"
-            onMouseDown={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              // prevent triggering edit when clicking handle
-              e.stopPropagation();
-            }}
-            {...listeners}
-            {...attributes}
-          >
-            <svg
-              className="w-3 h-3 text-gray-600"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <circle cx="5" cy="5" r="1.5" />
-              <circle cx="10" cy="5" r="1.5" />
-              <circle cx="15" cy="5" r="1.5" />
-              <circle cx="5" cy="10" r="1.5" />
-              <circle cx="10" cy="10" r="1.5" />
-              <circle cx="15" cy="10" r="1.5" />
-            </svg>
-          </button>
-          {item.type === 'page' && (
+          {/* Fixed-width control column (drag handle + optional collapse) */}
+          <span className="flex items-center gap-1 w-14 shrink-0">
             <button
               type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onToggleCollapse && onToggleCollapse();
-              }}
-              className={`mr-2 w-6 h-6 flex items-center justify-center rounded border text-xs font-semibold transition-colors cursor-pointer ${
-                isCollapsed
-                  ? 'bg-gray-200 hover:bg-gray-300'
-                  : 'bg-white hover:bg-gray-100'
+              className={`w-6 h-6 flex items-center justify-center rounded border text-xs font-semibold cursor-grab active:cursor-grabbing transition-colors ${
+                isDragging ? 'bg-gray-300' : 'bg-white hover:bg-gray-100'
               }`}
-              title={isCollapsed ? 'Expand Page' : 'Collapse Page'}
+              aria-label="Drag item"
               onMouseDown={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+              {...listeners}
+              {...attributes}
             >
-              {isCollapsed ? '+' : '−'}
+              <svg
+                className="w-3 h-3 text-gray-600"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <circle cx="5" cy="5" r="1.5" />
+                <circle cx="10" cy="5" r="1.5" />
+                <circle cx="15" cy="5" r="1.5" />
+                <circle cx="5" cy="10" r="1.5" />
+                <circle cx="10" cy="10" r="1.5" />
+                <circle cx="15" cy="10" r="1.5" />
+              </svg>
             </button>
-          )}
+            {item.type === 'page' ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onToggleCollapse && onToggleCollapse();
+                }}
+                className={`w-6 h-6 flex items-center justify-center rounded border text-xs font-semibold transition-colors cursor-pointer ${
+                  isCollapsed
+                    ? 'bg-gray-200 hover:bg-gray-300'
+                    : 'bg-white hover:bg-gray-100'
+                }`}
+                title={isCollapsed ? 'Expand Page' : 'Collapse Page'}
+                onMouseDown={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+              >
+                {isCollapsed ? '+' : '−'}
+              </button>
+            ) : (
+              // Placeholder to keep labels aligned when no collapse button
+              <span className="w-6 h-6" />
+            )}
+          </span>
           {item.conditions && item.conditions.length > 0 && (
             <svg
               className="w-4 h-4 text-gray-600 mr-2 inline"
