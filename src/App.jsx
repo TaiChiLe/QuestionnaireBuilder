@@ -42,7 +42,10 @@ function App() {
   // XML dropdown state & ref to hidden file input component
   const xmlLoaderRef = useRef(null);
   const [xmlMenuOpen, setXmlMenuOpen] = useState(false);
+  const menuRef = useRef(null);
   const [questionnaireName, setQuestionnaireName] = useState('');
+  // Central set of question IDs whose answers are expanded
+  const [expandedAnswerIds, setExpandedAnswerIds] = useState(() => new Set());
   // Preview panel sizing & collapse
   const [previewHeight, setPreviewHeight] = useState(
     Math.round(window.innerHeight * 0.4)
@@ -98,6 +101,22 @@ function App() {
       window.removeEventListener('mouseup', stopResize);
     };
   }, [onMouseMove, stopResize]);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (!xmlMenuOpen) return;
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setXmlMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside, true);
+    document.addEventListener('touchstart', handleClickOutside, true);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside, true);
+      document.removeEventListener('touchstart', handleClickOutside, true);
+    };
+  }, [xmlMenuOpen]);
 
   const togglePageCollapse = useCallback((pageId) => {
     setCollapsedPageIds((prev) => {
@@ -927,6 +946,7 @@ function App() {
             parentType={parentType}
             selected={selectedIds.has(item.id)}
             onSelect={(e) => handleSelectItem(e, item.id)}
+            expandedAnswerIds={expandedAnswerIds}
           >
             {!isPageCollapsed &&
               item.children &&
@@ -941,6 +961,7 @@ function App() {
       handleEditItem,
       togglePageCollapse,
       selectedIds,
+      expandedAnswerIds,
     ]
   );
 
@@ -1619,9 +1640,47 @@ function App() {
               >
                 Paste
               </button>
+              <div className="mx-2 h-5 w-px bg-gray-300" />
+              {(() => {
+                // compute button label based on expandedAnswerIds
+                const allQuestionIds = [];
+                const walk = (list) => {
+                  for (const itm of list) {
+                    if (itm.type === 'question') allQuestionIds.push(itm.id);
+                    if (itm.children && itm.children.length) walk(itm.children);
+                  }
+                };
+                walk(droppedItems);
+                const allCount = allQuestionIds.length;
+                const alreadyAllOpen =
+                  allCount > 0 &&
+                  allQuestionIds.every((id) => expandedAnswerIds.has(id));
+                const label = alreadyAllOpen
+                  ? 'Collapse Answers'
+                  : 'Expand Answers';
+                const title = alreadyAllOpen
+                  ? 'Collapse all question answers'
+                  : 'Expand all question answers';
+                return (
+                  <button
+                    type="button"
+                    className="px-2 py-1 text-xs rounded border bg-white hover:bg-gray-100"
+                    onClick={() => {
+                      if (alreadyAllOpen) {
+                        setExpandedAnswerIds(new Set());
+                      } else {
+                        setExpandedAnswerIds(new Set(allQuestionIds));
+                      }
+                    }}
+                    title={title}
+                  >
+                    {label}
+                  </button>
+                );
+              })()}
             </div>
             {/* Consolidated Menu Button */}
-            <div className="relative">
+            <div className="relative" ref={menuRef}>
               <button
                 type="button"
                 onClick={() => setXmlMenuOpen((o) => !o)}
