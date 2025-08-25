@@ -6,12 +6,12 @@ const tips = [
     body: 'Start by dragging a Page onto the canvas. All other components must be placed inside a Page to create your questionnaire structure.',
   },
   {
-    title: 'Basic vs Advanced Mode',
-    body: 'Toggle between Basic and Advanced modes using the button above the components. Basic mode shows pre-configured components with fixed data types, while Advanced mode shows generic components that require manual configuration.',
+    title: 'More or Less Option',
+    body: 'In More mode, use pre-configured components: List Box, Multi Select, Radio Buttons (for questions), Text Box, Notes, Date (for fields), plus Page, Information, Table, and Table Field. These have their data types already set.',
   },
   {
-    title: 'Basic Components',
-    body: 'In Basic mode, use pre-configured components: List Box, Multi Select, Radio Buttons (for questions), Text Box, Notes, Date (for fields), plus Page, Information, Table, and Table Field. These have their data types already set.',
+    title: 'Auto-Edit',
+    body: 'In Auto-Edit mode, the edit modal opens automatically when you drop a component onto the canvas.',
   },
   {
     title: 'Adding Components',
@@ -51,7 +51,7 @@ const tips = [
   },
   {
     title: '--- Advanced Features ---',
-    body: 'The following features require enabling "Show Advanced" in the edit modal or using Advanced mode:',
+    body: 'The following features require enabling "Show Advanced" in the edit modal.',
     isAdvanced: true,
   },
   {
@@ -72,11 +72,6 @@ const tips = [
   {
     title: 'Visibility Types',
     body: 'Choose "Any" (show if any condition is met) or "All" (show only if all conditions are met) for components with multiple visibility conditions.',
-    isAdvanced: true,
-  },
-  {
-    title: 'Advanced Components',
-    body: 'In Advanced mode, use generic Question and Field components that require manual data type selection.',
     isAdvanced: true,
   },
 ];
