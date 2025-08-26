@@ -11,30 +11,24 @@ const createIdGenerator = () => {
     };
 };
 
-// Convert XML datatype to display format
-const convertXmlDataTypeToDisplay = (xmlDataType) => {
-    switch (xmlDataType?.toLowerCase()) {
-        case 'text':
-            return 'Text';
-        case 'integer':
-        case 'number':
-            return 'Number';
-        case 'date':
-            return 'Date';
-        case 'boolean':
-        case 'yes/no':
-            return 'Yes/No';
-        case 'choice':
-        case 'radio':
-            return 'Radio Buttons';
-        case 'multichoice':
-        case 'checkbox':
-            return 'Multi Select';
-        case 'list-box':
-        case 'listbox':
-        default:
-            return 'List Box';
+// Convert XML datatype attribute to display format with tag context
+// Question: only checkbox -> Multi Select, radio -> Radio Buttons
+// Field: only date -> Date, textarea -> Text Area
+// Others ignored. Absence => derived defaults later.
+const convertXmlDataTypeToDisplay = (xmlDataType, tag) => {
+    if (!xmlDataType) return undefined;
+    const v = xmlDataType.toLowerCase();
+    if (tag === 'Question') {
+        if (v === 'checkbox') return 'Multi Select';
+        if (v === 'radio') return 'Radio Buttons';
+        return undefined; // ignore date/textarea on Question
     }
+    if (tag === 'Field' || tag === 'Column') {
+        if (v === 'date') return 'Date';
+        if (v === 'textarea') return 'Text Area';
+        return undefined; // ignore checkbox/radio on Field
+    }
+    return undefined;
 };
 
 // Get text content excluding visibility tags
@@ -103,17 +97,19 @@ const parseXmlElement = (element, generateIdFn) => {
     switch (tagName) {
         case 'Question':
             const textElement = element.querySelector('Text');
+            const rawQType = convertXmlDataTypeToDisplay(element.getAttribute('datatype'), 'Question');
+            const answersForQ = parseAnswers(element.querySelector('Answers'));
+            // Derive default when attribute absent: if answers exist -> List Box, else Text Box (represented in UI maybe as Text)
+            const derivedQType = rawQType || (answersForQ.length > 0 ? 'List Box' : 'Text Box');
             const questionItem = {
                 id: generateIdFn('question'),
                 type: 'question',
                 label: textElement?.textContent || 'Question',
-                dataType: convertXmlDataTypeToDisplay(
-                    element.getAttribute('datatype')
-                ),
+                dataType: derivedQType,
                 keyField: element.getAttribute('record') || '',
                 textRecord: textElement?.getAttribute('record') || '',
                 required: element.getAttribute('required') === 'true',
-                answers: parseAnswers(element.querySelector('Answers')),
+                answers: answersForQ,
                 children: [],
             };
 
@@ -129,13 +125,14 @@ const parseXmlElement = (element, generateIdFn) => {
         case 'Field':
             const fieldTextContent = getTextContentExcludingVisibility(element);
 
+            const rawFieldType = convertXmlDataTypeToDisplay(element.getAttribute('datatype'), 'Field');
             const fieldItem = {
                 id: generateIdFn('field'),
                 type: 'field',
                 label: fieldTextContent || 'Field',
                 keyField: element.getAttribute('record') || '',
                 required: element.getAttribute('required') === 'true',
-                dataType: convertXmlDataTypeToDisplay(element.getAttribute('datatype')),
+                dataType: rawFieldType || 'Text Box',
                 children: [],
             };
 
@@ -225,12 +222,13 @@ const parseXmlElement = (element, generateIdFn) => {
             return tableItem;
 
         case 'Column':
+            const rawColumnType = convertXmlDataTypeToDisplay(element.getAttribute('datatype'), 'Column');
             const columnItem = {
                 id: generateIdFn('table-field'),
                 type: 'table-field',
                 label: element.getAttribute('header') || 'Column',
                 required: element.getAttribute('required') === 'true',
-                dataType: convertXmlDataTypeToDisplay(element.getAttribute('datatype')),
+                dataType: rawColumnType || 'Text Box',
                 children: [],
             };
 
