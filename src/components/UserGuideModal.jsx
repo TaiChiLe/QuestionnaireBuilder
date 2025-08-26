@@ -34,8 +34,12 @@ const tips = [
     body: 'For List Boxes, Multi Select and Radio Buttons, click the chevron to expand and see answer options. Use the global "Expand All" / "Collapse All" buttons to control all questions at once.',
   },
   {
-    title: 'Preview & Errors',
-    body: 'Use the preview panel to see your questionnaire. Check the Errors tab to identify any issues before exporting. Resize the panel by dragging the handle, or use the buttons to collapse/expand it.',
+    title: 'Preview Section',
+    body: 'Use the preview panel to see your questionnaire. Using the handle, you can drag the preview panel to reposition it, or use the button to collapse/expand it.',
+  },
+  {
+    title: 'Errors',
+    body: 'Check the Errors tab to identify any issues before exporting. You can also click on the error messages to jump to the relevant question.',
   },
   {
     title: '--- Advanced Features ---',
@@ -49,7 +53,12 @@ const tips = [
   },
   {
     title: 'Key Fields',
-    body: 'Keys are unique identifiers for components, used in visibility conditions and XML export. They should contain only letters, numbers, and hyphens.',
+    body: 'Keys are unique identifiers for components, change this only if you get duplicate key errors.',
+    isAdvanced: true,
+  },
+  {
+    title: 'Visibility Types',
+    body: 'Choose "Any" (show if any condition is met) or "All" (show only if all conditions are met) for components with multiple visibility conditions.',
     isAdvanced: true,
   },
   {
@@ -58,8 +67,8 @@ const tips = [
     isAdvanced: true,
   },
   {
-    title: 'Visibility Types',
-    body: 'Choose "Any" (show if any condition is met) or "All" (show only if all conditions are met) for components with multiple visibility conditions.',
+    title: 'Direct XML Editing',
+    body: 'With "Show Advanced" enabled, you can edit the XML structure directly. This allows for precise control over the questionnaire layout and behavior.',
     isAdvanced: true,
   },
 ];
