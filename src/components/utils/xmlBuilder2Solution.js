@@ -15,7 +15,6 @@ export function generateOrderedXML(droppedItems) {
             items.forEach((item) => {
                 let elementNode;
 
-                // Create the appropriate XML element
                 if (item.type === 'page') {
                     const pageTitle = item.title || item.label || 'Page';
                     elementNode = parentNode.ele('Page').att('title', pageTitle);
@@ -24,26 +23,19 @@ export function generateOrderedXML(droppedItems) {
                         .att('record', item.keyField || '')
                         .att('required', item.required ? 'true' : 'false');
 
-                    // Add datatype attribute if not default
-                    let xmlDataType = item.dataType || 'List Box';
-                    if (xmlDataType === 'Multi Select') {
-                        xmlDataType = 'checkbox';
-                    } else if (xmlDataType === 'List Box') {
-                        xmlDataType = 'list-box';
-                    } else if (xmlDataType === 'Radio Buttons') {
-                        xmlDataType = 'radio';
-                    }
+                    // Only allow checkbox (Multi Select) and radio for Question
+                    let xmlDataType = item.dataType || '';
+                    if (xmlDataType === 'Multi Select') xmlDataType = 'checkbox';
+                    else if (xmlDataType === 'Radio Buttons') xmlDataType = 'radio';
+                    const allowedQuestionTypes = new Set(['checkbox', 'radio']);
+                    if (allowedQuestionTypes.has(xmlDataType)) {
+                        elementNode.att('datatype', xmlDataType);
+                    } // date/textarea NEVER emitted for Question
 
-                    if (xmlDataType.toLowerCase() !== 'list-box') {
-                        elementNode.att('datatype', xmlDataType.toLowerCase());
-                    }
-
-                    // Add Text element
                     elementNode.ele('Text')
                         .att('record', item.keyField || '')
                         .txt(item.label || '');
 
-                    // Add answers if they exist
                     if (item.answers && item.answers.length > 0) {
                         const answersNode = elementNode.ele('Answers');
                         item.answers.forEach((ans) => {
@@ -55,14 +47,13 @@ export function generateOrderedXML(droppedItems) {
                         .att('record', item.keyField || 'text')
                         .att('required', item.required ? 'true' : 'false');
 
-                    // Add datatype attribute for non-textbox fields
+                    // Only allow date and textarea for Field
                     if (item.dataType === 'Text Area') {
                         elementNode.att('datatype', 'textarea');
                     } else if (item.dataType === 'Date') {
                         elementNode.att('datatype', 'date');
-                    }
+                    } // checkbox/radio NEVER emitted for Field
 
-                    // Add text content
                     elementNode.txt(item.label || '');
                 } else if (item.type === 'information') {
                     elementNode = parentNode.ele('Information').txt(item.label || '');
@@ -70,7 +61,6 @@ export function generateOrderedXML(droppedItems) {
                     elementNode = parentNode.ele('Table')
                         .att('required', item.required ? 'true' : 'false');
 
-                    // Add Text element
                     elementNode.ele('Text')
                         .att('record', item.keyField || 'table')
                         .txt(item.label || '');
@@ -79,22 +69,20 @@ export function generateOrderedXML(droppedItems) {
                         .att('header', item.label || '')
                         .att('required', item.required ? 'true' : 'false');
 
-                    // Add datatype attribute for non-textbox table-fields
                     if (item.dataType === 'Date') {
                         elementNode.att('datatype', 'date');
                     }
                 }
 
-                // Add children if they exist
+                if (!elementNode) return; // Safety
+
                 if (item.children && item.children.length > 0) {
                     addItemsToXml(elementNode, item.children);
                 }
 
-                // Add visibility after children
                 if (item.conditions && item.conditions.length > 0) {
                     const visibilityType = item.visibilityType || 'Any';
                     const visibilityNode = elementNode.ele('Visibility').ele(visibilityType);
-
                     item.conditions.forEach((condition) => {
                         visibilityNode.ele('Condition')
                             .att('record', condition.record || '')
