@@ -134,7 +134,7 @@ const PreviewSection = ({
         </div>
         {!collapsed && (
           <div className="flex gap-2">
-            {['text', 'structure', 'xml', 'html', 'errors'].map((mode) => (
+            {['text', 'xml', 'html', 'errors'].map((mode) => (
               <button
                 key={mode}
                 onClick={() => setPreviewMode(mode)}
@@ -144,14 +144,12 @@ const PreviewSection = ({
                     : 'bg-white text-gray-700'
                 }`}
               >
-                {mode === 'structure'
-                  ? 'Structure'
-                  : mode === 'xml'
+                {mode === 'xml'
                   ? 'XML'
                   : mode === 'html'
                   ? 'HTML'
                   : mode === 'text'
-                  ? 'Text'
+                  ? 'TXT'
                   : 'Errors'}
               </button>
             ))}
@@ -168,42 +166,6 @@ const PreviewSection = ({
             </p>
           ) : (
             <>
-              {previewMode === 'structure' && (
-                <div>
-                  <h4 className="m-0 mb-3 text-gray-600">Structure Overview</h4>
-                  <div className="font-mono text-sm leading-relaxed text-gray-700">
-                    {droppedItems.map((item) => (
-                      <div key={item.id} className="mb-2">
-                        <strong>{item.type}</strong>: {item.label}
-                        {item.children && item.children.length > 0 && (
-                          <div className="ml-5 mt-1">
-                            {item.children.map((child) => (
-                              <div key={child.id} className="mb-1">
-                                ↳ <strong>{child.type}</strong>: {child.label}
-                                {child.children &&
-                                  child.children.length > 0 && (
-                                    <div className="ml-5 mt-0.5">
-                                      {child.children.map((grandchild) => (
-                                        <div
-                                          key={grandchild.id}
-                                          className="mb-0.5"
-                                        >
-                                          ↳ <strong>{grandchild.type}</strong>:{' '}
-                                          {grandchild.label}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {previewMode === 'xml' && droppedItems.length > 0 && (
                 <div>
                   <div className="flex justify-between items-center mb-3">

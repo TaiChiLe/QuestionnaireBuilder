@@ -2560,6 +2560,49 @@ function App() {
                     </button>
                   );
                 })()}
+
+                {/* Toggle Expand/Collapse All Pages */}
+                {(() => {
+                  const pageIds = [];
+                  const collectPages = (list) => {
+                    for (const itm of list) {
+                      if (itm.type === 'page') pageIds.push(itm.id);
+                      if (itm.children && itm.children.length)
+                        collectPages(itm.children);
+                    }
+                  };
+                  collectPages(droppedItems);
+                  const anyPages = pageIds.length > 0;
+                  const allExpanded =
+                    anyPages &&
+                    pageIds.every((id) => !collapsedPageIds.has(id));
+                  const nextActionExpand = !allExpanded; // if not all expanded, button expands; else collapses
+                  const label = nextActionExpand
+                    ? 'Expand Pages'
+                    : 'Collapse Pages';
+                  const title = nextActionExpand
+                    ? 'Expand all pages'
+                    : 'Collapse all pages';
+                  return (
+                    <button
+                      type="button"
+                      className="ml-2 px-3 py-1.5 text-xs rounded border bg-white hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={!anyPages}
+                      onClick={() => {
+                        if (nextActionExpand) {
+                          // expand all -> clear collapsed set
+                          setCollapsedPageIds(new Set());
+                        } else {
+                          // collapse all -> add all page ids
+                          setCollapsedPageIds(new Set(pageIds));
+                        }
+                      }}
+                      title={!anyPages ? 'No pages yet' : title}
+                    >
+                      {label}
+                    </button>
+                  );
+                })()}
               </div>
             </div>
 
