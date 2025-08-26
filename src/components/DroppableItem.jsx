@@ -44,6 +44,7 @@ function DroppableItem({
         dragRef(node);
         dropRef(node);
       }}
+      data-item-id={item.id}
       className={`group my-1.5 p-2.5 rounded cursor-default select-none relative w-full text-sm
         ${
           isOver
