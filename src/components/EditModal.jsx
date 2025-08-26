@@ -147,7 +147,18 @@ const EditModal = ({
             {editingItem.type !== 'table-field' && (
               <button
                 type="button"
-                onClick={() => setShowAdvanced((v) => !v)}
+                onClick={() =>
+                  setShowAdvanced((v) => {
+                    const next = !v;
+                    try {
+                      // Broadcast change so other components (e.g., PreviewSection) can react immediately
+                      window.dispatchEvent(
+                        new CustomEvent('qb-advanced-toggle', { detail: next })
+                      );
+                    } catch (_) {}
+                    return next;
+                  })
+                }
                 className={`px-3 py-1.5 rounded text-xs font-semibold border transition-colors ${
                   showAdvanced
                     ? 'bg-white text-[#f03741] border-[#fbc5c8] hover:bg-[#fff5f5]'

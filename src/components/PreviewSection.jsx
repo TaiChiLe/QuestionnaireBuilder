@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { buildAdvancedTextSummary } from './utils/xmlTextSummary';
 import ErrorPreview from './ErrorPreview';
 
@@ -21,6 +21,20 @@ const PreviewSection = ({
   const fileInputRef = useRef(null);
   // Download state (optional simple flash)
   const [justDownloaded, setJustDownloaded] = useState(false);
+  // Track if advanced features are enabled (reflected from EditModal's toggle)
+  const [advancedEnabled, setAdvancedEnabled] = useState(() => {
+    try {
+      return localStorage.getItem('qb_show_advanced') === 'true';
+    } catch (_) {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    const handler = (e) => setAdvancedEnabled(!!e.detail);
+    window.addEventListener('qb-advanced-toggle', handler);
+    return () => window.removeEventListener('qb-advanced-toggle', handler);
+  }, []);
 
   const handleRawXmlFile = (e) => {
     const file = e.target.files?.[0];
@@ -210,11 +224,12 @@ const PreviewSection = ({
                         </button>
                       </div>
                     ) : (
-                      droppedItems.length > 0 && (
+                      droppedItems.length > 0 &&
+                      advancedEnabled && (
                         <button
                           onClick={handleUnlockEdit}
                           className="px-3 py-1.5 text-xs bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors flex items-center gap-2"
-                          title="Edit XML directly"
+                          title="Edit XML directly (advanced feature)"
                         >
                           <svg
                             className="w-3 h-3"
@@ -264,7 +279,7 @@ const PreviewSection = ({
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="m-0 text-gray-600">
                       <b>
-                        Note: You will have to re-upload for Advanced
+                        Note: You will have to upload here for Advanced
                         Questionnaires.
                       </b>
                     </h4>
