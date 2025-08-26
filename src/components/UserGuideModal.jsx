@@ -119,7 +119,7 @@ function UserGuideModal({ isOpen, onClose }) {
         <div className="px-6 py-4 border-t flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-[#f03741] text-white rounded-md hover:bg-red-700 transition-colors"
           >
             Close
           </button>

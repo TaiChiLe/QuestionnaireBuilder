@@ -36,11 +36,14 @@ export function generateOrderedXML(droppedItems) {
                         .att('record', item.keyField || '')
                         .txt(item.label || '');
 
+                    const answersNode = elementNode.ele('Answers');
                     if (item.answers && item.answers.length > 0) {
-                        const answersNode = elementNode.ele('Answers');
                         item.answers.forEach((ans) => {
-                            answersNode.ele('Answer').txt(ans.text);
+                            answersNode.ele('Answer').txt(ans.text || '');
                         });
+                    } else {
+                        // Placeholder blank answer to satisfy schema requirement of at least one Answer
+                        answersNode.ele('Answer').txt('');
                     }
                 } else if (item.type === 'field') {
                     elementNode = parentNode.ele('Field')

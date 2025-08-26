@@ -869,7 +869,7 @@ function App() {
             if (hasStatuses) reasons.push('Statuses tag detected');
             if (hasSexAttr) reasons.push('sex attribute detected');
             showWarning(
-              `${reasons.join(
+              `Advanced Questionnaire Detected: ${reasons.join(
                 ' and '
               )} - editing this questionnaire is destructive`
             );

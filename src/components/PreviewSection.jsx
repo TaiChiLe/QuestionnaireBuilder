@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useMemo, useRef } from 'react';
+import { buildAdvancedTextSummary } from './utils/xmlTextSummary';
 import ErrorPreview from './ErrorPreview';
 
 const PreviewSection = ({
@@ -14,6 +15,49 @@ const PreviewSection = ({
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedXml, setEditedXml] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  // Raw (unfiltered) XML specifically for Text summary bypass
+  const [rawTextXml, setRawTextXml] = useState('');
+  const fileInputRef = useRef(null);
+  // Download state (optional simple flash)
+  const [justDownloaded, setJustDownloaded] = useState(false);
+
+  const handleRawXmlFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      setRawTextXml(String(evt.target?.result || ''));
+    };
+    reader.readAsText(file, 'utf-8');
+  };
+
+  const effectiveTextXml = rawTextXml || currentXmlString;
+
+  // Memoized advanced text summary so it isn't rebuilt on every re-render & can be copied easily
+  const textSummary = useMemo(
+    () => buildAdvancedTextSummary(effectiveTextXml),
+    [effectiveTextXml]
+  );
+
+  const handleDownloadTextSummary = () => {
+    try {
+      const blob = new Blob([textSummary], {
+        type: 'text/plain;charset=utf-8',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'questionnaire-summary.txt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setJustDownloaded(true);
+      setTimeout(() => setJustDownloaded(false), 1500);
+    } catch (e) {
+      alert('Download failed');
+    }
+  };
 
   const handleUnlockEdit = () => {
     setEditedXml(currentXmlString);
@@ -89,7 +133,7 @@ const PreviewSection = ({
         </div>
         {!collapsed && (
           <div className="flex gap-2">
-            {['structure', 'xml', 'html', 'errors'].map((mode) => (
+            {['text', 'structure', 'xml', 'html', 'errors'].map((mode) => (
               <button
                 key={mode}
                 onClick={() => setPreviewMode(mode)}
@@ -105,6 +149,8 @@ const PreviewSection = ({
                   ? 'XML'
                   : mode === 'html'
                   ? 'HTML'
+                  : mode === 'text'
+                  ? 'Text'
                   : 'Errors'}
               </button>
             ))}
@@ -115,7 +161,7 @@ const PreviewSection = ({
       {/* Preview Content */}
       {!collapsed && (
         <div className="flex-1 p-4 overflow-auto bg-white">
-          {droppedItems.length === 0 ? (
+          {droppedItems.length === 0 && previewMode !== 'text' ? (
             <p className="text-center text-gray-400 italic my-10">
               Add components above to see the preview
             </p>
@@ -157,7 +203,7 @@ const PreviewSection = ({
                 </div>
               )}
 
-              {previewMode === 'xml' && (
+              {previewMode === 'xml' && droppedItems.length > 0 && (
                 <div>
                   <div className="flex justify-between items-center mb-3">
                     <h4 className="m-0 text-gray-600">Generated XML</h4>
@@ -241,7 +287,7 @@ const PreviewSection = ({
                 </div>
               )}
 
-              {previewMode === 'html' && (
+              {previewMode === 'html' && droppedItems.length > 0 && (
                 <div>
                   <h4 className="m-0 mb-3 text-gray-600">HTML Preview</h4>
                   <div
@@ -250,7 +296,61 @@ const PreviewSection = ({
                   />
                 </div>
               )}
-              {previewMode === 'errors' && (
+              {previewMode === 'text' && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="m-0 text-gray-600">
+                      <b>
+                        Note: You will have to re-upload for Advanced
+                        Questionnaires.
+                      </b>
+                    </h4>
+                    <div className="flex gap-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".xml,application/xml,text/xml"
+                        className="hidden"
+                        onChange={handleRawXmlFile}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-2.5 py-1 text-xs border border-gray-300 rounded bg-white hover:bg-gray-100 transition-colors"
+                        title="Upload external questionnaire XML to bypass internal parser"
+                      >
+                        Upload XML
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDownloadTextSummary}
+                        className={`px-2.5 py-1 text-xs border border-gray-300 rounded transition-colors ${
+                          justDownloaded
+                            ? 'bg-[#f03741] text-white'
+                            : 'bg-white hover:bg-gray-100'
+                        }`}
+                        title="Download text summary as file"
+                      >
+                        {justDownloaded ? 'Saved' : 'Download'}
+                      </button>
+                      {rawTextXml && (
+                        <button
+                          type="button"
+                          onClick={() => setRawTextXml('')}
+                          className="px-2.5 py-1 text-xs border border-gray-300 rounded bg-white hover:bg-gray-100 transition-colors"
+                          title="Clear uploaded XML and revert to generated XML"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <pre className="bg-gray-100 border border-gray-300 rounded p-3 text-xs leading-relaxed overflow-auto m-0 whitespace-pre-wrap">
+                    {textSummary}
+                  </pre>
+                </div>
+              )}
+              {previewMode === 'errors' && droppedItems.length > 0 && (
                 <div>
                   <h4 className="m-0 mb-3 text-gray-600">Error Check</h4>
                   <ErrorPreview droppedItems={droppedItems} />

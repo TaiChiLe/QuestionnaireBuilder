@@ -1,5 +1,3 @@
-import { generateId } from './id';
-
 // Simple robust ID generator for XML parsing
 const createIdGenerator = () => {
     const counters = {};

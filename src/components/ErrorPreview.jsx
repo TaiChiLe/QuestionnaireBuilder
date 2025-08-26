@@ -26,6 +26,8 @@ const ErrorPreview = ({ droppedItems }) => {
       list.push({ ...ctx, errorType: 'missing-page-title' });
     const pushEmptyTable = (ctx) =>
       list.push({ ...ctx, errorType: 'empty-table' });
+    const pushEmptyQuestion = (ctx) =>
+      list.push({ ...ctx, errorType: 'empty-question' });
     const pushBlankConditionRecord = (ctx) =>
       list.push({ ...ctx, errorType: 'blank-condition-record' });
 
@@ -76,6 +78,19 @@ const ErrorPreview = ({ droppedItems }) => {
           } else {
             if (!keyUsage[key]) keyUsage[key] = [];
             keyUsage[key].push(ctx);
+          }
+        }
+
+        // Empty Question warning (no answers configured)
+        if (item.type === 'question') {
+          const answers = Array.isArray(item.answers) ? item.answers : [];
+          if (answers.length === 0) {
+            pushEmptyQuestion({
+              id: item.id + '-emptyq',
+              path: newAncestors,
+              label: item.label || '(no label)',
+              type: 'question',
+            });
           }
         }
 
@@ -142,10 +157,15 @@ const ErrorPreview = ({ droppedItems }) => {
           const isMissingTitle = err.errorType === 'missing-page-title';
           const isEmptyTable = err.errorType === 'empty-table';
           const isBlankCond = err.errorType === 'blank-condition-record';
+          const isEmptyQuestion = err.errorType === 'empty-question';
+          const isWarning = isEmptyQuestion; // classify warnings (currently only empty-question)
+          const wrapperClasses = isWarning
+            ? 'border border-orange-200 bg-orange-50 text-orange-700'
+            : 'border border-red-200 bg-red-50 text-red-700';
           return (
             <li
               key={err.id + '-' + err.errorType + '-' + idx}
-              className="border border-red-200 bg-red-50 rounded p-3 text-sm"
+              className={`${wrapperClasses} rounded p-3 text-sm`}
             >
               <span className="font-mono text-xs text-gray-700 block mb-1">
                 {chain.join(' -> ')} : {isMissing && 'Key Missing'}
@@ -154,6 +174,7 @@ const ErrorPreview = ({ droppedItems }) => {
                 {isMissingTitle && 'Missing Page Title'}
                 {isEmptyTable && 'Empty Table (no fields)'}
                 {isBlankCond && 'Blank Condition Record'}
+                {isEmptyQuestion && 'Empty Question (no answers)'}
               </span>
               {isMissing && (
                 <span className="text-red-700">
@@ -185,6 +206,12 @@ const ErrorPreview = ({ droppedItems }) => {
                 <span className="text-red-700">
                   Each visibility condition must reference a record key. Enter
                   or remove this condition.
+                </span>
+              )}
+              {isEmptyQuestion && (
+                <span className="text-orange-700">
+                  Add one or more answers or convert this to a Field if
+                  free-text.
                 </span>
               )}
             </li>
