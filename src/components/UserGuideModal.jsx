@@ -6,8 +6,8 @@ const tips = [
     body: 'Start by dragging a Page onto the canvas. All other components must be placed inside a Page to create your questionnaire structure.',
   },
   {
-    title: 'Auto-Edit',
-    body: 'In Auto-Edit mode, the edit modal opens automatically when you drop a component onto the canvas.',
+    title: 'Edit on Drop',
+    body: 'In Edit on Drop mode, the edit modal opens automatically when you drop a component onto the canvas.',
   },
   {
     title: 'Adding Components',

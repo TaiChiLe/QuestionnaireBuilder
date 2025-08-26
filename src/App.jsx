@@ -1011,11 +1011,12 @@ function App() {
         }
       }
 
-      // Rule 4: Only fields can be dropped into questions
-      if (target.type === 'question' && draggedType !== 'field') {
+      // Rule 4: Nothing can be dropped into questions (they are self-contained with answers)
+      if (target.type === 'question') {
         return {
           valid: false,
-          message: 'Only fields can be dropped into questions',
+          message:
+            'Questions cannot contain other items - they have their own answer options',
         };
       }
 
@@ -1217,7 +1218,7 @@ function App() {
     const rules = {
       root: ['page'],
       page: ['question', 'field', 'information', 'table'],
-      question: ['field'],
+      question: [], // Questions should not contain other items - they have their own answers
       field: [],
       information: [],
       table: ['table-field'],
