@@ -934,6 +934,49 @@ function App() {
     [saveToHistory, questionnaireName]
   );
 
+  // Navigate from error panel to a specific item on canvas
+  const navigateToItem = useCallback(
+    (id) => {
+      if (!id) return;
+      // Expand ancestor page if collapsed
+      const findPath = (items, targetId, path = []) => {
+        for (const itm of items) {
+          const newPath = [...path, itm];
+          if (itm.id === targetId) return newPath;
+          if (itm.children && itm.children.length) {
+            const found = findPath(itm.children, targetId, newPath);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+      const path = findPath(droppedItems, id) || [];
+      const pageAncestor = path.find((n) => n.type === 'page');
+      if (pageAncestor && collapsedPageIds.has(pageAncestor.id)) {
+        setCollapsedPageIds((prev) => {
+          const next = new Set(prev);
+          next.delete(pageAncestor.id);
+          return next;
+        });
+      }
+      setSelectedIds(new Set([id]));
+      setFocusId(id);
+      // Scroll after render
+      requestAnimationFrame(() => {
+        const el = document.querySelector(`[data-item-id="${id}"]`);
+        if (el && typeof el.scrollIntoView === 'function') {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Flash effect
+          el.classList.add('ring', 'ring-2', 'ring-[#f03741]');
+          setTimeout(() => {
+            el.classList.remove('ring', 'ring-2', 'ring-[#f03741]');
+          }, 1200);
+        }
+      });
+    },
+    [droppedItems, collapsedPageIds]
+  );
+
   // Helper function to get the parent context (what items are at the same level)
   const getParentContext = useCallback((items, targetId, parentItem = null) => {
     for (const item of items) {
@@ -2561,6 +2604,7 @@ function App() {
             collapsed={isPreviewCollapsed}
             onToggleCollapse={() => setIsPreviewCollapsed((c) => !c)}
             onXmlEdit={handleXmlEdit}
+            onNavigateToItem={navigateToItem}
           />
         </div>
       </div>

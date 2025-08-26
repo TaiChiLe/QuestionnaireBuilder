@@ -10,26 +10,39 @@ import React, { useMemo } from 'react';
 // Format example:
 //   Page Title -> Component Label : Key Missing
 //   Page Title -> Component Label : Duplicate Key (my-key)
-const ErrorPreview = ({ droppedItems }) => {
+const ErrorPreview = ({ droppedItems, onNavigateToItem }) => {
   const errors = useMemo(() => {
     const list = [];
     const keyUsage = {}; // key -> [{id, path, label, type}]
     const validKeyRegex = /^[A-Za-z0-9-]+$/; // Only letters, numbers, hyphen
 
     const pushMissingKey = (ctx) =>
-      list.push({ ...ctx, errorType: 'missing-key' });
+      list.push({ ...ctx, errorType: 'missing-key', targetId: ctx.id });
     const pushDuplicateKey = (ctx, key) =>
-      list.push({ ...ctx, errorType: 'duplicate-key', key });
+      list.push({ ...ctx, errorType: 'duplicate-key', key, targetId: ctx.id });
     const pushInvalidKey = (ctx, key) =>
-      list.push({ ...ctx, errorType: 'invalid-key-format', key });
+      list.push({
+        ...ctx,
+        errorType: 'invalid-key-format',
+        key,
+        targetId: ctx.id,
+      });
     const pushMissingTitle = (ctx) =>
-      list.push({ ...ctx, errorType: 'missing-page-title' });
+      list.push({ ...ctx, errorType: 'missing-page-title', targetId: ctx.id });
     const pushEmptyTable = (ctx) =>
-      list.push({ ...ctx, errorType: 'empty-table' });
+      list.push({ ...ctx, errorType: 'empty-table', targetId: ctx.id });
     const pushEmptyQuestion = (ctx) =>
-      list.push({ ...ctx, errorType: 'empty-question' });
+      list.push({
+        ...ctx,
+        errorType: 'empty-question',
+        targetId: ctx.originalId,
+      });
     const pushBlankConditionRecord = (ctx) =>
-      list.push({ ...ctx, errorType: 'blank-condition-record' });
+      list.push({
+        ...ctx,
+        errorType: 'blank-condition-record',
+        targetId: ctx.originalId,
+      });
 
     const walk = (items, ancestorPages) => {
       items.forEach((item) => {
@@ -87,6 +100,7 @@ const ErrorPreview = ({ droppedItems }) => {
           if (answers.length === 0) {
             pushEmptyQuestion({
               id: item.id + '-emptyq',
+              originalId: item.id,
               path: newAncestors,
               label: item.label || '(no label)',
               type: 'question',
@@ -101,6 +115,7 @@ const ErrorPreview = ({ droppedItems }) => {
             if (!rec) {
               pushBlankConditionRecord({
                 id: `${item.id}-cond-${idx}`,
+                originalId: item.id,
                 path: newAncestors.concat([
                   (item.label || item.title || item.type || 'Component') +
                     ` (Condition ${idx + 1})`,
@@ -165,7 +180,19 @@ const ErrorPreview = ({ droppedItems }) => {
           return (
             <li
               key={err.id + '-' + err.errorType + '-' + idx}
-              className={`${wrapperClasses} rounded p-3 text-sm`}
+              onClick={() =>
+                onNavigateToItem && onNavigateToItem(err.targetId || err.id)
+              }
+              className={`${wrapperClasses} rounded p-3 text-sm cursor-pointer hover:shadow transition-shadow`}
+              title="Click to focus this item"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onNavigateToItem && onNavigateToItem(err.targetId || err.id);
+                }
+              }}
             >
               <span className="font-mono text-xs text-gray-700 block mb-1">
                 {chain.join(' -> ')} : {isMissing && 'Key Missing'}

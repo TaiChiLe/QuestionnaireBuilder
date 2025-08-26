@@ -10,6 +10,7 @@ const PreviewSection = ({
   collapsed,
   onToggleCollapse,
   onXmlEdit, // New prop for handling XML edits
+  onNavigateToItem, // navigate from errors list to canvas item
 }) => {
   const [previewMode, setPreviewMode] = useState('html');
   const [isEditMode, setIsEditMode] = useState(false);
@@ -352,8 +353,13 @@ const PreviewSection = ({
               )}
               {previewMode === 'errors' && droppedItems.length > 0 && (
                 <div>
-                  <h4 className="m-0 mb-3 text-gray-600">Error Check</h4>
-                  <ErrorPreview droppedItems={droppedItems} />
+                  <h4 className="m-0 mb-3 text-gray-600">
+                    Error Check: Click To Move To Error
+                  </h4>
+                  <ErrorPreview
+                    droppedItems={droppedItems}
+                    onNavigateToItem={onNavigateToItem}
+                  />
                 </div>
               )}
             </>
