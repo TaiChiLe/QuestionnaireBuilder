@@ -2186,7 +2186,7 @@ function App() {
           style={{ height: `calc(100vh - ${previewHeight + 56}px)` }}
         >
           {/* The Sidebar with Draggable items */}
-          <div className="w-64 min-w-64 p-4 bg-gray-100 border-r border-gray-300 overflow-hidden h-full">
+          <div className="w-64 min-w-64 p-4 bg-gray-100 border-r border-gray-300 overflow-x-hidden overflow-y-auto h-full">
             {/* Toggle Button for Auto-Edit */}
             <div className="mb-4">
               <button
@@ -2206,7 +2206,7 @@ function App() {
               </button>
             </div>
 
-            <div className="block">
+            <div className="block overflow-hidden">
               {/* Basic Components */}
               {/* Draggable Components (previously gated by basic mode) */}
               <>
