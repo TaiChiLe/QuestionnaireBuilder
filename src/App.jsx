@@ -862,15 +862,25 @@ function App() {
           const hasClinicalForms = /<clinicalforms\b/i.test(rawXmlText);
           const hasStatuses = /<statuses\b/i.test(rawXmlText);
           const hasSexAttr = /\bsex\s*=\s*['"]/i.test(rawXmlText);
-          if (hasClinicalForms || hasStatuses || hasSexAttr) {
+          // Detect any Information (or information) element with a style attribute
+          const hasInformationStyle =
+            /<information\b[^>]*\bstyle\s*=\s*['"]/i.test(rawXmlText);
+          if (
+            hasClinicalForms ||
+            hasStatuses ||
+            hasSexAttr ||
+            hasInformationStyle
+          ) {
             const reasons = [];
             if (hasClinicalForms) reasons.push('ClinicalForms tag detected');
             if (hasStatuses) reasons.push('Statuses tag detected');
             if (hasSexAttr) reasons.push('sex attribute detected');
+            if (hasInformationStyle)
+              reasons.push('Information style attribute detected');
             showWarning(
               `Advanced Questionnaire Detected: ${reasons.join(
                 ' and '
-              )} - editing this questionnaire is destructive`
+              )} - advanced features present; editing this questionnaire is destructive.`
             );
           }
         } catch (e) {
