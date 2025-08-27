@@ -23,6 +23,14 @@ import {
 } from './components/utils/xmlParser';
 import { generateId } from './components/utils/id';
 
+// Builder-specific utils
+import {
+  generateClinicalFormXML,
+  exportClinicalFormXml,
+  parseClinicalFormXml,
+  extractClinicalFormName,
+} from './utils/clinicalForm';
+
 // Hooks
 import { useHistory } from './hooks/useHistory';
 import { usePreviewResize } from './hooks/usePreviewResize';
@@ -174,10 +182,13 @@ function App() {
     setItemToRemove(null);
   }, []);
 
-  // Real-time XML generation
+  // Real-time XML generation - different based on builder mode
   const currentXmlString = useMemo(() => {
+    if (builderMode === 'clinical') {
+      return generateClinicalFormXML(droppedItems, questionnaireName);
+    }
     return generateOrderedXML(droppedItems);
-  }, [droppedItems]);
+  }, [droppedItems, builderMode, questionnaireName]);
 
   // Generate HTML preview
   const currentHtmlString = useMemo(() => {
@@ -201,19 +212,46 @@ function App() {
 
     if (isSidebarItem) {
       const draggedType = DRAG_TYPES[active.id] || 'page';
+
+      // Auto-switch to clinical mode when dragging clinical form components
+      const isClinicalFormComponent = draggedType.startsWith('cf-');
+      const isQuestionnaireComponent = [
+        'page',
+        'question',
+        'field',
+        'information',
+        'table',
+        'table-field',
+      ].includes(draggedType);
+
+      let currentBuilderMode = builderMode;
+      if (isClinicalFormComponent && builderMode === 'questionnaire') {
+        // Auto-switch to clinical mode
+        setBuilderMode('clinical');
+        currentBuilderMode = 'clinical';
+      } else if (isQuestionnaireComponent && builderMode === 'clinical') {
+        // Auto-switch to questionnaire mode
+        setBuilderMode('questionnaire');
+        currentBuilderMode = 'questionnaire';
+      }
+
       const validation = validateDrop(
         draggedType,
         over.id,
         droppedItems,
         findItemById,
-        getParentContext
+        getParentContext,
+        currentBuilderMode
       );
 
       if (!validation.valid) {
         const targetItem = findItemById(droppedItems, over.id);
         if (targetItem) {
           const ctx = getParentContext(droppedItems, over.id);
-          if (ctx && canParentAccept(ctx.parentType, draggedType)) {
+          if (
+            ctx &&
+            canParentAccept(ctx.parentType, draggedType, currentBuilderMode)
+          ) {
             setIsValidDrop(true);
             return;
           }
@@ -247,11 +285,15 @@ function App() {
       over.id,
       droppedItems,
       findItemById,
-      getParentContext
+      getParentContext,
+      builderMode
     );
     if (!validation.valid) {
       const ctx = getParentContext(droppedItems, over.id);
-      if (ctx && canParentAccept(ctx.parentType, draggedItem.type)) {
+      if (
+        ctx &&
+        canParentAccept(ctx.parentType, draggedItem.type, builderMode)
+      ) {
         setIsValidDrop(true);
       } else {
         setIsValidDrop(false);
@@ -298,9 +340,13 @@ function App() {
     }
   }, [itemToRemove, removeItem, closeRemoveConfirmation]);
 
-  // Export XML using utility function
+  // Export XML using appropriate utility function based on builder mode
   function handleExportXml() {
-    exportXmlStructure(droppedItems, questionnaireName);
+    if (builderMode === 'clinical') {
+      exportClinicalFormXml(droppedItems, questionnaireName);
+    } else {
+      exportXmlStructure(droppedItems, questionnaireName);
+    }
   }
 
   // Function to handle editing an item
@@ -373,22 +419,55 @@ function App() {
     setShowNewXmlModal(false);
   }, []);
 
-  // Function to handle loading XML
+  // Function to handle loading XML - different parsing based on content
   const handleLoadXml = useCallback(
     (parsedItems, rawXmlText, fileName) => {
       saveToHistory();
-      setDroppedItems(parsedItems);
-      if (fileName) {
-        const base = fileName.replace(/\\.xml$/i, '');
-        setQuestionnaireName(base);
+
+      // Detect if this is a clinical form or questionnaire
+      let detectedBuilderMode = 'questionnaire';
+      let extractedName = '';
+      let finalParsedItems = parsedItems;
+
+      if (typeof rawXmlText === 'string') {
+        // Check if it's a clinical form
+        if (rawXmlText.includes('<form')) {
+          detectedBuilderMode = 'clinical';
+
+          // Re-parse using clinical form parser
+          const clinicalResult = parseClinicalFormXml(rawXmlText);
+          if (clinicalResult.valid) {
+            finalParsedItems = clinicalResult.items;
+            extractedName = clinicalResult.metadata?.name || '';
+          }
+        } else {
+          // Parse as questionnaire
+          extractedName = extractQuestionnaireName(rawXmlText);
+        }
+
+        // Set the appropriate builder mode
+        if (detectedBuilderMode !== builderMode) {
+          setBuilderMode(detectedBuilderMode);
+        }
       }
+
+      setDroppedItems(finalParsedItems);
+
+      if (fileName) {
+        const base = fileName.replace(/\.xml$/i, '');
+        setQuestionnaireName(base);
+      } else if (extractedName) {
+        setQuestionnaireName(extractedName);
+      }
+
       if (typeof rawXmlText === 'string') {
         try {
-          const hasClinicalForms = /<clinicalforms\\b/i.test(rawXmlText);
-          const hasStatuses = /<statuses\\b/i.test(rawXmlText);
-          const hasSexAttr = /\\bsex\\s*=\\s*['\"]/i.test(rawXmlText);
+          // Check for advanced features that might indicate incompatibility
+          const hasClinicalForms = /<clinicalforms\b/i.test(rawXmlText);
+          const hasStatuses = /<statuses\b/i.test(rawXmlText);
+          const hasSexAttr = /\bsex\s*=\s*['"]/i.test(rawXmlText);
           const hasInformationStyle =
-            /<information\\b[^>]*\\bstyle\\s*=\\s*['\"]/i.test(rawXmlText);
+            /<information\b[^>]*\bstyle\s*=\s*['"]/i.test(rawXmlText);
 
           if (
             hasClinicalForms ||
@@ -402,10 +481,15 @@ function App() {
             if (hasSexAttr) reasons.push('sex attribute detected');
             if (hasInformationStyle)
               reasons.push('Information style attribute detected');
+
+            const builderType =
+              detectedBuilderMode === 'clinical'
+                ? 'Clinical Form'
+                : 'Questionnaire';
             showWarning(
-              `Advanced Questionnaire Detected: ${reasons.join(
+              `Advanced ${builderType} Detected: ${reasons.join(
                 ' and '
-              )} - advanced features present; editing this questionnaire is destructive.`
+              )} - advanced features present; editing may be destructive.`
             );
           }
         } catch (e) {
@@ -413,15 +497,33 @@ function App() {
         }
       }
     },
-    [showWarning, saveToHistory]
+    [showWarning, saveToHistory, builderMode]
   );
 
   // Function to handle direct XML editing
   const handleXmlEdit = useCallback(
     async (editedXmlString) => {
       try {
-        const parsedItems = parseXmlToItems(editedXmlString);
-        const newQuestionnaireName = extractQuestionnaireName(editedXmlString);
+        // Detect if this is a clinical form or questionnaire
+        let detectedBuilderMode = 'questionnaire';
+        let parsedItems = [];
+        let extractedName = '';
+
+        if (editedXmlString.includes('<form')) {
+          detectedBuilderMode = 'clinical';
+
+          const clinicalResult = parseClinicalFormXml(editedXmlString);
+          if (clinicalResult.valid) {
+            parsedItems = clinicalResult.items;
+            extractedName = clinicalResult.metadata?.name || '';
+          } else {
+            throw new Error('Invalid clinical form XML');
+          }
+        } else {
+          // Parse as questionnaire
+          parsedItems = parseXmlToItems(editedXmlString);
+          extractedName = extractQuestionnaireName(editedXmlString);
+        }
 
         saveToHistory();
 
@@ -439,14 +541,16 @@ function App() {
           return newTree;
         };
 
+        // Set the appropriate builder mode if different
+        if (detectedBuilderMode !== builderMode) {
+          setBuilderMode(detectedBuilderMode);
+        }
+
         setDroppedItems(parsedItems);
         setXmlTree(rebuildXmlTree(parsedItems));
 
-        if (
-          newQuestionnaireName &&
-          newQuestionnaireName !== questionnaireName
-        ) {
-          setQuestionnaireName(newQuestionnaireName);
+        if (extractedName && extractedName !== questionnaireName) {
+          setQuestionnaireName(extractedName);
         }
 
         setSelectedIds(new Set());
@@ -457,7 +561,7 @@ function App() {
         return Promise.reject(error);
       }
     },
-    [saveToHistory, questionnaireName, setSelectedIds, setFocusId]
+    [saveToHistory, questionnaireName, setSelectedIds, setFocusId, builderMode]
   );
 
   // Navigate from error panel to a specific item on canvas
@@ -826,6 +930,29 @@ function App() {
       setPendingHistorySave(true);
 
       const draggedType = DRAG_TYPES[draggedItemId];
+
+      // Auto-switch to clinical mode when dropping clinical form components
+      const isClinicalFormComponent = draggedType.startsWith('cf-');
+      const isQuestionnaireComponent = [
+        'page',
+        'question',
+        'field',
+        'information',
+        'table',
+        'table-field',
+      ].includes(draggedType);
+
+      let currentBuilderMode = builderMode;
+      if (isClinicalFormComponent && builderMode === 'questionnaire') {
+        // Auto-switch to clinical mode
+        setBuilderMode('clinical');
+        currentBuilderMode = 'clinical';
+      } else if (isQuestionnaireComponent && builderMode === 'clinical') {
+        // Auto-switch to questionnaire mode
+        setBuilderMode('questionnaire');
+        currentBuilderMode = 'questionnaire';
+      }
+
       const baseItem =
         COMPONENT_SPECIFIC_ITEMS[draggedItemId] || DEFAULT_ITEMS[draggedType];
 
@@ -845,12 +972,16 @@ function App() {
         overId,
         droppedItems,
         findItemById,
-        getParentContext
+        getParentContext,
+        currentBuilderMode
       );
       if (!validation.valid) {
         if (overId !== 'main-canvas') {
           const ctx = getParentContext(droppedItems, overId);
-          if (ctx && canParentAccept(ctx.parentType, draggedType)) {
+          if (
+            ctx &&
+            canParentAccept(ctx.parentType, draggedType, currentBuilderMode)
+          ) {
             setDroppedItems((prev) => insertItemBefore(prev, overId, newItem));
             setXmlTree((prev) => ({ ...prev, [newItem.id]: newItem }));
             setEditingItem({ ...newItem });
@@ -901,12 +1032,16 @@ function App() {
       overId,
       droppedItems,
       findItemById,
-      getParentContext
+      getParentContext,
+      builderMode
     );
     if (!validation.valid) {
       if (overId !== 'main-canvas') {
         const ctx = getParentContext(droppedItems, overId);
-        if (ctx && canParentAccept(ctx.parentType, draggedItem.type)) {
+        if (
+          ctx &&
+          canParentAccept(ctx.parentType, draggedItem.type, builderMode)
+        ) {
           setDroppedItems((prev) => {
             const liveCtx = getParentContext(prev, overId);
             if (!liveCtx) return prev;

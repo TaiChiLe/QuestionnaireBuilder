@@ -50,7 +50,10 @@ function DroppableItem({
           isOver
             ? 'border-2 border-green-500 bg-green-50'
             : `border border-gray-300 ${
-                parentType === 'page' && item.type !== 'page'
+                (parentType === 'page' && item.type !== 'page') ||
+                (parentType === 'cf-group' && !item.type.startsWith('cf-')) ||
+                (parentType === 'cf-panel' && !item.type.startsWith('cf-')) ||
+                (parentType === 'cf-table' && !item.type.startsWith('cf-'))
                   ? 'bg-gray-50'
                   : 'bg-gray-100'
               }`
@@ -76,7 +79,20 @@ function DroppableItem({
             item.type === 'field' ||
             item.type === 'information' ||
             item.type === 'table' ||
-            item.type === 'table-field')
+            item.type === 'table-field' ||
+            // Clinical form editable types
+            item.type === 'cf-textbox' ||
+            item.type === 'cf-textarea' ||
+            item.type === 'cf-radio' ||
+            item.type === 'cf-list' ||
+            item.type === 'cf-check' ||
+            item.type === 'cf-date' ||
+            item.type === 'cf-button' ||
+            item.type === 'cf-info' ||
+            item.type === 'cf-group' ||
+            item.type === 'cf-panel' ||
+            item.type === 'cf-table' ||
+            item.type === 'cf-notes')
         ) {
           onEdit(item.id);
         }
@@ -113,7 +129,10 @@ function DroppableItem({
                 <circle cx="15" cy="10" r="1.5" />
               </svg>
             </button>
-            {item.type === 'page' ? (
+            {item.type === 'page' ||
+            item.type === 'cf-group' ||
+            item.type === 'cf-panel' ||
+            item.type === 'cf-table' ? (
               <button
                 type="button"
                 onClick={(e) => {
@@ -126,7 +145,27 @@ function DroppableItem({
                     ? 'bg-gray-200 hover:bg-gray-300'
                     : 'bg-white hover:bg-gray-100'
                 }`}
-                title={isCollapsed ? 'Expand Page' : 'Collapse Page'}
+                title={
+                  isCollapsed
+                    ? `Expand ${
+                        item.type === 'page'
+                          ? 'Page'
+                          : item.type
+                              .replace('cf-', '')
+                              .charAt(0)
+                              .toUpperCase() +
+                            item.type.replace('cf-', '').slice(1)
+                      }`
+                    : `Collapse ${
+                        item.type === 'page'
+                          ? 'Page'
+                          : item.type
+                              .replace('cf-', '')
+                              .charAt(0)
+                              .toUpperCase() +
+                            item.type.replace('cf-', '').slice(1)
+                      }`
+                }
                 onMouseDown={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
               >
@@ -163,6 +202,12 @@ function DroppableItem({
                 [{item.dataType}]
               </span>
             )}
+          {/* Clinical Form type indicators */}
+          {item.type.startsWith('cf-') && (
+            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              [{item.type.replace('cf-', '').toUpperCase()}]
+            </span>
+          )}
           {item.type === 'question' &&
             item.answers &&
             item.answers.length > 0 && (
@@ -176,6 +221,37 @@ function DroppableItem({
                 }}
                 className="ml-1 w-6 h-6 flex items-center justify-center rounded border border-gray-300 bg-white hover:bg-gray-100 cursor-pointer"
                 title={showAnswers ? 'Hide Answers' : 'Show Answers'}
+                aria-expanded={showAnswers}
+              >
+                <svg
+                  className={`w-3.5 h-3.5 transition-transform duration-150 ${
+                    showAnswers ? 'rotate-90' : ''
+                  }`}
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  stroke="#f03741"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M7 4l6 6-6 6" />
+                </svg>
+              </button>
+            )}
+          {/* Clinical Form radio/list items display */}
+          {(item.type === 'cf-radio' || item.type === 'cf-list') &&
+            item.items &&
+            item.items.length > 0 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowAnswers((s) => !s);
+                }}
+                className="ml-1 w-6 h-6 flex items-center justify-center rounded border border-gray-300 bg-white hover:bg-gray-100 cursor-pointer"
+                title={showAnswers ? 'Hide Options' : 'Show Options'}
                 aria-expanded={showAnswers}
               >
                 <svg
@@ -222,7 +298,20 @@ function DroppableItem({
                   item.type === 'field' ||
                   item.type === 'information' ||
                   item.type === 'table' ||
-                  item.type === 'table-field'
+                  item.type === 'table-field' ||
+                  // Clinical form editable types
+                  item.type === 'cf-textbox' ||
+                  item.type === 'cf-textarea' ||
+                  item.type === 'cf-radio' ||
+                  item.type === 'cf-list' ||
+                  item.type === 'cf-check' ||
+                  item.type === 'cf-date' ||
+                  item.type === 'cf-button' ||
+                  item.type === 'cf-info' ||
+                  item.type === 'cf-group' ||
+                  item.type === 'cf-panel' ||
+                  item.type === 'cf-table' ||
+                  item.type === 'cf-notes'
                 ) {
                   onEdit(item.id);
                 }
@@ -265,13 +354,38 @@ function DroppableItem({
             </ul>
           </div>
         )}
+      {showAnswers &&
+        (item.type === 'cf-radio' || item.type === 'cf-list') &&
+        item.items &&
+        item.items.length > 0 && (
+          <div className="mt-2 ml-14 mb-1 p-2 bg-white border border-gray-200 rounded shadow-inner">
+            <div className="text-xs font-semibold text-gray-600 mb-1">
+              Options ({item.items.length})
+            </div>
+            <ul className="list-disc ml-4 space-y-0.5">
+              {item.items.map((option, index) => (
+                <li
+                  key={option.code || index}
+                  className="text-xs text-gray-700 break-all"
+                >
+                  {option.text || '(empty)'} {option.code && `(${option.code})`}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       {!isCollapsed && children && (
         <div className="mt-2.5 pl-5 border-l-2 border-dashed border-gray-300">
           {children}
         </div>
       )}
-      {item.type === 'page' && !isCollapsed && <div className="h-8 w-full" />}
-      {item.type === 'table' && <div className="h-8 w-full" />}
+      {(item.type === 'page' ||
+        item.type === 'cf-group' ||
+        item.type === 'cf-panel') &&
+        !isCollapsed && <div className="h-8 w-full" />}
+      {(item.type === 'table' || item.type === 'cf-table') && (
+        <div className="h-8 w-full" />
+      )}
     </div>
   );
 }
