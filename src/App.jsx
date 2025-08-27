@@ -10,15 +10,34 @@ import RemoveConfirmationModal from './components/RemoveConfirmationModal';
 import NewXmlModal from './components/NewXmlModal';
 import PreviewSection from './components/PreviewSection';
 import XmlLoader from './components/XmlLoader';
+import UserGuideModal from './components/UserGuideModal';
+import PasteXmlModal from './components/PasteXmlModal';
+import { Sidebar } from './components/sidebar/Sidebar';
+
+// Utils
 import { generateOrderedXML } from './components/utils/xmlBuilder2Solution';
 import { exportXmlStructure } from './components/utils/xmlExporter';
 import {
   parseXmlToItems,
   extractQuestionnaireName,
 } from './components/utils/xmlParser';
-import UserGuideModal from './components/UserGuideModal';
-import PasteXmlModal from './components/PasteXmlModal';
 import { generateId } from './components/utils/id';
+
+// Hooks
+import { useHistory } from './hooks/useHistory';
+import { usePreviewResize } from './hooks/usePreviewResize';
+import { useSelection } from './hooks/useSelection';
+import { useDragAndDropHelpers } from './hooks/useDragAndDropHelpers';
+import { useValidation } from './hooks/useValidation';
+import { useHtmlGenerator } from './hooks/useHtmlGenerator';
+
+// Constants
+import {
+  SIDEBAR_ITEMS,
+  DRAG_TYPES,
+  DEFAULT_ITEMS,
+  COMPONENT_SPECIFIC_ITEMS,
+} from './constants/dragAndDrop';
 
 // The central state to represent the XML tree
 const initialXmlTree = {};
@@ -49,6 +68,8 @@ function App() {
   const [uploadMenuOpen, setUploadMenuOpen] = useState(false);
   const uploadMenuRef = useRef(null);
   const [questionnaireName, setQuestionnaireName] = useState('');
+  // Mode toggle between Questionnaire and Clinical Form builders
+  const [builderMode, setBuilderMode] = useState('questionnaire'); // 'questionnaire' or 'clinical'
   // Central set of question IDs whose answers are expanded
   const [expandedAnswerIds, setExpandedAnswerIds] = useState(() => new Set());
   // Preview panel sizing & collapse
@@ -2032,12 +2053,26 @@ function App() {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
       collisionDetection={pointerWithin}
+      autoScroll={{ layoutShiftCompensation: false }}
     >
       <div className="flex flex-col h-screen w-screen m-0 p-0 overflow-hidden fixed top-0 left-0">
         {/* Header with export button */}
         <div className="px-4 py-2 border-b border-gray-300 bg-gray-50 flex-shrink-0 flex justify-between items-center w-full">
           <h1 className="m-0 text-2xl flex items-center gap-4 flex-1 justify-start whitespace-nowrap">
-            <span>Questionnaire XML Builder</span>
+            <button
+              type="button"
+              onClick={() =>
+                setBuilderMode((prev) =>
+                  prev === 'questionnaire' ? 'clinical' : 'questionnaire'
+                )
+              }
+              className="px-4 py-2 bg-white border-2 border-[#f03741] text-[#f03741] rounded-md hover:bg-[#f03741] hover:text-white transition-colors font-semibold text-xl"
+              title="Toggle between Questionnaire and Clinical Form builders"
+            >
+              {builderMode === 'questionnaire'
+                ? 'Questionnaire XML Builder'
+                : 'Clinical Form XML Builder'}
+            </button>
             <button
               type="button"
               onClick={() => setShowUserGuide(true)}
@@ -2186,7 +2221,7 @@ function App() {
           style={{ height: `calc(100vh - ${previewHeight + 56}px)` }}
         >
           {/* The Sidebar with Draggable items */}
-          <div className="w-64 min-w-64 p-4 bg-gray-100 border-r border-gray-300 overflow-hidden h-full">
+          <div className="w-64 min-w-64 max-w-64 p-4 bg-gray-100 border-r border-gray-300 overflow-x-hidden overflow-y-auto h-full relative">
             {/* Toggle Button for Auto-Edit */}
             <div className="mb-4">
               <button
@@ -2206,257 +2241,809 @@ function App() {
               </button>
             </div>
 
-            <div className="block">
-              {/* Basic Components */}
-              {/* Draggable Components (previously gated by basic mode) */}
-              <>
-                {/* Page is available in both modes */}
-                <div className="mb-2">
-                  <DraggableItem id="form-tag" isValidDrop={isValidDrop}>
-                    <span className="inline-flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-5 h-5 text-gray-600"
-                      >
-                        <rect
-                          x="3"
-                          y="4"
-                          width="18"
-                          height="16"
-                          rx="2"
-                          ry="2"
-                        />
-                        <path d="M3 10h18" />
-                        <path d="M7 14h6" />
-                      </svg>
-                      <span>Page</span>
-                    </span>
-                  </DraggableItem>
-                </div>
+            <div className="block overflow-hidden">
+              {builderMode === 'questionnaire' ? (
+                <>
+                  {/* Questionnaire Components */}
+                  <div className="mb-4">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                      Questionnaire Components
+                    </h3>
+                  </div>
+                  {/* Questionnaire Components */}
+                  <div className="mb-2">
+                    <DraggableItem id="form-tag" isValidDrop={isValidDrop}>
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <rect
+                            x="3"
+                            y="4"
+                            width="18"
+                            height="16"
+                            rx="2"
+                            ry="2"
+                          />
+                          <path d="M3 10h18" />
+                          <path d="M7 14h6" />
+                        </svg>
+                        <span>Page</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
 
-                {/* Basic Field Components */}
-                <div className="mb-2">
-                  <DraggableItem id="date-tag" isValidDrop={isValidDrop}>
-                    <span className="inline-flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-5 h-5 text-gray-600"
-                      >
-                        <rect
-                          x="3"
-                          y="4"
-                          width="18"
-                          height="18"
-                          rx="2"
-                          ry="2"
-                        />
-                        <line x1="16" y1="2" x2="16" y2="6" />
-                        <line x1="8" y1="2" x2="8" y2="6" />
-                        <line x1="3" y1="10" x2="21" y2="10" />
-                      </svg>
-                      <span>Date</span>
-                    </span>
-                  </DraggableItem>
-                </div>
+                  {/* Basic Field Components */}
+                  <div className="mb-2">
+                    <DraggableItem id="date-tag" isValidDrop={isValidDrop}>
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <rect
+                            x="3"
+                            y="4"
+                            width="18"
+                            height="18"
+                            rx="2"
+                            ry="2"
+                          />
+                          <line x1="16" y1="2" x2="16" y2="6" />
+                          <line x1="8" y1="2" x2="8" y2="6" />
+                          <line x1="3" y1="10" x2="21" y2="10" />
+                        </svg>
+                        <span>Date</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
 
-                {/* Information, Table, and Table Field - available in basic mode */}
-                <div className="mb-2">
-                  <DraggableItem id="information-tag" isValidDrop={isValidDrop}>
-                    <span className="inline-flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-5 h-5 text-gray-600"
-                      >
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M12 8h.01" />
-                        <path d="M10.5 12h1.5v4h1.5" />
-                      </svg>
-                      <span>Information</span>
-                    </span>
-                  </DraggableItem>
-                </div>
+                  {/* Information, Table, and Table Field - available in basic mode */}
+                  <div className="mb-2">
+                    <DraggableItem
+                      id="information-tag"
+                      isValidDrop={isValidDrop}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M12 8h.01" />
+                          <path d="M10.5 12h1.5v4h1.5" />
+                        </svg>
+                        <span>Information</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
 
-                {/* Basic Question Components */}
-                <div className="mb-2">
-                  <DraggableItem id="list-box-tag" isValidDrop={isValidDrop}>
-                    <span className="inline-flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-5 h-5 text-gray-600"
-                      >
-                        <rect x="3" y="6" width="18" height="12" rx="2" />
-                        <path d="M7 9h10" />
-                        <path d="M7 12h7" />
-                        <path d="M7 15h5" />
-                      </svg>
-                      <span>List Box</span>
-                    </span>
-                  </DraggableItem>
-                </div>
-                <div className="mb-2">
-                  <DraggableItem
-                    id="multi-select-tag"
-                    isValidDrop={isValidDrop}
-                  >
-                    <span className="inline-flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-5 h-5 text-gray-600"
-                      >
-                        <rect x="3" y="5" width="6" height="6" rx="1" />
-                        <path d="M21 7L13 15l-3-3" />
-                        <rect x="3" y="13" width="6" height="6" rx="1" />
-                        <path d="M21 15L13 23l-3-3" />
-                      </svg>
-                      <span>Multi Select</span>
-                    </span>
-                  </DraggableItem>
-                </div>
+                  {/* Basic Question Components */}
+                  <div className="mb-2">
+                    <DraggableItem id="list-box-tag" isValidDrop={isValidDrop}>
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <rect x="3" y="6" width="18" height="12" rx="2" />
+                          <path d="M7 9h10" />
+                          <path d="M7 12h7" />
+                          <path d="M7 15h5" />
+                        </svg>
+                        <span>List Box</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+                  <div className="mb-2">
+                    <DraggableItem
+                      id="multi-select-tag"
+                      isValidDrop={isValidDrop}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <rect x="3" y="5" width="6" height="6" rx="1" />
+                          <path d="M21 7L13 15l-3-3" />
+                          <rect x="3" y="13" width="6" height="6" rx="1" />
+                          <path d="M21 15L13 23l-3-3" />
+                        </svg>
+                        <span>Multi Select</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
 
-                <div className="mb-2">
-                  <DraggableItem id="notes-tag" isValidDrop={isValidDrop}>
-                    <span className="inline-flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-5 h-5 text-gray-600"
-                      >
-                        <rect x="4" y="4" width="16" height="16" rx="2" />
-                        <path d="M8 8h8" />
-                        <path d="M8 12h8" />
-                        <path d="M8 16h6" />
-                      </svg>
-                      <span>Notes</span>
-                    </span>
-                  </DraggableItem>
-                </div>
+                  <div className="mb-2">
+                    <DraggableItem id="notes-tag" isValidDrop={isValidDrop}>
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <rect x="4" y="4" width="16" height="16" rx="2" />
+                          <path d="M8 8h8" />
+                          <path d="M8 12h8" />
+                          <path d="M8 16h6" />
+                        </svg>
+                        <span>Notes</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
 
-                <div className="mb-2">
-                  <DraggableItem
-                    id="radio-buttons-tag"
-                    isValidDrop={isValidDrop}
-                  >
-                    <span className="inline-flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-5 h-5 text-gray-600"
-                      >
-                        <circle cx="7" cy="7" r="3" />
-                        <circle cx="7" cy="17" r="3" />
-                        <path d="M14 7h7" />
-                        <path d="M14 17h7" />
-                      </svg>
-                      <span>Radio Buttons</span>
-                    </span>
-                  </DraggableItem>
-                </div>
+                  <div className="mb-2">
+                    <DraggableItem
+                      id="radio-buttons-tag"
+                      isValidDrop={isValidDrop}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <circle cx="7" cy="7" r="3" />
+                          <circle cx="7" cy="17" r="3" />
+                          <path d="M14 7h7" />
+                          <path d="M14 17h7" />
+                        </svg>
+                        <span>Radio Buttons</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
 
-                <div className="mb-2">
-                  <DraggableItem id="table-tag" isValidDrop={isValidDrop}>
-                    <span className="inline-flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-5 h-5 text-gray-600"
-                      >
-                        <rect x="3" y="6" width="18" height="12" rx="2" />
-                        <path d="M3 10h18" />
-                        <path d="M9 6v12" />
-                        <path d="M15 6v12" />
-                      </svg>
-                      <span>Table</span>
-                    </span>
-                  </DraggableItem>
-                </div>
-                <div className="mb-2">
-                  <DraggableItem id="table-field-tag" isValidDrop={isValidDrop}>
-                    <span className="inline-flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-5 h-5 text-gray-600"
-                      >
-                        <rect x="4" y="4" width="16" height="16" rx="2" />
-                        <path d="M4 9h16" />
-                        <path d="M9 4v16" />
-                      </svg>
-                      <span>Table Field</span>
-                    </span>
-                  </DraggableItem>
-                </div>
+                  <div className="mb-2">
+                    <DraggableItem id="table-tag" isValidDrop={isValidDrop}>
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <rect x="3" y="6" width="18" height="12" rx="2" />
+                          <path d="M3 10h18" />
+                          <path d="M9 6v12" />
+                          <path d="M15 6v12" />
+                        </svg>
+                        <span>Table</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+                  <div className="mb-2">
+                    <DraggableItem
+                      id="table-field-tag"
+                      isValidDrop={isValidDrop}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <rect x="4" y="4" width="16" height="16" rx="2" />
+                          <path d="M4 9h16" />
+                          <path d="M9 4v16" />
+                        </svg>
+                        <span>Table Field</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
 
-                <div className="mb-2">
-                  <DraggableItem id="text-box-tag" isValidDrop={isValidDrop}>
-                    <span className="inline-flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-5 h-5 text-gray-600"
-                      >
-                        <rect x="4" y="6" width="16" height="4" rx="1" />
-                        <path d="M6 8h12" />
-                      </svg>
-                      <span>Text Box</span>
-                    </span>
-                  </DraggableItem>
-                </div>
-              </>
+                  <div className="mb-2">
+                    <DraggableItem id="text-box-tag" isValidDrop={isValidDrop}>
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <rect x="4" y="6" width="16" height="4" rx="1" />
+                          <path d="M6 8h12" />
+                        </svg>
+                        <span>Text Box</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Clinical Form Components */}
+                  <div className="mb-4">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                      Clinical Form Components
+                    </h3>
+                  </div>
+
+                  {/* Button */}
+                  <div className="mb-2">
+                    <DraggableItem id="button-tag" isValidDrop={isValidDrop}>
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <rect x="3" y="7" width="18" height="10" rx="2" />
+                          <path d="M9 12h6" />
+                        </svg>
+                        <span>Button</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+
+                  {/* Chart */}
+                  <div className="mb-2">
+                    <DraggableItem id="chart-tag" isValidDrop={isValidDrop}>
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <path d="M3 3v18h18" />
+                          <path d="M18 17l-4-4-4 4-4-8" />
+                        </svg>
+                        <span>Chart</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+
+                  {/* Check */}
+                  <div className="mb-2">
+                    <DraggableItem id="check-tag" isValidDrop={isValidDrop}>
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                          <path d="M9 12l2 2 4-4" />
+                        </svg>
+                        <span>Check</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+
+                  {/* Date */}
+                  <div className="mb-2">
+                    <DraggableItem
+                      id="clinical-date-tag"
+                      isValidDrop={isValidDrop}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <rect
+                            x="3"
+                            y="4"
+                            width="18"
+                            height="18"
+                            rx="2"
+                            ry="2"
+                          />
+                          <line x1="16" y1="2" x2="16" y2="6" />
+                          <line x1="8" y1="2" x2="8" y2="6" />
+                          <line x1="3" y1="10" x2="21" y2="10" />
+                        </svg>
+                        <span>Date</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+
+                  {/* Form Button */}
+                  <div className="mb-2">
+                    <DraggableItem
+                      id="form-button-tag"
+                      isValidDrop={isValidDrop}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <rect x="3" y="6" width="18" height="12" rx="2" />
+                          <path d="M12 10v4" />
+                          <path d="M10 12h4" />
+                        </svg>
+                        <span>Form Button</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+
+                  {/* Functions */}
+                  <div className="mb-2">
+                    <DraggableItem id="functions-tag" isValidDrop={isValidDrop}>
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                          <path d="M2 17l10 5 10-5" />
+                          <path d="M2 12l10 5 10-5" />
+                        </svg>
+                        <span>Functions</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+
+                  {/* Future Date */}
+                  <div className="mb-2">
+                    <DraggableItem
+                      id="future-date-tag"
+                      isValidDrop={isValidDrop}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <polyline points="12,6 12,12 16,14" />
+                        </svg>
+                        <span>Future Date</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+
+                  {/* Group */}
+                  <div className="mb-2">
+                    <DraggableItem id="group-tag" isValidDrop={isValidDrop}>
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <rect x="3" y="3" width="7" height="7" />
+                          <rect x="14" y="3" width="7" height="7" />
+                          <rect x="14" y="14" width="7" height="7" />
+                          <rect x="3" y="14" width="7" height="7" />
+                        </svg>
+                        <span>Group</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+
+                  {/* Info */}
+                  <div className="mb-2">
+                    <DraggableItem id="info-tag" isValidDrop={isValidDrop}>
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M12 8h.01" />
+                          <path d="M10.5 12h1.5v4h1.5" />
+                        </svg>
+                        <span>Info</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+
+                  {/* List */}
+                  <div className="mb-2">
+                    <DraggableItem id="list-tag" isValidDrop={isValidDrop}>
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <line x1="8" y1="6" x2="21" y2="6" />
+                          <line x1="8" y1="12" x2="21" y2="12" />
+                          <line x1="8" y1="18" x2="21" y2="18" />
+                          <line x1="3" y1="6" x2="3.01" y2="6" />
+                          <line x1="3" y1="12" x2="3.01" y2="12" />
+                          <line x1="3" y1="18" x2="3.01" y2="18" />
+                        </svg>
+                        <span>List</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+
+                  {/* Metafield */}
+                  <div className="mb-2">
+                    <DraggableItem id="metafield-tag" isValidDrop={isValidDrop}>
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <path d="M4 6h16v2H4z" />
+                          <path d="M4 10h16v2H4z" />
+                          <path d="M4 14h16v2H4z" />
+                          <path d="M4 18h16v2H4z" />
+                        </svg>
+                        <span>Metafield</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+
+                  {/* Metafields */}
+                  <div className="mb-2">
+                    <DraggableItem
+                      id="metafields-tag"
+                      isValidDrop={isValidDrop}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                          <path d="M7 7h10" />
+                          <path d="M7 12h10" />
+                          <path d="M7 17h10" />
+                        </svg>
+                        <span>Metafields</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+
+                  {/* Notes */}
+                  <div className="mb-2">
+                    <DraggableItem
+                      id="clinical-notes-tag"
+                      isValidDrop={isValidDrop}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <rect x="4" y="4" width="16" height="16" rx="2" />
+                          <path d="M8 8h8" />
+                          <path d="M8 12h8" />
+                          <path d="M8 16h6" />
+                        </svg>
+                        <span>Notes</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+
+                  {/* Notes with History */}
+                  <div className="mb-2">
+                    <DraggableItem
+                      id="notes-with-history-tag"
+                      isValidDrop={isValidDrop}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <rect x="4" y="4" width="16" height="16" rx="2" />
+                          <path d="M8 8h8" />
+                          <path d="M8 12h8" />
+                          <path d="M8 16h6" />
+                          <circle cx="18" cy="6" r="3" />
+                        </svg>
+                        <span>Notes with History</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+
+                  {/* Panel */}
+                  <div className="mb-2">
+                    <DraggableItem id="panel-tag" isValidDrop={isValidDrop}>
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                          <path d="M9 3v18" />
+                        </svg>
+                        <span>Panel</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+
+                  {/* Prescriptions */}
+                  <div className="mb-2">
+                    <DraggableItem
+                      id="prescriptions-tag"
+                      isValidDrop={isValidDrop}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <rect
+                            x="2"
+                            y="3"
+                            width="20"
+                            height="14"
+                            rx="2"
+                            ry="2"
+                          />
+                          <line x1="8" y1="21" x2="16" y2="21" />
+                          <line x1="12" y1="17" x2="12" y2="21" />
+                        </svg>
+                        <span>Prescriptions</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+
+                  {/* Radio */}
+                  <div className="mb-2">
+                    <DraggableItem
+                      id="clinical-radio-tag"
+                      isValidDrop={isValidDrop}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <circle cx="12" cy="12" r="3" />
+                          <circle cx="12" cy="12" r="10" />
+                        </svg>
+                        <span>Radio</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+
+                  {/* Services */}
+                  <div className="mb-2">
+                    <DraggableItem id="services-tag" isValidDrop={isValidDrop}>
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <circle cx="12" cy="12" r="3" />
+                          <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
+                        </svg>
+                        <span>Services</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+
+                  {/* Table */}
+                  <div className="mb-2">
+                    <DraggableItem
+                      id="clinical-table-tag"
+                      isValidDrop={isValidDrop}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <rect x="3" y="6" width="18" height="12" rx="2" />
+                          <path d="M3 10h18" />
+                          <path d="M9 6v12" />
+                          <path d="M15 6v12" />
+                        </svg>
+                        <span>Table</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+
+                  {/* Textarea */}
+                  <div className="mb-2">
+                    <DraggableItem id="textarea-tag" isValidDrop={isValidDrop}>
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <rect x="3" y="6" width="18" height="12" rx="2" />
+                          <path d="M7 9h10" />
+                          <path d="M7 13h8" />
+                          <path d="M7 17h6" />
+                        </svg>
+                        <span>Textarea</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+
+                  {/* Textbox */}
+                  <div className="mb-2">
+                    <DraggableItem
+                      id="clinical-textbox-tag"
+                      isValidDrop={isValidDrop}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-5 h-5 text-gray-600"
+                        >
+                          <rect x="4" y="6" width="16" height="4" rx="1" />
+                          <path d="M6 8h12" />
+                        </svg>
+                        <span>Textbox</span>
+                      </span>
+                    </DraggableItem>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
