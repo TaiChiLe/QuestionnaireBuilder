@@ -10,6 +10,8 @@ import RemoveConfirmationModal from './components/RemoveConfirmationModal';
 import NewXmlModal from './components/NewXmlModal';
 import PreviewSection from './components/PreviewSection';
 import XmlLoader from './components/XmlLoader';
+import DragOverlayContent from './components/DragOverlayContent';
+import SidebarDraggableComponents from './components/SidebarDraggableComponents';
 import { generateOrderedXML } from './components/utils/xmlBuilder2Solution';
 import { exportXmlStructure } from './components/utils/xmlExporter';
 import {
@@ -20,6 +22,8 @@ import UserGuideModal from './components/UserGuideModal';
 import PasteXmlModal from './components/PasteXmlModal';
 import { generateId } from './components/utils/id';
 import { generateHtmlPreview } from './components/utils/htmlConverter';
+import { createItemFromDraggedId } from './components/utils/itemFactory';
+import { validateDrop, canParentAccept } from './components/utils/dragDropValidation';
 
 // The central state to represent the XML tree
 const initialXmlTree = {};
@@ -62,7 +66,7 @@ function App() {
     try {
       const stored = localStorage.getItem('qb_auto_edit');
       return stored !== null ? stored === 'true' : true; // default to true
-    } catch (_) {
+    } catch {
       return true;
     }
   });
@@ -72,7 +76,7 @@ function App() {
     try {
       const stored = localStorage.getItem('qb_show_advanced');
       return stored === 'true';
-    } catch (_) {
+    } catch {
       return false;
     }
   });
@@ -80,8 +84,8 @@ function App() {
   useEffect(() => {
     try {
       localStorage.setItem('qb_show_advanced', showAdvanced ? 'true' : 'false');
-    } catch (_) {
-      /* noop */
+    } catch {
+      // Ignore localStorage errors
     }
   }, [showAdvanced]);
 
@@ -173,8 +177,8 @@ function App() {
   useEffect(() => {
     try {
       localStorage.setItem('qb_auto_edit', autoEdit ? 'true' : 'false');
-    } catch (_) {
-      /* noop */
+    } catch {
+      // Ignore localStorage errors
     }
   }, [autoEdit]);
 
@@ -283,71 +287,6 @@ function App() {
     });
   }, []);
 
-  // Move existing item to a new parent inserting before a specific sibling (used for table-field cross-table moves)
-  const moveItemToParentBefore = useCallback(
-    (items, itemId, newParentId, beforeSiblingId) => {
-      let itemToMove = null;
-      const remove = (list) =>
-        list.reduce((acc, itm) => {
-          if (itm.id === itemId) return acc; // drop it
-          if (itm.children && itm.children.length > 0) {
-            const newChildren = remove(itm.children);
-            if (newChildren !== itm.children) {
-              itm = { ...itm, children: newChildren };
-            }
-          }
-          return [...acc, itm];
-        }, []);
-
-      const without = remove(items);
-
-      if (!itemToMove) {
-        // Need to locate original item (second pass) since we discarded it; fetch from original tree first.
-        const find = (list) => {
-          for (const itm of list) {
-            if (itm.id === itemId) return itm;
-            if (itm.children && itm.children.length > 0) {
-              const f = find(itm.children);
-              if (f) return f;
-            }
-          }
-          return null;
-        };
-        itemToMove = find(items);
-      }
-      if (!itemToMove) return items; // nothing to do
-
-      const insert = (list) =>
-        list.map((itm) => {
-          if (itm.id === newParentId) {
-            const children = itm.children || [];
-            const existingIdx = children.findIndex((c) => c.id === itemId);
-            if (existingIdx !== -1) return itm; // already present
-            const beforeIdx = children.findIndex(
-              (c) => c.id === beforeSiblingId
-            );
-            let newChildren;
-            if (beforeIdx === -1) {
-              newChildren = [...children, itemToMove];
-            } else {
-              newChildren = [
-                ...children.slice(0, beforeIdx),
-                itemToMove,
-                ...children.slice(beforeIdx),
-              ];
-            }
-            return { ...itm, children: newChildren };
-          }
-          if (itm.children && itm.children.length > 0) {
-            return { ...itm, children: insert(itm.children) };
-          }
-          return itm;
-        });
-      return insert(without);
-    },
-    []
-  );
-
   // Function to show warning modal
   const showWarning = useCallback((message) => {
     setWarningMessage(message);
@@ -432,7 +371,7 @@ function App() {
         draggedType = 'field';
       }
 
-      const validation = validateDrop(draggedType, over.id, droppedItems);
+      const validation = validateDrop(draggedType, over.id, droppedItems, findItemById, getParentContext);
       if (!validation.valid) {
         const targetItem = findItemById(droppedItems, over.id);
         if (targetItem) {
@@ -466,7 +405,7 @@ function App() {
       }
     }
 
-    const validation = validateDrop(draggedItem.type, over.id, droppedItems);
+    const validation = validateDrop(draggedItem.type, over.id, droppedItems, findItemById, getParentContext);
     if (!validation.valid) {
       // Allow slot insertion for existing item drag
       const ctx = getParentContext(droppedItems, over.id);
@@ -731,8 +670,8 @@ function App() {
               )} - advanced features present; editing this questionnaire is destructive.`
             );
           }
-        } catch (e) {
-          // ignore parse errors
+        } catch {
+          // Ignore parse errors
         }
       }
     },
@@ -853,177 +792,9 @@ function App() {
     return null;
   }, []);
 
-  // Validation rules for drag and drop
-  const validateDrop = useCallback(
-    (draggedType, targetId, droppedItems) => {
-      // Rule 1: Only certain items can be dropped in root level
-      if (targetId === 'main-canvas') {
-        // Only pages can be dropped at root level
-        if (draggedType !== 'page') {
-          return {
-            valid: false,
-            message: 'Only pages can be placed at the root level',
-          };
-        }
-        return { valid: true };
-      }
-
-      // Find the target item and its context
-      const target = findItemById(droppedItems, targetId);
-      if (!target) {
-        return { valid: false, message: 'Target not found' };
-      }
-
-      const context = getParentContext(droppedItems, targetId);
-      if (!context) {
-        return { valid: false, message: 'Could not determine parent context' };
-      }
-
-      // Rule 2: Items can only be dropped into pages or tables
-      if (target.type !== 'page' && target.type !== 'table') {
-        return {
-          valid: false,
-          message: 'Items can only be dropped into pages or tables',
-        };
-      }
-
-      // Rule 3: Only Questions, Fields, Information, and Tables can be dropped into pages (not other pages or table-fields)
-      if (target.type === 'page') {
-        if (draggedType === 'page') {
-          return {
-            valid: false,
-            message: 'Pages cannot be dropped inside other pages',
-          };
-        }
-        if (draggedType === 'table-field') {
-          return {
-            valid: false,
-            message: 'Table fields can only be dropped into tables',
-          };
-        }
-        if (
-          draggedType === 'question' ||
-          draggedType === 'field' ||
-          draggedType === 'information' ||
-          draggedType === 'table'
-        ) {
-          return { valid: true };
-        }
-      }
-
-      // Rule 4: Nothing can be dropped into questions (they are self-contained with answers)
-      if (target.type === 'question') {
-        return {
-          valid: false,
-          message:
-            'Questions cannot contain other items - they have their own answer options',
-        };
-      }
-
-      // Rule 5: Nothing can be dropped into fields
-      if (target.type === 'field') {
-        return {
-          valid: false,
-          message: 'Fields cannot contain other items',
-        };
-      }
-
-      // Rule 6: Only table-fields can be dropped into tables
-      if (target.type === 'table') {
-        if (draggedType !== 'table-field') {
-          return {
-            valid: false,
-            message: 'Only table fields can be dropped into tables',
-          };
-        }
-        return { valid: true };
-      }
-
-      return { valid: true };
-    },
-    [findItemById, getParentContext]
-  );
-
-  // Helper function to determine if a drop zone is valid during drag
-  const isValidDropZone = useCallback(
-    (targetId, activeId) => {
-      if (!activeId) return true;
-
-      // Check if dragging from sidebar
-      const isSidebarItem = [
-        'form-tag',
-        'section-tag',
-        'field-tag',
-        'information-tag',
-        'table-tag',
-        'table-field-tag',
-        // Basic components
-        'list-box-tag',
-        'multi-select-tag',
-        'radio-buttons-tag',
-        'text-box-tag',
-        'notes-tag',
-        'date-tag',
-      ].includes(activeId);
-
-      if (isSidebarItem) {
-        let draggedType;
-        switch (activeId) {
-          case 'form-tag':
-            draggedType = 'page';
-            break;
-          case 'section-tag':
-            draggedType = 'question';
-            break;
-          case 'field-tag':
-            draggedType = 'field';
-            break;
-          case 'information-tag':
-            draggedType = 'information';
-            break;
-          case 'table-tag':
-            draggedType = 'table';
-            break;
-          case 'table-field-tag':
-            draggedType = 'table-field';
-            break;
-          // Basic Question components
-          case 'list-box-tag':
-          case 'multi-select-tag':
-          case 'radio-buttons-tag':
-            draggedType = 'question';
-            break;
-          // Basic Field components
-          case 'text-box-tag':
-          case 'notes-tag':
-          case 'date-tag':
-            draggedType = 'field';
-            break;
-          default:
-            return false;
-        }
-
-        const validation = validateDrop(draggedType, targetId, droppedItems);
-        return validation.valid;
-      } else {
-        // Existing item being moved
-        const draggedItem = findItemById(droppedItems, activeId);
-        if (!draggedItem) return false;
-
-        const validation = validateDrop(
-          draggedItem.type,
-          targetId,
-          droppedItems
-        );
-        return validation.valid;
-      }
-    },
-    [validateDrop, findItemById, droppedItems]
-  );
-
   // Function to reorder items within the same parent
   const reorderItems = useCallback((items, activeId, overId) => {
-    const findItemAndParent = (items, targetId, parent = null, index = -1) => {
+    const findItemAndParent = (items, targetId, parent = null) => {
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
         if (item.id === targetId) {
@@ -1071,66 +842,6 @@ function App() {
     }
 
     return items;
-  }, []);
-
-  // Recursive renderer (lost in refactor) to display items and nested children
-  const renderItems = useCallback(
-    (items, parentType = 'root') =>
-      items.map((item) => {
-        const isPageCollapsed =
-          item.type === 'page' && collapsedPageIds.has(item.id);
-        return (
-          <DroppableItem
-            key={item.id}
-            item={item}
-            onRemove={showRemoveConfirmation}
-            onEdit={handleEditItem}
-            isCollapsed={isPageCollapsed}
-            onToggleCollapse={
-              item.type === 'page'
-                ? () => togglePageCollapse(item.id)
-                : undefined
-            }
-            parentType={parentType}
-            selected={selectedIds.has(item.id)}
-            onSelect={(e) => handleSelectItem(e, item.id)}
-            expandedAnswerIds={expandedAnswerIds}
-          >
-            {!isPageCollapsed &&
-              item.children &&
-              item.children.length > 0 &&
-              renderItems(item.children, item.type)}
-          </DroppableItem>
-        );
-      }),
-    [
-      collapsedPageIds,
-      showRemoveConfirmation,
-      handleEditItem,
-      togglePageCollapse,
-      selectedIds,
-      expandedAnswerIds,
-    ]
-  );
-
-  // === Slot Insertion Helpers ===
-  const canParentAccept = useCallback((parentType, childType) => {
-    const rules = {
-      root: ['page'],
-      page: ['question', 'field', 'information', 'table'],
-      question: [], // Questions should not contain other items - they have their own answers
-      field: [],
-      information: [],
-      table: ['table-field'],
-      'table-field': [],
-    };
-    return (rules[parentType] || []).includes(childType);
-  }, []);
-
-  // ===== Selection & Clipboard Logic =====
-  const clearSelection = useCallback(() => {
-    setSelectedIds(new Set());
-    setFocusId(null);
   }, []);
 
   // Normalize selection to prevent parent+descendant mixes
@@ -1194,6 +905,53 @@ function App() {
     [droppedItems, focusId, normalizeSelection]
   );
 
+  // Recursive renderer (lost in refactor) to display items and nested children
+  const renderItems = useCallback(
+    (items, parentType = 'root') =>
+      items.map((item) => {
+        const isPageCollapsed =
+          item.type === 'page' && collapsedPageIds.has(item.id);
+        return (
+          <DroppableItem
+            key={item.id}
+            item={item}
+            onRemove={showRemoveConfirmation}
+            onEdit={handleEditItem}
+            isCollapsed={isPageCollapsed}
+            onToggleCollapse={
+              item.type === 'page'
+                ? () => togglePageCollapse(item.id)
+                : undefined
+            }
+            parentType={parentType}
+            selected={selectedIds.has(item.id)}
+            onSelect={(e) => handleSelectItem(e, item.id)}
+            expandedAnswerIds={expandedAnswerIds}
+          >
+            {!isPageCollapsed &&
+              item.children &&
+              item.children.length > 0 &&
+              renderItems(item.children, item.type)}
+          </DroppableItem>
+        );
+      }),
+    [
+      collapsedPageIds,
+      showRemoveConfirmation,
+      handleEditItem,
+      togglePageCollapse,
+      selectedIds,
+      expandedAnswerIds,
+      handleSelectItem,
+    ]
+  );
+
+  // ===== Selection & Clipboard Logic =====
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+    setFocusId(null);
+  }, []);
+
   // Extract top-level selected item objects (no descendants because normalized)
   const getSelectedRootNodes = useCallback(() => {
     const roots = [];
@@ -1209,7 +967,7 @@ function App() {
   }, [droppedItems, selectedIds]);
 
   const deepCloneWithNewIds = useCallback((node) => {
-    const { id, children, ...rest } = node;
+    const { children, ...rest } = node;
     const cloned = {
       ...rest,
       id: generateId(node.type),
@@ -1221,7 +979,7 @@ function App() {
 
   // Deep clone collecting new ids (used for selection after paste when copying)
   const deepCloneWithNewIdsAndCollect = useCallback((node, collected) => {
-    const { id, children, ...rest } = node;
+    const { children, ...rest } = node;
     const newId = generateId(node.type);
     collected.push(newId);
     return {
@@ -1270,28 +1028,6 @@ function App() {
     },
     [selectedIds, getSelectedRootNodes, removeMany, deepCloneWithNewIds]
   );
-
-  const insertAfterId = useCallback((items, targetId, newNodes) => {
-    const walk = (list) => {
-      const out = [];
-      for (const itm of list) {
-        out.push(itm);
-        if (itm.id === targetId) {
-          out.push(...newNodes);
-        }
-        if (itm.children && itm.children.length) {
-          const newChildren = walk(itm.children);
-          if (newChildren !== itm.children) {
-            const updated = { ...itm, children: newChildren };
-            out[out.length - (itm.id === targetId ? newNodes.length + 1 : 1)] =
-              updated; // replace last occurrence
-          }
-        }
-      }
-      return out;
-    };
-    return walk(items);
-  }, []);
 
   const handlePaste = useCallback(() => {
     if (!clipboard) return;
@@ -1438,7 +1174,6 @@ function App() {
     focusId,
     getParentContext,
     droppedItems,
-    canParentAccept,
     deepCloneWithNewIdsAndCollect,
     showWarning,
     saveToHistory,
@@ -1562,166 +1297,17 @@ function App() {
     }
 
     if (isSidebarItem) {
-      // Mark that we need to save to history after this operation
+      //dragged type validation
       setPendingHistorySave(true);
 
-      let newItem;
-      let draggedType;
-      switch (draggedItemId) {
-        case 'form-tag':
-          draggedType = 'page';
-          newItem = {
-            id: generateId('page'),
-            type: 'page',
-            label: 'Page',
-            children: [],
-          };
-          break;
-        case 'section-tag':
-          draggedType = 'question';
-          newItem = {
-            id: generateId('question'),
-            type: 'question',
-            label: 'Question',
-            children: [],
-            dataType: 'List Box',
-            textRecord: '',
-            keyField: '',
-            required: false,
-            answers: [{ id: generateId('answer'), text: 'Option 1' }],
-          };
-          break;
-        case 'field-tag':
-          draggedType = 'field';
-          newItem = {
-            id: generateId('field'),
-            type: 'field',
-            label: 'Field',
-            children: [],
-            dataType: 'Text Box',
-            keyField: '',
-            required: false,
-          };
-          break;
-        case 'information-tag':
-          draggedType = 'information';
-          newItem = {
-            id: generateId('information'),
-            type: 'information',
-            label: 'New Information',
-            children: [],
-          };
-          break;
-        case 'table-tag':
-          draggedType = 'table';
-          newItem = {
-            id: generateId('table'),
-            type: 'table',
-            label: 'New Table',
-            children: [],
-            keyField: '',
-            required: false,
-            columns: [
-              { header: 'Column 1', dataType: 'Text Box', required: false },
-            ],
-          };
-          break;
-        case 'table-field-tag':
-          draggedType = 'table-field';
-          newItem = {
-            id: generateId('table-field'),
-            type: 'table-field',
-            label: 'New Table Field',
-            children: [],
-            dataType: 'Text Box',
-            required: false,
-          };
-          break;
-        // Basic Question components
-        case 'list-box-tag':
-          draggedType = 'question';
-          newItem = {
-            id: generateId('question'),
-            type: 'question',
-            label: 'List Box',
-            children: [],
-            dataType: 'List Box',
-            textRecord: '',
-            keyField: '',
-            required: false,
-            answers: [{ id: generateId('answer'), text: 'Option 1' }],
-          };
-          break;
-        case 'multi-select-tag':
-          draggedType = 'question';
-          newItem = {
-            id: generateId('question'),
-            type: 'question',
-            label: 'Multi Select',
-            children: [],
-            dataType: 'Multi Select',
-            textRecord: '',
-            keyField: '',
-            required: false,
-            answers: [{ id: generateId('answer'), text: 'Option 1' }],
-          };
-          break;
-        case 'radio-buttons-tag':
-          draggedType = 'question';
-          newItem = {
-            id: generateId('question'),
-            type: 'question',
-            label: 'Radio Buttons',
-            children: [],
-            dataType: 'Radio Buttons',
-            textRecord: '',
-            keyField: '',
-            required: false,
-            answers: [{ id: generateId('answer'), text: 'Option 1' }],
-          };
-          break;
-        // Basic Field components
-        case 'text-box-tag':
-          draggedType = 'field';
-          newItem = {
-            id: generateId('field'),
-            type: 'field',
-            label: 'Text Box',
-            children: [],
-            dataType: 'Text Box',
-            keyField: '',
-            required: false,
-          };
-          break;
-        case 'notes-tag':
-          draggedType = 'field';
-          newItem = {
-            id: generateId('field'),
-            type: 'field',
-            label: 'Notes',
-            children: [],
-            dataType: 'Text Area',
-            keyField: '',
-            required: false,
-          };
-          break;
-        case 'date-tag':
-          draggedType = 'field';
-          newItem = {
-            id: generateId('field'),
-            type: 'field',
-            label: 'Date',
-            children: [],
-            dataType: 'Date',
-            keyField: '',
-            required: false,
-          };
-          break;
-        default:
-          return;
+      const itemResult = createItemFromDraggedId(draggedItemId);
+      if (!itemResult) {
+        return; // Invalid draggedItemId
       }
 
-      const validation = validateDrop(draggedType, overId, droppedItems);
+      const { draggedType, newItem } = itemResult;
+
+      const validation = validateDrop(draggedType, overId, droppedItems, findItemById, getParentContext);
       if (!validation.valid) {
         if (overId !== 'main-canvas') {
           const ctx = getParentContext(droppedItems, overId);
@@ -1782,7 +1368,7 @@ function App() {
       }
     }
 
-    const validation = validateDrop(draggedItem.type, overId, droppedItems);
+    const validation = validateDrop(draggedItem.type, overId, droppedItems, findItemById, getParentContext);
     if (!validation.valid) {
       // Try slot insertion (insert before overId among siblings of overId)
       if (overId !== 'main-canvas') {
@@ -2057,254 +1643,7 @@ function App() {
             <div className="block overflow-hidden">
               {/* Basic Components */}
               {/* Draggable Components (previously gated by basic mode) */}
-              <>
-                {/* Page is available in both modes */}
-                <div className="mb-2">
-                  <DraggableItem id="form-tag" isValidDrop={isValidDrop}>
-                    <span className="inline-flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-5 h-5 text-gray-600"
-                      >
-                        <rect
-                          x="3"
-                          y="4"
-                          width="18"
-                          height="16"
-                          rx="2"
-                          ry="2"
-                        />
-                        <path d="M3 10h18" />
-                        <path d="M7 14h6" />
-                      </svg>
-                      <span>Page</span>
-                    </span>
-                  </DraggableItem>
-                </div>
-
-                {/* Basic Field Components */}
-                <div className="mb-2">
-                  <DraggableItem id="date-tag" isValidDrop={isValidDrop}>
-                    <span className="inline-flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-5 h-5 text-gray-600"
-                      >
-                        <rect
-                          x="3"
-                          y="4"
-                          width="18"
-                          height="18"
-                          rx="2"
-                          ry="2"
-                        />
-                        <line x1="16" y1="2" x2="16" y2="6" />
-                        <line x1="8" y1="2" x2="8" y2="6" />
-                        <line x1="3" y1="10" x2="21" y2="10" />
-                      </svg>
-                      <span>Date</span>
-                    </span>
-                  </DraggableItem>
-                </div>
-
-                {/* Information, Table, and Table Field - available in basic mode */}
-                <div className="mb-2">
-                  <DraggableItem id="information-tag" isValidDrop={isValidDrop}>
-                    <span className="inline-flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-5 h-5 text-gray-600"
-                      >
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M12 8h.01" />
-                        <path d="M10.5 12h1.5v4h1.5" />
-                      </svg>
-                      <span>Information</span>
-                    </span>
-                  </DraggableItem>
-                </div>
-
-                {/* Basic Question Components */}
-                <div className="mb-2">
-                  <DraggableItem id="list-box-tag" isValidDrop={isValidDrop}>
-                    <span className="inline-flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-5 h-5 text-gray-600"
-                      >
-                        <rect x="3" y="6" width="18" height="12" rx="2" />
-                        <path d="M7 9h10" />
-                        <path d="M7 12h7" />
-                        <path d="M7 15h5" />
-                      </svg>
-                      <span>List Box</span>
-                    </span>
-                  </DraggableItem>
-                </div>
-                <div className="mb-2">
-                  <DraggableItem
-                    id="multi-select-tag"
-                    isValidDrop={isValidDrop}
-                  >
-                    <span className="inline-flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-5 h-5 text-gray-600"
-                      >
-                        <rect x="3" y="5" width="6" height="6" rx="1" />
-                        <path d="M21 7L13 15l-3-3" />
-                        <rect x="3" y="13" width="6" height="6" rx="1" />
-                        <path d="M21 15L13 23l-3-3" />
-                      </svg>
-                      <span>Multi Select</span>
-                    </span>
-                  </DraggableItem>
-                </div>
-
-                <div className="mb-2">
-                  <DraggableItem id="notes-tag" isValidDrop={isValidDrop}>
-                    <span className="inline-flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-5 h-5 text-gray-600"
-                      >
-                        <rect x="4" y="4" width="16" height="16" rx="2" />
-                        <path d="M8 8h8" />
-                        <path d="M8 12h8" />
-                        <path d="M8 16h6" />
-                      </svg>
-                      <span>Notes</span>
-                    </span>
-                  </DraggableItem>
-                </div>
-
-                <div className="mb-2">
-                  <DraggableItem
-                    id="radio-buttons-tag"
-                    isValidDrop={isValidDrop}
-                  >
-                    <span className="inline-flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-5 h-5 text-gray-600"
-                      >
-                        <circle cx="7" cy="7" r="3" />
-                        <circle cx="7" cy="17" r="3" />
-                        <path d="M14 7h7" />
-                        <path d="M14 17h7" />
-                      </svg>
-                      <span>Radio Buttons</span>
-                    </span>
-                  </DraggableItem>
-                </div>
-
-                <div className="mb-2">
-                  <DraggableItem id="table-tag" isValidDrop={isValidDrop}>
-                    <span className="inline-flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-5 h-5 text-gray-600"
-                      >
-                        <rect x="3" y="6" width="18" height="12" rx="2" />
-                        <path d="M3 10h18" />
-                        <path d="M9 6v12" />
-                        <path d="M15 6v12" />
-                      </svg>
-                      <span>Table</span>
-                    </span>
-                  </DraggableItem>
-                </div>
-                <div className="mb-2">
-                  <DraggableItem id="table-field-tag" isValidDrop={isValidDrop}>
-                    <span className="inline-flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-5 h-5 text-gray-600"
-                      >
-                        <rect x="4" y="4" width="16" height="16" rx="2" />
-                        <path d="M4 9h16" />
-                        <path d="M9 4v16" />
-                      </svg>
-                      <span>Table Field</span>
-                    </span>
-                  </DraggableItem>
-                </div>
-
-                <div className="mb-2">
-                  <DraggableItem id="text-box-tag" isValidDrop={isValidDrop}>
-                    <span className="inline-flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="w-5 h-5 text-gray-600"
-                      >
-                        <rect x="4" y="6" width="16" height="4" rx="1" />
-                        <path d="M6 8h12" />
-                      </svg>
-                      <span>Text Box</span>
-                    </span>
-                  </DraggableItem>
-                </div>
-              </>
+              <SidebarDraggableComponents isValidDrop={isValidDrop} />
             </div>
           </div>
 
@@ -2465,7 +1804,9 @@ function App() {
                         window.dispatchEvent(
                           new CustomEvent('qb-advanced-toggle', { detail: next })
                         );
-                      } catch (_) {}
+                      } catch {
+                        // Ignore any errors when dispatching the event
+                      }
                       return next;
                     })
                   }
@@ -2536,275 +1877,7 @@ function App() {
                 : 'bg-blue-50 border-blue-300 text-gray-800'
             }`}
           >
-            {/* Icon + Label mimic sidebar */}
-            {(() => {
-              const common = 'w-5 h-5 text-gray-600 flex-shrink-0';
-              switch (activeId) {
-                case 'form-tag':
-                  return (
-                    <>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className={common}
-                      >
-                        <rect
-                          x="3"
-                          y="4"
-                          width="18"
-                          height="16"
-                          rx="2"
-                          ry="2"
-                        />
-                        <path d="M3 10h18" />
-                        <path d="M7 14h6" />
-                      </svg>
-                      <span>Page</span>
-                    </>
-                  );
-                case 'section-tag':
-                  return (
-                    <>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className={common}
-                      >
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M8 10h8" />
-                        <path d="M8 14h5" />
-                      </svg>
-                      <span>Question</span>
-                    </>
-                  );
-                case 'field-tag':
-                  return (
-                    <>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className={common}
-                      >
-                        <rect x="4" y="5" width="16" height="14" rx="2" />
-                        <path d="M8 9h8" />
-                        <path d="M8 13h5" />
-                      </svg>
-                      <span>Field</span>
-                    </>
-                  );
-                case 'information-tag':
-                  return (
-                    <>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className={common}
-                      >
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M12 8h.01" />
-                        <path d="M10.5 12h1.5v4h1.5" />
-                      </svg>
-                      <span>Information</span>
-                    </>
-                  );
-                case 'table-tag':
-                  return (
-                    <>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className={common}
-                      >
-                        <rect x="3" y="6" width="18" height="12" rx="2" />
-                        <path d="M3 10h18" />
-                        <path d="M9 6v12" />
-                        <path d="M15 6v12" />
-                      </svg>
-                      <span>Table</span>
-                    </>
-                  );
-                case 'table-field-tag':
-                  return (
-                    <>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className={common}
-                      >
-                        <rect x="4" y="4" width="16" height="16" rx="2" />
-                        <path d="M4 9h16" />
-                        <path d="M9 4v16" />
-                      </svg>
-                      <span>Table Field</span>
-                    </>
-                  );
-                case 'list-box-tag':
-                  return (
-                    <>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className={common}
-                      >
-                        <rect x="3" y="6" width="18" height="12" rx="2" />
-                        <path d="M7 9h10" />
-                        <path d="M7 12h7" />
-                        <path d="M7 15h5" />
-                      </svg>
-                      <span>List Box</span>
-                    </>
-                  );
-                case 'multi-select-tag':
-                  return (
-                    <>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className={common}
-                      >
-                        <rect x="3" y="5" width="6" height="6" rx="1" />
-                        <path d="M21 7L13 15l-3-3" />
-                        <rect x="3" y="13" width="6" height="6" rx="1" />
-                        <path d="M21 15L13 23l-3-3" />
-                      </svg>
-                      <span>Multi Select</span>
-                    </>
-                  );
-                case 'radio-buttons-tag':
-                  return (
-                    <>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className={common}
-                      >
-                        <circle cx="7" cy="7" r="3" />
-                        <circle cx="7" cy="17" r="3" />
-                        <path d="M14 7h7" />
-                        <path d="M14 17h7" />
-                      </svg>
-                      <span>Radio Buttons</span>
-                    </>
-                  );
-
-                case 'text-box-tag':
-                  return (
-                    <>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className={common}
-                      >
-                        <rect x="4" y="6" width="16" height="4" rx="1" />
-                        <path d="M6 8h12" />
-                      </svg>
-                      <span>Text Box</span>
-                    </>
-                  );
-                case 'notes-tag':
-                  return (
-                    <>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className={common}
-                      >
-                        <rect x="4" y="4" width="16" height="16" rx="2" />
-                        <path d="M8 8h8" />
-                        <path d="M8 12h8" />
-                        <path d="M8 16h6" />
-                      </svg>
-                      <span>Notes</span>
-                    </>
-                  );
-                case 'date-tag':
-                  return (
-                    <>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className={common}
-                      >
-                        <rect
-                          x="3"
-                          y="4"
-                          width="18"
-                          height="18"
-                          rx="2"
-                          ry="2"
-                        />
-                        <line x1="16" y1="2" x2="16" y2="6" />
-                        <line x1="8" y1="2" x2="8" y2="6" />
-                        <line x1="3" y1="10" x2="21" y2="10" />
-                      </svg>
-                      <span>Date</span>
-                    </>
-                  );
-                default:
-                  // Existing item drag - just show its type text
-                  return <span>Moving Item</span>;
-              }
-            })()}
+            <DragOverlayContent activeId={activeId} />
           </div>
         ) : null}
       </DragOverlay>
