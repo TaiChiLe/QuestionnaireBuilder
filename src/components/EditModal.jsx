@@ -379,6 +379,18 @@ const EditModal = ({
                   ? 'All Patient Data'
                   : editingItem.type === 'cf-prescription'
                   ? 'Prescription'
+                  : editingItem.type === 'cf-provided-services'
+                  ? 'Provided Services'
+                  : editingItem.type === 'cf-radio'
+                  ? 'Radio'
+                  : editingItem.type === 'cf-snom-textbox'
+                  ? 'SNOM Text Box'
+                  : editingItem.type === 'cf-table'
+                  ? 'Table'
+                  : editingItem.type === 'cf-table-field'
+                  ? 'Table Field'
+                  : editingItem.type === 'cf-textbox'
+                  ? 'Text Box'
                   : 'Question'}
                 : {editingItem.label}
               </h2>
@@ -1373,6 +1385,754 @@ const EditModal = ({
                       There are no settings for this control
                     </p>
                   </div>
+                </>
+              )}
+              {editingItem.type === 'cf-provided-services' && (
+                <>
+                  <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
+                    <p className="text-gray-600 text-center italic">
+                      There are no settings for this control
+                    </p>
+                  </div>
+                </>
+              )}
+              {editingItem.type === 'cf-radio' && (
+                <>
+                  <div>
+                    <label className="block mb-1 font-semibold text-gray-700">
+                      Label:
+                    </label>
+                    <input
+                      type="text"
+                      value={editingItem.label || ''}
+                      onChange={(e) => {
+                        const newLabel = e.target.value;
+                        onItemUpdate((prev) => ({
+                          ...prev,
+                          label: newLabel,
+                        }));
+                      }}
+                      ref={firstFieldRef}
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <CodeField
+                    value={editingItem.code}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        code: value,
+                      }))
+                    }
+                  />
+                  <KeyField
+                    value={editingItem.key}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        key: value,
+                      }))
+                    }
+                  />
+                  <TagField
+                    value={editingItem.tag}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        tag: value,
+                      }))
+                    }
+                  />
+                  <GlobalField
+                    value={editingItem.global}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        global: value,
+                      }))
+                    }
+                  />
+                  <RequiredCheckboxField
+                    value={editingItem.cfrequired}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        cfrequired: value,
+                      }))
+                    }
+                  />
+                  <WidthField
+                    value={editingItem.width}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        width: value,
+                      }))
+                    }
+                  />
+                  <div>
+                    <label className="block mb-2 font-semibold text-gray-700">
+                      Options:
+                    </label>
+                    <div className="flex gap-2 mb-2">
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-600 mb-1">
+                          Label
+                        </label>
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-600 mb-1">
+                          Code
+                        </label>
+                      </div>
+                      <div className="w-20">
+                        {/* Spacer for remove button */}
+                      </div>
+                    </div>
+                    {(editingItem.options || []).map((option, index) => (
+                      <div key={option.id} className="flex gap-2 mb-2">
+                        <div className="flex-1">
+                          <input
+                            type="text"
+                            value={option.text || ''}
+                            onChange={(e) => {
+                              const newOptions = [
+                                ...(editingItem.options || []),
+                              ];
+                              newOptions[index] = {
+                                ...option,
+                                text: e.target.value,
+                              };
+                              onItemUpdate((prev) => ({
+                                ...prev,
+                                options: newOptions,
+                              }));
+                            }}
+                            className="w-full p-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Label"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <input
+                            type="number"
+                            value={option.value || ''}
+                            onChange={(e) => {
+                              const newOptions = [
+                                ...(editingItem.options || []),
+                              ];
+                              newOptions[index] = {
+                                ...option,
+                                value: e.target.value,
+                              };
+                              onItemUpdate((prev) => ({
+                                ...prev,
+                                options: newOptions,
+                              }));
+                            }}
+                            className="w-full p-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Code"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newOptions = (
+                              editingItem.options || []
+                            ).filter((_, i) => i !== index);
+                            onItemUpdate((prev) => ({
+                              ...prev,
+                              options: newOptions,
+                            }));
+                          }}
+                          className="px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-md hover:bg-red-100 cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newOption = {
+                          id: `option-${Date.now()}-${
+                            (editingItem.options || []).length + 1
+                          }`,
+                          text: '',
+                          value: '',
+                        };
+                        onItemUpdate((prev) => ({
+                          ...prev,
+                          options: [...(prev.options || []), newOption],
+                        }));
+                      }}
+                      className="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 cursor-pointer"
+                    >
+                      Add Answer Option
+                    </button>
+                  </div>
+                </>
+              )}
+              {editingItem.type === 'cf-snom-textbox' && (
+                <>
+                  <div>
+                    <label className="block mb-1 font-semibold text-gray-700">
+                      Label:
+                    </label>
+                    <input
+                      type="text"
+                      value={editingItem.label || ''}
+                      onChange={(e) => {
+                        const newLabel = e.target.value;
+                        onItemUpdate((prev) => ({
+                          ...prev,
+                          label: newLabel,
+                        }));
+                      }}
+                      ref={firstFieldRef}
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <CodeField
+                    value={editingItem.code}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        code: value,
+                      }))
+                    }
+                  />
+                  <KeyField
+                    value={editingItem.key}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        key: value,
+                      }))
+                    }
+                  />
+                  <TagField
+                    value={editingItem.tag}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        tag: value,
+                      }))
+                    }
+                  />
+                  <GlobalField
+                    value={editingItem.global}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        global: value,
+                      }))
+                    }
+                  />
+                  <div>
+                    <label className="block mb-1 font-semibold text-gray-700">
+                      Subset:
+                    </label>
+                    <p className="text-sm text-gray-600 mb-2">
+                      This will be a numeric SNOMED concept id for the subset.
+                    </p>
+                    <input
+                      type="number"
+                      value={editingItem.subset || ''}
+                      onChange={(e) =>
+                        onItemUpdate((prev) => ({
+                          ...prev,
+                          subset: e.target.value,
+                        }))
+                      }
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter SNOMED concept id"
+                    />
+                  </div>
+                  <WidthField
+                    value={editingItem.width}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        width: value,
+                      }))
+                    }
+                  />
+                </>
+              )}
+              {editingItem.type === 'cf-table' && (
+                <>
+                  <div>
+                    <label className="block mb-1 font-semibold text-gray-700">
+                      Label:
+                    </label>
+                    <input
+                      type="text"
+                      value={editingItem.label || ''}
+                      onChange={(e) => {
+                        const newLabel = e.target.value;
+                        onItemUpdate((prev) => ({
+                          ...prev,
+                          label: newLabel,
+                        }));
+                      }}
+                      ref={firstFieldRef}
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <CodeField
+                    value={editingItem.code}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        code: value,
+                      }))
+                    }
+                  />
+                  <KeyField
+                    value={editingItem.key}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        key: value,
+                      }))
+                    }
+                  />
+                  <TagField
+                    value={editingItem.tag}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        tag: value,
+                      }))
+                    }
+                  />
+                  <GlobalField
+                    value={editingItem.global}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        global: value,
+                      }))
+                    }
+                  />
+                  <RequiredCheckboxField
+                    value={editingItem.cfrequired}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        cfrequired: value,
+                      }))
+                    }
+                  />
+                </>
+              )}
+              {editingItem.type === 'cf-table-field' && (
+                <>
+                  <div>
+                    <label className="block mb-1 font-semibold text-gray-700">
+                      Label:
+                    </label>
+                    <input
+                      type="text"
+                      value={editingItem.label || ''}
+                      onChange={(e) => {
+                        const newLabel = e.target.value;
+                        onItemUpdate((prev) => ({
+                          ...prev,
+                          label: newLabel,
+                        }));
+                      }}
+                      ref={firstFieldRef}
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-1 font-semibold text-gray-700">
+                      Data Type:
+                    </label>
+                    <select
+                      value={editingItem.dataType || 'textbox'}
+                      onChange={(e) =>
+                        onItemUpdate((prev) => ({
+                          ...prev,
+                          dataType: e.target.value,
+                        }))
+                      }
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="textbox">Text Box</option>
+                      <option value="cf-checkbox">Checkbox</option>
+                      <option value="cf-date">Date</option>
+                      <option value="cf-future-date">Future Date</option>
+                      <option value="cf-listbox">List Box</option>
+                      <option value="cf-radio">Radio</option>
+                      <option value="cf-snom-textbox">SNOMED Text Box</option>
+                    </select>
+                  </div>
+
+                  {/* Common fields for simple datatypes: checkbox, date, future-date, and textbox */}
+                  {(editingItem.dataType === 'cf-checkbox' ||
+                    editingItem.dataType === 'cf-date' ||
+                    editingItem.dataType === 'cf-future-date' ||
+                    editingItem.dataType === 'textbox') && (
+                    <>
+                      <CodeField
+                        value={editingItem.code}
+                        onChange={(value) =>
+                          onItemUpdate((prev) => ({
+                            ...prev,
+                            code: value,
+                          }))
+                        }
+                      />
+                      <KeyField
+                        value={editingItem.key}
+                        onChange={(value) =>
+                          onItemUpdate((prev) => ({
+                            ...prev,
+                            key: value,
+                          }))
+                        }
+                      />
+                      <TagField
+                        value={editingItem.tag}
+                        onChange={(value) =>
+                          onItemUpdate((prev) => ({
+                            ...prev,
+                            tag: value,
+                          }))
+                        }
+                      />
+                      <GlobalField
+                        value={editingItem.global}
+                        onChange={(value) =>
+                          onItemUpdate((prev) => ({
+                            ...prev,
+                            global: value,
+                          }))
+                        }
+                      />
+                      <WidthField
+                        value={editingItem.width}
+                        onChange={(value) =>
+                          onItemUpdate((prev) => ({
+                            ...prev,
+                            width: value,
+                          }))
+                        }
+                      />
+                    </>
+                  )}
+
+                  {(editingItem.dataType === 'cf-listbox' ||
+                    editingItem.dataType === 'cf-radio') && (
+                    <>
+                      <CodeField
+                        value={editingItem.code}
+                        onChange={(value) =>
+                          onItemUpdate((prev) => ({
+                            ...prev,
+                            code: value,
+                          }))
+                        }
+                      />
+                      <KeyField
+                        value={editingItem.key}
+                        onChange={(value) =>
+                          onItemUpdate((prev) => ({
+                            ...prev,
+                            key: value,
+                          }))
+                        }
+                      />
+                      <TagField
+                        value={editingItem.tag}
+                        onChange={(value) =>
+                          onItemUpdate((prev) => ({
+                            ...prev,
+                            tag: value,
+                          }))
+                        }
+                      />
+                      <GlobalField
+                        value={editingItem.global}
+                        onChange={(value) =>
+                          onItemUpdate((prev) => ({
+                            ...prev,
+                            global: value,
+                          }))
+                        }
+                      />
+                      <RequiredCheckboxField
+                        value={editingItem.cfrequired}
+                        onChange={(value) =>
+                          onItemUpdate((prev) => ({
+                            ...prev,
+                            cfrequired: value,
+                          }))
+                        }
+                      />
+                      <WidthField
+                        value={editingItem.width}
+                        onChange={(value) =>
+                          onItemUpdate((prev) => ({
+                            ...prev,
+                            width: value,
+                          }))
+                        }
+                      />
+                      <div>
+                        <label className="block mb-2 font-semibold text-gray-700">
+                          {editingItem.dataType === 'cf-listbox' && (
+                            <span>Answer </span>
+                          )}
+                          Options:
+                        </label>
+                        <div className="flex gap-2 mb-2">
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium text-gray-600 mb-1">
+                              Label
+                            </label>
+                          </div>
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium text-gray-600 mb-1">
+                              Code
+                            </label>
+                          </div>
+                          <div className="w-20">
+                            {/* Spacer for remove button */}
+                          </div>
+                        </div>
+                        {(editingItem.options || []).map((option, index) => (
+                          <div key={option.id} className="flex gap-2 mb-2">
+                            <div className="flex-1">
+                              <input
+                                type="text"
+                                value={option.text || ''}
+                                onChange={(e) => {
+                                  const newOptions = [
+                                    ...(editingItem.options || []),
+                                  ];
+                                  newOptions[index] = {
+                                    ...option,
+                                    text: e.target.value,
+                                  };
+                                  onItemUpdate((prev) => ({
+                                    ...prev,
+                                    options: newOptions,
+                                  }));
+                                }}
+                                className="w-full p-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Label"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <input
+                                type="number"
+                                value={option.value || ''}
+                                onChange={(e) => {
+                                  const newOptions = [
+                                    ...(editingItem.options || []),
+                                  ];
+                                  newOptions[index] = {
+                                    ...option,
+                                    value: e.target.value,
+                                  };
+                                  onItemUpdate((prev) => ({
+                                    ...prev,
+                                    options: newOptions,
+                                  }));
+                                }}
+                                className="w-full p-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Code"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newOptions = (
+                                  editingItem.options || []
+                                ).filter((_, i) => i !== index);
+                                onItemUpdate((prev) => ({
+                                  ...prev,
+                                  options: newOptions,
+                                }));
+                              }}
+                              className="px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-md hover:bg-red-100 cursor-pointer"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newOption = {
+                              id: `option-${Date.now()}-${
+                                (editingItem.options || []).length + 1
+                              }`,
+                              text: '',
+                              value: '',
+                            };
+                            onItemUpdate((prev) => ({
+                              ...prev,
+                              options: [...(prev.options || []), newOption],
+                            }));
+                          }}
+                          className="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 cursor-pointer"
+                        >
+                          Add Answer Option
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {editingItem.dataType === 'cf-snom-textbox' && (
+                    <>
+                      <CodeField
+                        value={editingItem.code}
+                        onChange={(value) =>
+                          onItemUpdate((prev) => ({
+                            ...prev,
+                            code: value,
+                          }))
+                        }
+                      />
+                      <KeyField
+                        value={editingItem.key}
+                        onChange={(value) =>
+                          onItemUpdate((prev) => ({
+                            ...prev,
+                            key: value,
+                          }))
+                        }
+                      />
+                      <TagField
+                        value={editingItem.tag}
+                        onChange={(value) =>
+                          onItemUpdate((prev) => ({
+                            ...prev,
+                            tag: value,
+                          }))
+                        }
+                      />
+                      <GlobalField
+                        value={editingItem.global}
+                        onChange={(value) =>
+                          onItemUpdate((prev) => ({
+                            ...prev,
+                            global: value,
+                          }))
+                        }
+                      />
+                      <div>
+                        <label className="block mb-1 font-semibold text-gray-700">
+                          Subset:
+                        </label>
+                        <p className="text-sm text-gray-600 mb-2">
+                          This will be a numeric SNOMED concept id for the
+                          subset.
+                        </p>
+                        <input
+                          type="number"
+                          value={editingItem.subset || ''}
+                          onChange={(e) =>
+                            onItemUpdate((prev) => ({
+                              ...prev,
+                              subset: e.target.value,
+                            }))
+                          }
+                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Enter SNOMED concept id"
+                        />
+                      </div>
+                      <WidthField
+                        value={editingItem.width}
+                        onChange={(value) =>
+                          onItemUpdate((prev) => ({
+                            ...prev,
+                            width: value,
+                          }))
+                        }
+                      />
+                    </>
+                  )}
+                </>
+              )}
+              {editingItem.type === 'cf-textbox' && (
+                <>
+                  <div>
+                    <label className="block mb-1 font-semibold text-gray-700">
+                      Label:
+                    </label>
+                    <input
+                      type="text"
+                      value={editingItem.label || ''}
+                      onChange={(e) => {
+                        const newLabel = e.target.value;
+                        onItemUpdate((prev) => ({
+                          ...prev,
+                          label: newLabel,
+                        }));
+                      }}
+                      ref={firstFieldRef}
+                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <CodeField
+                    value={editingItem.code}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        code: value,
+                      }))
+                    }
+                  />
+                  <KeyField
+                    value={editingItem.key}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        key: value,
+                      }))
+                    }
+                  />
+                  <TagField
+                    value={editingItem.tag}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        tag: value,
+                      }))
+                    }
+                  />
+                  <GlobalField
+                    value={editingItem.global}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        global: value,
+                      }))
+                    }
+                  />
+                  <RequiredCheckboxField
+                    value={editingItem.cfrequired}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        cfrequired: value,
+                      }))
+                    }
+                  />
+                  <WidthField
+                    value={editingItem.width}
+                    onChange={(value) =>
+                      onItemUpdate((prev) => ({
+                        ...prev,
+                        width: value,
+                      }))
+                    }
+                  />
                 </>
               )}
               {editingItem.type === 'field' && (

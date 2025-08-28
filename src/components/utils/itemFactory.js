@@ -395,6 +395,7 @@ export const createItemFromDraggedId = (draggedItemId) => {
         dataType: 'Radio Buttons',
         keyField: '',
         cfrequired: false,
+        code: '',
         options: [
           { id: generateId('option'), text: 'Option 1', value: '1' },
           { id: generateId('option'), text: 'Option 2', value: '2' }
@@ -409,8 +410,12 @@ export const createItemFromDraggedId = (draggedItemId) => {
         type: 'cf-snom-textbox',
         label: 'SNOMED Text Box',
         children: [],
-        dataType: 'SNOMED Text',
-        keyField: '',
+        code: '',
+        key: '',
+        tag: '[Inherit from parent]',
+        global: 'false',
+        subset: '',
+        width: '',
         cfrequired: false,
       };
       break;
@@ -422,7 +427,10 @@ export const createItemFromDraggedId = (draggedItemId) => {
         type: 'cf-table',
         label: 'Table',
         children: [],
-        keyField: '',
+        code: '',
+        key: '',
+        tag: '[Inherit from parent]',
+        global: '',
         cfrequired: false,
         columns: [
           { header: 'Column 1', dataType: 'Text Box', required: false },
@@ -439,8 +447,15 @@ export const createItemFromDraggedId = (draggedItemId) => {
         type: 'cf-table-field',
         label: 'Table Field',
         children: [],
-        dataType: 'Text Box',
-        required: false,
+        dataType: 'textbox',
+        // Common fields that might be needed based on datatype
+        code: '',
+        key: '',
+        tag: '[Inherit from parent]',
+        global: '',
+        subset: '', // for cf-snom-textbox
+        width: '',
+        options: [], // for cf-listbox and cf-radio
         columnIndex: 0,
       };
       break;
@@ -452,11 +467,11 @@ export const createItemFromDraggedId = (draggedItemId) => {
         type: 'cf-textbox',
         label: 'Text Box',
         children: [],
-        dataType: 'Text Box',
-        keyField: '',
-        required: false,
-        maxLength: 255,
-        validation: 'none',
+        code: '',
+        key: '',
+        tag: '[Inherit from parent]',
+        global: '',
+        width: '',
       };
       break;
 
