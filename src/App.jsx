@@ -23,7 +23,10 @@ import PasteXmlModal from './components/PasteXmlModal';
 import { generateId } from './components/utils/id';
 import { generateHtmlPreview } from './components/utils/htmlConverter';
 import { createItemFromDraggedId } from './components/utils/itemFactory';
-import { validateDrop, canParentAccept } from './components/utils/dragDropValidation';
+import {
+  validateDrop,
+  canParentAccept,
+} from './components/utils/dragDropValidation';
 
 // The central state to represent the XML tree
 const initialXmlTree = {};
@@ -371,7 +374,13 @@ function App() {
         draggedType = 'field';
       }
 
-      const validation = validateDrop(draggedType, over.id, droppedItems, findItemById, getParentContext);
+      const validation = validateDrop(
+        draggedType,
+        over.id,
+        droppedItems,
+        findItemById,
+        getParentContext
+      );
       if (!validation.valid) {
         const targetItem = findItemById(droppedItems, over.id);
         if (targetItem) {
@@ -405,7 +414,13 @@ function App() {
       }
     }
 
-    const validation = validateDrop(draggedItem.type, over.id, droppedItems, findItemById, getParentContext);
+    const validation = validateDrop(
+      draggedItem.type,
+      over.id,
+      droppedItems,
+      findItemById,
+      getParentContext
+    );
     if (!validation.valid) {
       // Allow slot insertion for existing item drag
       const ctx = getParentContext(droppedItems, over.id);
@@ -1307,7 +1322,13 @@ function App() {
 
       const { draggedType, newItem } = itemResult;
 
-      const validation = validateDrop(draggedType, overId, droppedItems, findItemById, getParentContext);
+      const validation = validateDrop(
+        draggedType,
+        overId,
+        droppedItems,
+        findItemById,
+        getParentContext
+      );
       if (!validation.valid) {
         if (overId !== 'main-canvas') {
           const ctx = getParentContext(droppedItems, overId);
@@ -1368,7 +1389,13 @@ function App() {
       }
     }
 
-    const validation = validateDrop(draggedItem.type, overId, droppedItems, findItemById, getParentContext);
+    const validation = validateDrop(
+      draggedItem.type,
+      overId,
+      droppedItems,
+      findItemById,
+      getParentContext
+    );
     if (!validation.valid) {
       // Try slot insertion (insert before overId among siblings of overId)
       if (overId !== 'main-canvas') {
@@ -1471,7 +1498,7 @@ function App() {
         {/* Header with export button */}
         <div className="px-4 py-2 border-b border-gray-300 bg-gray-50 flex-shrink-0 flex justify-between items-center w-full">
           <h1 className="m-0 text-2xl flex items-center gap-4 flex-1 justify-start whitespace-nowrap">
-            <span>Questionnaire XML Builder</span>
+            <span>Unofficial Questionnaire XML Builder</span>
             <button
               type="button"
               onClick={() => setShowUserGuide(true)}
@@ -1802,7 +1829,9 @@ function App() {
                       try {
                         // Broadcast change so other components (e.g., PreviewSection) can react immediately
                         window.dispatchEvent(
-                          new CustomEvent('qb-advanced-toggle', { detail: next })
+                          new CustomEvent('qb-advanced-toggle', {
+                            detail: next,
+                          })
                         );
                       } catch {
                         // Ignore any errors when dispatching the event
@@ -1815,7 +1844,11 @@ function App() {
                       ? 'bg-white text-[#f03741] border-[#fbc5c8] hover:bg-[#fff5f5]'
                       : 'bg-[#f03741] text-white border-[#f03741] hover:bg-[#d82f36]'
                   }`}
-                  title={showAdvanced ? 'Hide advanced features' : 'Show advanced features'}
+                  title={
+                    showAdvanced
+                      ? 'Hide advanced features'
+                      : 'Show advanced features'
+                  }
                 >
                   {showAdvanced ? 'Hide Advanced' : 'Show Advanced'}
                 </button>
