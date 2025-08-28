@@ -8,28 +8,12 @@ const EditModal = ({
   onCancel,
   onItemUpdate,
   droppedItems = [],
+  showAdvanced = false,
 }) => {
   const [keyPickerState, setKeyPickerState] = useState({
     open: false,
     conditionIndex: null,
   });
-  // Advanced settings toggle (persisted)
-  const [showAdvanced, setShowAdvanced] = useState(() => {
-    try {
-      const stored = localStorage.getItem('qb_show_advanced');
-      return stored === 'true';
-    } catch (_) {
-      return false;
-    }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('qb_show_advanced', showAdvanced ? 'true' : 'false');
-    } catch (_) {
-      /* noop */
-    }
-  }, [showAdvanced]);
 
   const sanitizeForKey = (text) =>
     (text || '')
@@ -117,7 +101,7 @@ const EditModal = ({
   return (
     <div className="fixed inset-0 flex justify-center items-center z-[2000] bg-black/10">
       <div
-        className="bg-white rounded-lg p-6 w-[600px] max-w-[90vw] max-h-[80vh] overflow-auto shadow-2xl"
+        className="bg-white rounded-lg px-6 w-[600px] max-w-[90vw] max-h-[80vh] overflow-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <form
@@ -128,48 +112,44 @@ const EditModal = ({
           onKeyDown={handleFormKeyDown}
           noValidate
         >
-          <div className="flex items-start justify-between gap-4 mb-5">
-            <h2 className="m-0 font-bold text-xl text-gray-800 flex-1">
-              Edit{' '}
-              {editingItem.type === 'page'
-                ? 'Page'
-                : editingItem.type === 'field'
-                ? 'Field'
-                : editingItem.type === 'information'
-                ? 'Information'
-                : editingItem.type === 'table'
-                ? 'Table'
-                : editingItem.type === 'table-field'
-                ? 'Table Field'
-                : 'Question'}
-              : {editingItem.label}
-            </h2>
-            {editingItem.type !== 'table-field' && (
-              <button
-                type="button"
-                onClick={() =>
-                  setShowAdvanced((v) => {
-                    const next = !v;
-                    try {
-                      // Broadcast change so other components (e.g., PreviewSection) can react immediately
-                      window.dispatchEvent(
-                        new CustomEvent('qb-advanced-toggle', { detail: next })
-                      );
-                    } catch (_) {}
-                    return next;
-                  })
-                }
-                className={`px-3 py-1.5 rounded text-xs font-semibold border transition-colors ${
-                  showAdvanced
-                    ? 'bg-white text-[#f03741] border-[#fbc5c8] hover:bg-[#fff5f5]'
-                    : 'bg-[#f03741] text-white border-[#f03741] hover:bg-[#d82f36]'
-                }`}
-              >
-                {showAdvanced ? 'Hide Advanced' : 'Show Advanced'}
-              </button>
-            )}
+          {/* Fixed Header with Title and Action Buttons */}
+          <div className="sticky top-0 bg-white z-10 border-b border-gray-200 -mx-6 px-6 py-4 mb-4">
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="m-0 font-bold text-xl text-gray-800 flex-1">
+                Edit{' '}
+                {editingItem.type === 'page'
+                  ? 'Page'
+                  : editingItem.type === 'field'
+                  ? 'Field'
+                  : editingItem.type === 'information'
+                  ? 'Information'
+                  : editingItem.type === 'table'
+                  ? 'Table'
+                  : editingItem.type === 'table-field'
+                  ? 'Table Field'
+                  : 'Question'}
+                : {editingItem.label}
+              </h2>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  className="px-5 py-2.5 bg-gray-100 text-gray-800 border border-gray-300 rounded-md hover:bg-gray-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-blue-600 text-white border-0 rounded-md hover:bg-blue-700 cursor-pointer font-semibold"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
           </div>
-          <div className="px-2">
+
+          {/* Scrollable Content Area */}
+          <div className="px-2 pb-6">
             <div className="flex flex-col space-y-4">
               {editingItem.type === 'page' && (
                 <div>
@@ -696,21 +676,6 @@ const EditModal = ({
                   </div>
                 )}
             </div>
-          </div>
-          <div className="flex gap-3 mt-6 justify-end">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="px-5 py-2.5 bg-gray-100 text-gray-800 border border-gray-300 rounded-md hover:bg-gray-200 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2.5 bg-blue-600 text-white border-0 rounded-md hover:bg-blue-700 cursor-pointer font-semibold"
-            >
-              Save Changes
-            </button>
           </div>
         </form>
       </div>
