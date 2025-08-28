@@ -1,7 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { DndContext, pointerWithin, DragOverlay } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
-import DraggableItem from './components/DraggableItem';
 import DroppableArea from './components/DroppableArea';
 import DroppableItem from './components/DroppableItem';
 import EditModal from './components/EditModal';
@@ -27,6 +26,10 @@ import {
   validateDrop,
   canParentAccept,
 } from './components/utils/dragDropValidation';
+import {
+  validateDrop,
+  canParentAccept,
+} from './components/utils/dragDropValidation';
 
 // The central state to represent the XML tree
 const initialXmlTree = {};
@@ -46,6 +49,8 @@ function App() {
   const [itemToRemove, setItemToRemove] = useState(null);
   const [showUserGuide, setShowUserGuide] = useState(false);
   const [showPasteXml, setShowPasteXml] = useState(false);
+  const [showModeSwitch, setShowModeSwitch] = useState(false);
+  const [pendingBuilderMode, setPendingBuilderMode] = useState(null);
   // Builder mode toggle - 'questionnaire' or 'clinical'
   const [builderMode, setBuilderMode] = useState('questionnaire');
   // Multi-select & clipboard state
@@ -316,6 +321,41 @@ function App() {
     setShowWarningModal(true);
   }, []);
 
+  // Function to handle builder mode switch request
+  const handleModeSwitch = useCallback(() => {
+    const newMode =
+      builderMode === 'questionnaire' ? 'clinical' : 'questionnaire';
+
+    // If canvas has items, show confirmation
+    if (droppedItems.length > 0) {
+      setPendingBuilderMode(newMode);
+      setShowModeSwitch(true);
+    } else {
+      // Canvas is empty, switch directly
+      setBuilderMode(newMode);
+    }
+  }, [builderMode, droppedItems.length]);
+
+  // Function to confirm mode switch and clear canvas
+  const confirmModeSwitch = useCallback(() => {
+    if (pendingBuilderMode) {
+      saveToHistory();
+      setDroppedItems([]);
+      setXmlTree({});
+      setSelectedIds(new Set());
+      setFocusId(null);
+      setBuilderMode(pendingBuilderMode);
+      setPendingBuilderMode(null);
+    }
+    setShowModeSwitch(false);
+  }, [pendingBuilderMode, saveToHistory]);
+
+  // Function to cancel mode switch
+  const cancelModeSwitch = useCallback(() => {
+    setPendingBuilderMode(null);
+    setShowModeSwitch(false);
+  }, []);
+
   // Function to close warning modal
   const closeWarning = useCallback(() => {
     setShowWarningModal(false);
@@ -372,6 +412,26 @@ function App() {
       'text-box-tag',
       'notes-tag',
       'date-tag',
+      // Clinical Form components
+      'cf-button-tag',
+      'cf-check-tag',
+      'cf-date-tag',
+      'cf-future-date-tag',
+      'cf-group-tag',
+      'cf-info-tag',
+      'cf-listbox-tag',
+      'cf-notes-tag',
+      'cf-notes-history-tag',
+      'cf-panel-tag',
+      'cf-patient-data-tag',
+      'cf-patient-data-all-tag',
+      'cf-prescription-tag',
+      'cf-provided-services-tag',
+      'cf-radio-tag',
+      'cf-snom-text-box',
+      'cf-table-tag',
+      'cf-table-field-tag',
+      'cf-textbox-tag',
     ].includes(active.id);
 
     if (isSidebarItem) {
@@ -401,11 +461,46 @@ function App() {
         findItemById,
         getParentContext
       );
+      // Clinical Form components
+      if (active.id === 'cf-button-tag') draggedType = 'cf-button';
+      if (active.id === 'cf-check-tag') draggedType = 'cf-checkbox';
+      if (active.id === 'cf-date-tag') draggedType = 'cf-date';
+      if (active.id === 'cf-future-date-tag') draggedType = 'cf-future-date';
+      if (active.id === 'cf-group-tag') draggedType = 'cf-group';
+      if (active.id === 'cf-info-tag') draggedType = 'cf-info';
+      if (active.id === 'cf-listbox-tag') draggedType = 'cf-listbox';
+      if (active.id === 'cf-notes-tag') draggedType = 'cf-notes';
+      if (active.id === 'cf-notes-history-tag')
+        draggedType = 'cf-notes-history';
+      if (active.id === 'cf-panel-tag') draggedType = 'cf-panel';
+      if (active.id === 'cf-patient-data-tag') draggedType = 'cf-patient-data';
+      if (active.id === 'cf-patient-data-all-tag')
+        draggedType = 'cf-patient-data-all';
+      if (active.id === 'cf-prescription-tag') draggedType = 'cf-prescription';
+      if (active.id === 'cf-provided-services-tag')
+        draggedType = 'cf-provided-services';
+      if (active.id === 'cf-radio-tag') draggedType = 'cf-radio';
+      if (active.id === 'cf-snom-text-box') draggedType = 'cf-snom-textbox';
+      if (active.id === 'cf-table-tag') draggedType = 'cf-table';
+      if (active.id === 'cf-table-field-tag') draggedType = 'cf-table-field';
+      if (active.id === 'cf-textbox-tag') draggedType = 'cf-textbox';
+
+      const validation = validateDrop(
+        draggedType,
+        over.id,
+        droppedItems,
+        findItemById,
+        getParentContext,
+        builderMode
+      );
       if (!validation.valid) {
         const targetItem = findItemById(droppedItems, over.id);
         if (targetItem) {
           const ctx = getParentContext(droppedItems, over.id);
-          if (ctx && canParentAccept(ctx.parentType, draggedType)) {
+          if (
+            ctx &&
+            canParentAccept(ctx.parentType, draggedType, builderMode)
+          ) {
             setIsValidDrop(true);
             return;
           }
@@ -441,10 +536,21 @@ function App() {
       findItemById,
       getParentContext
     );
+    const validation = validateDrop(
+      draggedItem.type,
+      over.id,
+      droppedItems,
+      findItemById,
+      getParentContext,
+      builderMode
+    );
     if (!validation.valid) {
       // Allow slot insertion for existing item drag
       const ctx = getParentContext(droppedItems, over.id);
-      if (ctx && canParentAccept(ctx.parentType, draggedItem.type)) {
+      if (
+        ctx &&
+        canParentAccept(ctx.parentType, draggedItem.type, builderMode)
+      ) {
         setIsValidDrop(true);
       } else {
         setIsValidDrop(false);
@@ -1069,12 +1175,41 @@ function App() {
   const handlePaste = useCallback(() => {
     if (!clipboard) return;
 
-    // Root-level paste fallback: if no focus and clipboard contains only pages, append at root
+    // Root-level paste fallback: if no focus and clipboard contains valid root items, append at root
     if (!focusId) {
       const roots = clipboard.items;
       if (roots.length === 0) return;
-      const allPages = roots.every((n) => n.type === 'page');
-      if (!allPages) return; // need a focus context for non-page types
+
+      // Define clinical form component types
+      const clinicalFormTypes = [
+        'cf-button',
+        'cf-checkbox',
+        'cf-date',
+        'cf-future-date',
+        'cf-group',
+        'cf-info',
+        'cf-listbox',
+        'cf-notes',
+        'cf-notes-history',
+        'cf-panel',
+        'cf-patient-data',
+        'cf-patient-data-all',
+        'cf-provided-services',
+        'cf-radio',
+        'cf-snom-textbox',
+        'cf-table',
+        'cf-table-field',
+        'cf-textbox',
+      ];
+
+      // Check if all items are valid for root level based on current mode
+      const allValidForRoot = roots.every(
+        (n) =>
+          n.type === 'page' ||
+          (builderMode === 'clinical' && clinicalFormTypes.includes(n.type))
+      );
+
+      if (!allValidForRoot) return; // need a focus context for non-root-level types
       const collectedIds = [];
       saveToHistory();
       setDroppedItems((prev) => {
@@ -1105,7 +1240,7 @@ function App() {
     if (isContainer) {
       // Check if any clipboard item can be a child of this container
       const allowedInside = roots.filter((n) =>
-        canParentAccept(targetNode.type, n.type)
+        canParentAccept(targetNode.type, n.type, builderMode)
       );
       if (allowedInside.length > 0) {
         mode = 'append-children';
@@ -1119,7 +1254,8 @@ function App() {
       const allowed = [];
       const skipped = [];
       for (const node of roots) {
-        if (canParentAccept(targetNode.type, node.type)) allowed.push(node);
+        if (canParentAccept(targetNode.type, node.type, builderMode))
+          allowed.push(node);
         else skipped.push(node);
       }
       if (allowed.length === 0) {
@@ -1162,7 +1298,7 @@ function App() {
     const skipped = [];
     for (const node of roots) {
       const pt = parentId ? parentType : 'root';
-      if (canParentAccept(pt, node.type)) allowed.push(node);
+      if (canParentAccept(pt, node.type, builderMode)) allowed.push(node);
       else skipped.push(node);
     }
     if (allowed.length === 0) {
@@ -1314,6 +1450,25 @@ function App() {
       'text-box-tag',
       'notes-tag',
       'date-tag',
+      'cf-button-tag',
+      'cf-check-tag',
+      'cf-date-tag',
+      'cf-future-date-tag',
+      'cf-group-tag',
+      'cf-info-tag',
+      'cf-listbox-tag',
+      'cf-notes-tag',
+      'cf-notes-history-tag',
+      'cf-panel-tag',
+      'cf-patient-data-tag',
+      'cf-patient-data-all-tag',
+      'cf-prescription-tag',
+      'cf-provided-services-tag',
+      'cf-radio-tag',
+      'cf-snom-text-box',
+      'cf-table-tag',
+      'cf-table-field-tag',
+      'cf-textbox-tag',
     ].includes(draggedItemId);
 
     const getAllItemIds = (items) => {
@@ -1351,10 +1506,21 @@ function App() {
         findItemById,
         getParentContext
       );
+      const validation = validateDrop(
+        draggedType,
+        overId,
+        droppedItems,
+        findItemById,
+        getParentContext,
+        builderMode
+      );
       if (!validation.valid) {
         if (overId !== 'main-canvas') {
           const ctx = getParentContext(droppedItems, overId);
-          if (ctx && canParentAccept(ctx.parentType, draggedType)) {
+          if (
+            ctx &&
+            canParentAccept(ctx.parentType, draggedType, builderMode)
+          ) {
             setDroppedItems((prev) => insertItemBefore(prev, overId, newItem));
             setXmlTree((prev) => ({ ...prev, [newItem.id]: newItem }));
 
@@ -1418,11 +1584,22 @@ function App() {
       findItemById,
       getParentContext
     );
+    const validation = validateDrop(
+      draggedItem.type,
+      overId,
+      droppedItems,
+      findItemById,
+      getParentContext,
+      builderMode
+    );
     if (!validation.valid) {
       // Try slot insertion (insert before overId among siblings of overId)
       if (overId !== 'main-canvas') {
         const ctx = getParentContext(droppedItems, overId);
-        if (ctx && canParentAccept(ctx.parentType, draggedItem.type)) {
+        if (
+          ctx &&
+          canParentAccept(ctx.parentType, draggedItem.type, builderMode)
+        ) {
           setDroppedItems((prev) => {
             const liveCtx = getParentContext(prev, overId); // recompute in current state
             if (!liveCtx) return prev;
@@ -1484,8 +1661,39 @@ function App() {
     }
 
     if (overId === 'main-canvas') {
-      if (draggedItem.type !== 'page') {
-        showWarning('Only pages can be moved to the root level');
+      // Define clinical form component types
+      const clinicalFormTypes = [
+        'cf-button',
+        'cf-checkbox',
+        'cf-date',
+        'cf-future-date',
+        'cf-group',
+        'cf-info',
+        'cf-listbox',
+        'cf-notes',
+        'cf-notes-history',
+        'cf-panel',
+        'cf-patient-data',
+        'cf-patient-data-all',
+        'cf-prescription',
+        'cf-provided-services',
+        'cf-radio',
+        'cf-snom-textbox',
+        'cf-table',
+        'cf-table-field',
+        'cf-textbox',
+      ];
+
+      // Allow pages in both modes, clinical form components only in clinical mode
+      const isValidForRoot =
+        draggedItem.type === 'page' ||
+        (builderMode === 'clinical' &&
+          clinicalFormTypes.includes(draggedItem.type));
+
+      if (!isValidForRoot) {
+        const modeText =
+          builderMode === 'clinical' ? 'clinical form components' : 'pages';
+        showWarning(`Only ${modeText} can be moved to the root level`);
         return;
       }
       setDroppedItems((prev) => moveItemToTopLevel(prev, draggedItemId));
@@ -1537,13 +1745,22 @@ function App() {
                   builderMode === 'questionnaire' ? 'clinical' : 'questionnaire'
                 )
               }
+              onClick={handleModeSwitch}
               className="px-4 py-2 rounded-lg border-2 border-[#f03741] bg-white hover:bg-[#f03741] hover:text-white transition-colors font-semibold text-lg"
               title={`Switch to ${
                 builderMode === 'questionnaire'
                   ? 'Clinical Form'
                   : 'Questionnaire'
               } Builder`}
+              title={`Switch to ${
+                builderMode === 'questionnaire'
+                  ? 'Clinical Form'
+                  : 'Questionnaire'
+              } Builder`}
             >
+              {builderMode === 'questionnaire'
+                ? 'Questionnaire XML Builder'
+                : 'Clinical Form Builder'}
               {builderMode === 'questionnaire'
                 ? 'Questionnaire XML Builder'
                 : 'Clinical Form Builder'}
@@ -1791,6 +2008,10 @@ function App() {
                 isValidDrop={isValidDrop}
                 builderMode={builderMode}
               />
+              <SidebarDraggableComponents
+                isValidDrop={isValidDrop}
+                builderMode={builderMode}
+              />
             </div>
           </div>
 
@@ -1990,6 +2211,9 @@ function App() {
                           new CustomEvent('qb-advanced-toggle', {
                             detail: next,
                           })
+                          new CustomEvent('qb-advanced-toggle', {
+                            detail: next,
+                          })
                         );
                       } catch {
                         // Ignore any errors when dispatching the event
@@ -2002,6 +2226,11 @@ function App() {
                       ? 'bg-white text-[#f03741] border-[#fbc5c8] hover:bg-[#fff5f5]'
                       : 'bg-[#f03741] text-white border-[#f03741] hover:bg-[#d82f36]'
                   }`}
+                  title={
+                    showAdvanced
+                      ? 'Hide advanced features'
+                      : 'Show advanced features'
+                  }
                   title={
                     showAdvanced
                       ? 'Hide advanced features'
@@ -2098,6 +2327,37 @@ function App() {
         onClose={closeWarning}
         isDarkMode={isDarkMode}
       />
+
+      {/* Mode Switch Confirmation Modal */}
+      {showModeSwitch && (
+        <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Switch Builder Mode</h3>
+            <p className="text-gray-600 mb-6">
+              Switching to{' '}
+              {pendingBuilderMode === 'clinical'
+                ? 'Clinical Form'
+                : 'Questionnaire'}{' '}
+              Builder will remove all items currently on the canvas. This action
+              cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={cancelModeSwitch}
+                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmModeSwitch}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+              >
+                Continue & Clear Canvas
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Remove Confirmation Modal */}
       <RemoveConfirmationModal

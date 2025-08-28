@@ -1,5 +1,4 @@
 import { useDroppable } from '@dnd-kit/core';
-import { useMemo } from 'react';
 
 function DroppableArea(props) {
   const { setNodeRef, isOver } = useDroppable({ id: props.id });

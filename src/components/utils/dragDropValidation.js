@@ -7,11 +7,22 @@
  * Determines if a parent type can accept a child type based on questionnaire structure rules
  * @param {string} parentType - The type of the parent container ('root', 'page', 'table', etc.)
  * @param {string} childType - The type of the child item to be added
+ * @param {string} builderMode - The current builder mode ('questionnaire' or 'clinical')
  * @returns {boolean} - Whether the parent can accept the child
  */
-export const canParentAccept = (parentType, childType) => {
+export const canParentAccept = (parentType, childType, builderMode = 'questionnaire') => {
+  // Clinical form component types
+  const clinicalFormTypes = [
+    'cf-button', 'cf-checkbox', 'cf-date', 'cf-future-date', 'cf-group',
+    'cf-info', 'cf-listbox', 'cf-notes', 'cf-notes-history', 'cf-panel',
+    'cf-patient-data', 'cf-patient-data-all', 'cf-prescription', 'cf-provided-services',
+    'cf-radio', 'cf-snom-textbox', 'cf-table', 'cf-table-field', 'cf-textbox'
+  ];
+
   const rules = {
-    root: ['page'],
+    root: builderMode === 'clinical'
+      ? ['page', ...clinicalFormTypes]
+      : ['page'],
     page: ['question', 'field', 'information', 'table'],
     question: [], // Questions should not contain other items - they have their own answers
     field: [],
@@ -29,16 +40,29 @@ export const canParentAccept = (parentType, childType) => {
  * @param {Array} droppedItems - The current array of dropped items
  * @param {Function} findItemById - Function to find an item by ID in the tree
  * @param {Function} getParentContext - Function to get parent context for an item
+ * @param {string} builderMode - The current builder mode ('questionnaire' or 'clinical')
  * @returns {Object} - Validation result with 'valid' boolean and optional 'message'
  */
-export const validateDrop = (draggedType, targetId, droppedItems, findItemById, getParentContext) => {
+export const validateDrop = (draggedType, targetId, droppedItems, findItemById, getParentContext, builderMode = 'questionnaire') => {
   // Rule 1: Only certain items can be dropped in root level
   if (targetId === 'main-canvas') {
-    // Only pages can be dropped at root level
-    if (draggedType !== 'page') {
+    // Define clinical form component types
+    const clinicalFormTypes = [
+      'cf-button', 'cf-checkbox', 'cf-date', 'cf-future-date', 'cf-group',
+      'cf-info', 'cf-listbox', 'cf-notes', 'cf-notes-history', 'cf-panel',
+      'cf-patient-data', 'cf-patient-data-all', 'cf-prescription', 'cf-provided-services',
+      'cf-radio', 'cf-snom-textbox', 'cf-table', 'cf-table-field', 'cf-textbox'
+    ];
+
+    // Allow pages in both modes, clinical form components only in clinical mode
+    const isValidForRoot = draggedType === 'page' ||
+      (builderMode === 'clinical' && clinicalFormTypes.includes(draggedType));
+
+    if (!isValidForRoot) {
+      const modeText = builderMode === 'clinical' ? 'clinical form components' : 'pages';
       return {
         valid: false,
-        message: 'Only pages can be placed at the root level',
+        message: `Only ${modeText} can be placed at the root level`,
       };
     }
     return { valid: true };

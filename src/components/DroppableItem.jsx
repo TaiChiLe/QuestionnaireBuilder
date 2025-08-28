@@ -89,7 +89,27 @@ function DroppableItem({
             item.type === 'field' ||
             item.type === 'information' ||
             item.type === 'table' ||
-            item.type === 'table-field')
+            item.type === 'table-field' ||
+            // Clinical Form components
+            item.type === 'cf-button' ||
+            item.type === 'cf-checkbox' ||
+            item.type === 'cf-date' ||
+            item.type === 'cf-future-date' ||
+            item.type === 'cf-group' ||
+            item.type === 'cf-info' ||
+            item.type === 'cf-listbox' ||
+            item.type === 'cf-notes' ||
+            item.type === 'cf-notes-history' ||
+            item.type === 'cf-panel' ||
+            item.type === 'cf-patient-data' ||
+            item.type === 'cf-patient-data-all' ||
+            item.type === 'cf-prescription' ||
+            item.type === 'cf-provided-services' ||
+            item.type === 'cf-radio' ||
+            item.type === 'cf-snom-textbox' ||
+            item.type === 'cf-table' ||
+            item.type === 'cf-table-field' ||
+            item.type === 'cf-textbox')
         ) {
           onEdit(item.id);
         }
@@ -276,7 +296,27 @@ function DroppableItem({
                   item.type === 'field' ||
                   item.type === 'information' ||
                   item.type === 'table' ||
-                  item.type === 'table-field'
+                  item.type === 'table-field' ||
+                  // Clinical Form components
+                  item.type === 'cf-button' ||
+                  item.type === 'cf-checkbox' ||
+                  item.type === 'cf-date' ||
+                  item.type === 'cf-future-date' ||
+                  item.type === 'cf-group' ||
+                  item.type === 'cf-info' ||
+                  item.type === 'cf-listbox' ||
+                  item.type === 'cf-notes' ||
+                  item.type === 'cf-notes-history' ||
+                  item.type === 'cf-panel' ||
+                  item.type === 'cf-patient-data' ||
+                  item.type === 'cf-patient-data-all' ||
+                  item.type === 'cf-prescription' ||
+                  item.type === 'cf-provided-services' ||
+                  item.type === 'cf-radio' ||
+                  item.type === 'cf-snom-textbox' ||
+                  item.type === 'cf-table' ||
+                  item.type === 'cf-table-field' ||
+                  item.type === 'cf-textbox'
                 ) {
                   onEdit(item.id);
                 }
