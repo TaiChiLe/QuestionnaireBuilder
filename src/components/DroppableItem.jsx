@@ -158,7 +158,10 @@ function DroppableItem({
                 <circle cx="15" cy="10" r="1.5" />
               </svg>
             </button>
-            {item.type === 'page' ? (
+            {item.type === 'page' ||
+            item.type === 'cf-group' ||
+            item.type === 'cf-panel' ||
+            item.type === 'cf-table' ? (
               <button
                 type="button"
                 onClick={(e) => {
@@ -175,7 +178,27 @@ function DroppableItem({
                     ? 'bg-gray-700 hover:bg-gray-600 border-gray-600'
                     : 'bg-white hover:bg-gray-100'
                 }`}
-                title={isCollapsed ? 'Expand Page' : 'Collapse Page'}
+                title={
+                  isCollapsed
+                    ? `Expand ${
+                        item.type === 'page'
+                          ? 'Page'
+                          : item.type === 'cf-group'
+                          ? 'Group'
+                          : item.type === 'cf-panel'
+                          ? 'Panel'
+                          : 'Table'
+                      }`
+                    : `Collapse ${
+                        item.type === 'page'
+                          ? 'Page'
+                          : item.type === 'cf-group'
+                          ? 'Group'
+                          : item.type === 'cf-panel'
+                          ? 'Panel'
+                          : 'Table'
+                      }`
+                }
                 onMouseDown={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
               >
@@ -263,6 +286,21 @@ function DroppableItem({
               } ml-2 font-normal mr-2`}
             >
               [Table]
+            </span>
+          )}
+          {item.type === 'cf-group' && (
+            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              [Group]
+            </span>
+          )}
+          {item.type === 'cf-panel' && (
+            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              [Panel]
+            </span>
+          )}
+          {item.type === 'cf-table' && (
+            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              [CF Table]
             </span>
           )}
           {item.type === 'information' && (
@@ -392,6 +430,15 @@ function DroppableItem({
         </div>
       )}
       {item.type === 'page' && !isCollapsed && <div className="h-8 w-full" />}
+      {item.type === 'cf-group' && !isCollapsed && (
+        <div className="h-8 w-full" />
+      )}
+      {item.type === 'cf-panel' && !isCollapsed && (
+        <div className="h-8 w-full" />
+      )}
+      {item.type === 'cf-table' && !isCollapsed && (
+        <div className="h-8 w-full" />
+      )}
       {item.type === 'table' && <div className="h-8 w-full" />}
     </div>
   );

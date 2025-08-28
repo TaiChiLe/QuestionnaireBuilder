@@ -57,7 +57,7 @@ function App() {
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [focusId, setFocusId] = useState(null);
   const [clipboard, setClipboard] = useState(null); // { items: [], isCut: bool }
-  // Track collapsed page IDs for UI collapsing/expanding large forms
+  // Track collapsed container IDs (pages, cf-groups, cf-panels) for UI collapsing/expanding large forms
   const [collapsedPageIds, setCollapsedPageIds] = useState(() => new Set());
   // XML dropdown state & ref to hidden file input component
   const xmlLoaderRef = useRef(null);
@@ -306,11 +306,11 @@ function App() {
     };
   }, [uploadMenuOpen]);
 
-  const togglePageCollapse = useCallback((pageId) => {
+  const togglePageCollapse = useCallback((containerId) => {
     setCollapsedPageIds((prev) => {
       const next = new Set(prev);
-      if (next.has(pageId)) next.delete(pageId);
-      else next.add(pageId);
+      if (next.has(containerId)) next.delete(containerId);
+      else next.add(containerId);
       return next;
     });
   }, []);
@@ -331,24 +331,42 @@ function App() {
       setPendingBuilderMode(newMode);
       setShowModeSwitch(true);
     } else {
-      // Canvas is empty, switch directly
+      // Canvas is empty, switch directly and clear history
       setBuilderMode(newMode);
+      setClipboard(null); // Clear clipboard as it may contain incompatible items
+
+      // Reset history stack even when canvas is empty to prevent undo/redo with incompatible data
+      const initialState = {
+        droppedItems: [],
+        xmlTree: {},
+      };
+      setHistoryStack([initialState]);
+      setHistoryIndex(0);
     }
   }, [builderMode, droppedItems.length]);
 
   // Function to confirm mode switch and clear canvas
   const confirmModeSwitch = useCallback(() => {
     if (pendingBuilderMode) {
-      saveToHistory();
+      // Clear all state without saving to history since we're switching modes
       setDroppedItems([]);
       setXmlTree({});
       setSelectedIds(new Set());
       setFocusId(null);
+      setClipboard(null); // Clear clipboard as it may contain incompatible items
       setBuilderMode(pendingBuilderMode);
       setPendingBuilderMode(null);
+
+      // Reset history stack to prevent undo/redo with incompatible data
+      const initialState = {
+        droppedItems: [],
+        xmlTree: {},
+      };
+      setHistoryStack([initialState]);
+      setHistoryIndex(0);
     }
     setShowModeSwitch(false);
-  }, [pendingBuilderMode, saveToHistory]);
+  }, [pendingBuilderMode]);
 
   // Function to cancel mode switch
   const cancelModeSwitch = useCallback(() => {
@@ -1050,17 +1068,24 @@ function App() {
   const renderItems = useCallback(
     (items, parentType = 'root') =>
       items.map((item) => {
-        const isPageCollapsed =
-          item.type === 'page' && collapsedPageIds.has(item.id);
+        const isContainerCollapsed =
+          (item.type === 'page' ||
+            item.type === 'cf-group' ||
+            item.type === 'cf-panel' ||
+            item.type === 'cf-table') &&
+          collapsedPageIds.has(item.id);
         return (
           <DroppableItem
             key={item.id}
             item={item}
             onRemove={showRemoveConfirmation}
             onEdit={handleEditItem}
-            isCollapsed={isPageCollapsed}
+            isCollapsed={isContainerCollapsed}
             onToggleCollapse={
-              item.type === 'page'
+              item.type === 'page' ||
+              item.type === 'cf-group' ||
+              item.type === 'cf-panel' ||
+              item.type === 'cf-table'
                 ? () => togglePageCollapse(item.id)
                 : undefined
             }
@@ -1070,7 +1095,7 @@ function App() {
             expandedAnswerIds={expandedAnswerIds}
             isDarkMode={isDarkMode}
           >
-            {!isPageCollapsed &&
+            {!isContainerCollapsed &&
               item.children &&
               item.children.length > 0 &&
               renderItems(item.children, item.type)}
@@ -1198,16 +1223,17 @@ function App() {
         'cf-radio',
         'cf-snom-textbox',
         'cf-table',
-        'cf-table-field',
         'cf-textbox',
       ];
 
       // Check if all items are valid for root level based on current mode
-      const allValidForRoot = roots.every(
-        (n) =>
-          n.type === 'page' ||
-          (builderMode === 'clinical' && clinicalFormTypes.includes(n.type))
-      );
+      const allValidForRoot = roots.every((n) => {
+        if (builderMode === 'clinical') {
+          return clinicalFormTypes.includes(n.type);
+        } else {
+          return n.type === 'page';
+        }
+      });
 
       if (!allValidForRoot) return; // need a focus context for non-root-level types
       const collectedIds = [];
@@ -1680,15 +1706,14 @@ function App() {
         'cf-radio',
         'cf-snom-textbox',
         'cf-table',
-        'cf-table-field',
         'cf-textbox',
       ];
 
-      // Allow pages in both modes, clinical form components only in clinical mode
+      // Clinical forms: only CF components at root. Questionnaires: only pages at root.
       const isValidForRoot =
-        draggedItem.type === 'page' ||
-        (builderMode === 'clinical' &&
-          clinicalFormTypes.includes(draggedItem.type));
+        builderMode === 'clinical'
+          ? clinicalFormTypes.includes(draggedItem.type)
+          : draggedItem.type === 'page';
 
       if (!isValidForRoot) {
         const modeText =
@@ -2067,7 +2092,30 @@ function App() {
                   disabled={
                     !clipboard ||
                     (!focusId &&
-                      !(clipboard.items || []).every((i) => i.type === 'page'))
+                      !(clipboard.items || []).every((i) =>
+                        builderMode === 'clinical'
+                          ? [
+                              'cf-button',
+                              'cf-checkbox',
+                              'cf-date',
+                              'cf-future-date',
+                              'cf-group',
+                              'cf-info',
+                              'cf-listbox',
+                              'cf-notes',
+                              'cf-notes-history',
+                              'cf-panel',
+                              'cf-patient-data',
+                              'cf-patient-data-all',
+                              'cf-prescription',
+                              'cf-provided-services',
+                              'cf-radio',
+                              'cf-snom-textbox',
+                              'cf-table',
+                              'cf-textbox',
+                            ].includes(i.type)
+                          : i.type === 'page'
+                      ))
                   }
                   onClick={handlePaste}
                   title="Paste After (Ctrl+V)"
@@ -2152,28 +2200,49 @@ function App() {
                   );
                 })()}
 
-                {/* Toggle Expand/Collapse All Pages */}
+                {/* Toggle Expand/Collapse All Containers */}
                 {(() => {
-                  const pageIds = [];
-                  const collectPages = (list) => {
+                  const containerIds = [];
+                  const collectContainers = (list) => {
                     for (const itm of list) {
-                      if (itm.type === 'page') pageIds.push(itm.id);
+                      if (
+                        itm.type === 'page' ||
+                        itm.type === 'cf-group' ||
+                        itm.type === 'cf-panel' ||
+                        itm.type === 'cf-table'
+                      )
+                        containerIds.push(itm.id);
                       if (itm.children && itm.children.length)
-                        collectPages(itm.children);
+                        collectContainers(itm.children);
                     }
                   };
-                  collectPages(droppedItems);
-                  const anyPages = pageIds.length > 0;
+                  collectContainers(droppedItems);
+                  const anyContainers = containerIds.length > 0;
                   const allExpanded =
-                    anyPages &&
-                    pageIds.every((id) => !collapsedPageIds.has(id));
+                    anyContainers &&
+                    containerIds.every((id) => !collapsedPageIds.has(id));
                   const nextActionExpand = !allExpanded; // if not all expanded, button expands; else collapses
+
+                  // Mode-specific labels
+                  const containerType =
+                    builderMode === 'questionnaire'
+                      ? 'Pages'
+                      : 'Groups, Panels & Tables';
+                  const containerTypeLower =
+                    builderMode === 'questionnaire'
+                      ? 'pages'
+                      : 'groups, panels and tables';
+
                   const label = nextActionExpand
-                    ? 'Expand Pages'
-                    : 'Collapse Pages';
+                    ? `Expand ${containerType}`
+                    : `Collapse ${containerType}`;
                   const title = nextActionExpand
-                    ? 'Expand all pages'
-                    : 'Collapse all pages';
+                    ? `Expand all ${containerTypeLower}`
+                    : `Collapse all ${containerTypeLower}`;
+                  const noContainersTitle =
+                    builderMode === 'questionnaire'
+                      ? 'No pages yet'
+                      : 'No groups, panels or tables yet';
                   return (
                     <button
                       type="button"
@@ -2188,11 +2257,11 @@ function App() {
                           // expand all -> clear collapsed set
                           setCollapsedPageIds(new Set());
                         } else {
-                          // collapse all -> add all page ids
-                          setCollapsedPageIds(new Set(pageIds));
+                          // collapse all -> add all container ids
+                          setCollapsedPageIds(new Set(containerIds));
                         }
                       }}
-                      title={!anyPages ? 'No pages yet' : title}
+                      title={!anyContainers ? noContainersTitle : title}
                     >
                       {label}
                     </button>
