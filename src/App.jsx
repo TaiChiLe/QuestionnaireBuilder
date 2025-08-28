@@ -66,6 +66,24 @@ function App() {
     }
   });
 
+  // Advanced settings toggle (persisted)
+  const [showAdvanced, setShowAdvanced] = useState(() => {
+    try {
+      const stored = localStorage.getItem('qb_show_advanced');
+      return stored === 'true';
+    } catch (_) {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('qb_show_advanced', showAdvanced ? 'true' : 'false');
+    } catch (_) {
+      /* noop */
+    }
+  }, [showAdvanced]);
+
   // Undo/Redo functionality
   const [historyStack, setHistoryStack] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -2605,6 +2623,31 @@ function App() {
                     </button>
                   );
                 })()}
+
+                {/* Advanced Features Toggle */}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowAdvanced((v) => {
+                      const next = !v;
+                      try {
+                        // Broadcast change so other components (e.g., PreviewSection) can react immediately
+                        window.dispatchEvent(
+                          new CustomEvent('qb-advanced-toggle', { detail: next })
+                        );
+                      } catch (_) {}
+                      return next;
+                    })
+                  }
+                  className={`ml-2 px-3 py-1.5 rounded text-xs font-semibold border transition-colors ${
+                    showAdvanced
+                      ? 'bg-white text-[#f03741] border-[#fbc5c8] hover:bg-[#fff5f5]'
+                      : 'bg-[#f03741] text-white border-[#f03741] hover:bg-[#d82f36]'
+                  }`}
+                  title={showAdvanced ? 'Hide advanced features' : 'Show advanced features'}
+                >
+                  {showAdvanced ? 'Hide Advanced' : 'Show Advanced'}
+                </button>
               </div>
             </div>
 
@@ -2944,6 +2987,7 @@ function App() {
         onCancel={handleCancelEdit}
         onItemUpdate={setEditingItem}
         droppedItems={droppedItems}
+        showAdvanced={showAdvanced}
       />
 
       {/* Warning Modal */}
