@@ -46,6 +46,8 @@ function App() {
   const [itemToRemove, setItemToRemove] = useState(null);
   const [showUserGuide, setShowUserGuide] = useState(false);
   const [showPasteXml, setShowPasteXml] = useState(false);
+  // Builder mode toggle - 'questionnaire' or 'clinical'
+  const [builderMode, setBuilderMode] = useState('questionnaire');
   // Multi-select & clipboard state
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [focusId, setFocusId] = useState(null);
@@ -1498,7 +1500,24 @@ function App() {
         {/* Header with export button */}
         <div className="px-4 py-2 border-b border-gray-300 bg-gray-50 flex-shrink-0 flex justify-between items-center w-full">
           <h1 className="m-0 text-2xl flex items-center gap-4 flex-1 justify-start whitespace-nowrap">
-            <span>Unofficial Questionnaire XML Builder</span>
+            <button
+              type="button"
+              onClick={() =>
+                setBuilderMode(
+                  builderMode === 'questionnaire' ? 'clinical' : 'questionnaire'
+                )
+              }
+              className="px-4 py-2 rounded-lg border-2 border-[#f03741] bg-white hover:bg-[#f03741] hover:text-white transition-colors font-semibold text-lg"
+              title={`Switch to ${
+                builderMode === 'questionnaire'
+                  ? 'Clinical Form'
+                  : 'Questionnaire'
+              } Builder`}
+            >
+              {builderMode === 'questionnaire'
+                ? 'Questionnaire XML Builder'
+                : 'Clinical Form Builder'}
+            </button>
             <button
               type="button"
               onClick={() => setShowUserGuide(true)}
@@ -1670,7 +1689,10 @@ function App() {
             <div className="block overflow-hidden">
               {/* Basic Components */}
               {/* Draggable Components (previously gated by basic mode) */}
-              <SidebarDraggableComponents isValidDrop={isValidDrop} />
+              <SidebarDraggableComponents
+                isValidDrop={isValidDrop}
+                builderMode={builderMode}
+              />
             </div>
           </div>
 
