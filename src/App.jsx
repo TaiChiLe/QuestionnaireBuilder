@@ -2405,6 +2405,7 @@ function App() {
         onItemUpdate={setEditingItem}
         droppedItems={droppedItems}
         showAdvanced={showAdvanced}
+        builderMode={builderMode}
       />
 
       {/* Warning Modal */}
