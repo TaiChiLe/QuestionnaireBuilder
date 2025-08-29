@@ -9,7 +9,7 @@ function DroppableItem({
   isCollapsed,
   onToggleCollapse,
   parentType = 'root',
-  selected = false,
+  isSelected = false,
   onSelect,
   expandedAnswerIds,
   isDarkMode,
@@ -32,8 +32,15 @@ function DroppableItem({
   // Local toggle state for showing question answers
   const [showAnswers, setShowAnswers] = useState(false);
   // Keep local state in sync if central set changes externally (only for questions)
+  // Clinical form components use purely local state
   useEffect(() => {
-    if (item.type === 'question') {
+    // Sync showAnswers with expandedAnswerIds for expandable components
+    if (
+      item.type === 'question' ||
+      ((item.type === 'cf-listbox' || item.type === 'cf-radio') &&
+        item.options &&
+        item.options.length > 0)
+    ) {
       const shouldBeOpen = expandedAnswerIds?.has(item.id) || false;
       setShowAnswers(shouldBeOpen);
     }
@@ -71,7 +78,7 @@ function DroppableItem({
         }
         ${!isDragging ? 'transition-all duration-200' : ''}
         ${isDragging ? 'z-[1000]' : 'z-[1]'}
-  ${selected && !isDragging ? 'outline outline-blue-400' : ''}
+  ${isSelected && !isDragging ? 'outline outline-blue-400' : ''}
       `}
       style={{ transform: transformStyle }}
       tabIndex={-1}
@@ -244,9 +251,13 @@ function DroppableItem({
                 [{item.dataType}]
               </span>
             )}
-          {item.type === 'question' &&
+          {((item.type === 'question' &&
             item.answers &&
-            item.answers.length > 0 && (
+            item.answers.length > 0) ||
+            ((item.type === 'cf-listbox' || item.type === 'cf-radio') &&
+              item.options &&
+              item.options.length > 0)) && (
+            <>
               <button
                 type="button"
                 onClick={(e) => {
@@ -278,7 +289,8 @@ function DroppableItem({
                   <path d="M7 4l6 6-6 6" />
                 </svg>
               </button>
-            )}
+            </>
+          )}
           {item.type === 'table' && (
             <span
               className={`text-xs ${
@@ -389,9 +401,12 @@ function DroppableItem({
         </div>
       </div>
       {showAnswers &&
-        item.type === 'question' &&
-        item.answers &&
-        item.answers.length > 0 && (
+        ((item.type === 'question' &&
+          item.answers &&
+          item.answers.length > 0) ||
+          ((item.type === 'cf-listbox' || item.type === 'cf-radio') &&
+            item.options &&
+            item.options.length > 0)) && (
           <div
             className={`mt-2 ml-14 mb-1 p-2 ${
               isDarkMode
@@ -404,19 +419,33 @@ function DroppableItem({
                 isDarkMode ? 'text-gray-300' : 'text-gray-600'
               } mb-1`}
             >
-              Answers ({item.answers.length})
+              {item.type === 'question'
+                ? `Answers (${item.answers?.length || 0})`
+                : `Options (${item.options?.length || 0})`}
             </div>
             <ul className="list-disc ml-4 space-y-0.5">
-              {item.answers.map((ans) => (
-                <li
-                  key={ans.id}
-                  className={`text-xs ${
-                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                  } break-all`}
-                >
-                  {ans.text || '(empty)'}
-                </li>
-              ))}
+              {item.type === 'question'
+                ? item.answers?.map((ans) => (
+                    <li
+                      key={ans.id}
+                      className="text-xs text-gray-700 break-all"
+                    >
+                      {ans.text || '(empty)'}
+                    </li>
+                  ))
+                : item.options?.map((opt) => (
+                    <li
+                      key={opt.id}
+                      className="text-xs text-gray-700 break-all"
+                    >
+                      {opt.text || '(empty)'}
+                      {opt.value && opt.value !== opt.text && (
+                        <span className="text-gray-500 ml-1">
+                          [code: {opt.value}]
+                        </span>
+                      )}
+                    </li>
+                  ))}
             </ul>
           </div>
         )}

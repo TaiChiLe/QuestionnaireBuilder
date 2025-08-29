@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import KeyPickerModal from './KeyPickerModal';
+import { getNextCodeNumber } from './utils/clinicalFormCodeManager';
 
 // Define reusable field components outside the main component to prevent re-creation
 const CodeField = ({ value, onChange, required = false }) => (
@@ -691,11 +692,11 @@ const EditModal = ({
                       Required:
                     </label>
                     <select
-                      value={editingItem.required || 'Ignore'}
+                      value={editingItem.cfrequired || 'Ignore'}
                       onChange={(e) =>
                         onItemUpdate((prev) => ({
                           ...prev,
-                          required: e.target.value,
+                          cfrequired: e.target.value,
                         }))
                       }
                       className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -1150,7 +1151,7 @@ const EditModal = ({
                             (editingItem.options || []).length + 1
                           }`,
                           text: '',
-                          value: '',
+                          value: getNextCodeNumber(),
                         };
                         onItemUpdate((prev) => ({
                           ...prev,
@@ -1558,7 +1559,7 @@ const EditModal = ({
                             (editingItem.options || []).length + 1
                           }`,
                           text: '',
-                          value: '',
+                          value: getNextCodeNumber(),
                         };
                         onItemUpdate((prev) => ({
                           ...prev,
@@ -1929,7 +1930,7 @@ const EditModal = ({
                             <div className="flex-1">
                               <input
                                 type="number"
-                                value={option.value || ''}
+                                value={getNextCodeNumber()}
                                 onChange={(e) => {
                                   const newOptions = [
                                     ...(editingItem.options || []),
@@ -1972,7 +1973,7 @@ const EditModal = ({
                                 (editingItem.options || []).length + 1
                               }`,
                               text: '',
-                              value: '',
+                              value: getNextCodeNumber(),
                             };
                             onItemUpdate((prev) => ({
                               ...prev,
