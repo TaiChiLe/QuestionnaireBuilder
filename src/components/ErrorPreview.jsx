@@ -183,20 +183,14 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem, builderMode }) => {
             'cf-textbox',
           ];
 
-          // Components that require Code (excluding cf-group and cf-info)
+          // Components that require Code (only those that actually have code property in itemFactory)
           const codeRequiredComponents = [
-            'cf-button',
             'cf-checkbox',
             'cf-date',
             'cf-future-date',
             'cf-listbox',
             'cf-notes',
             'cf-notes-history',
-            'cf-panel',
-            'cf-patient-data',
-            'cf-patient-data-all',
-            'cf-prescription',
-            'cf-provided-services',
             'cf-radio',
             'cf-snom-textbox',
             'cf-table',
