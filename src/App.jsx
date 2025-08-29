@@ -2547,6 +2547,7 @@ function App() {
         onItemUpdate={setEditingItem}
         droppedItems={droppedItems}
         showAdvanced={showAdvanced}
+        builderMode={builderMode}
         isDarkMode={isDarkMode}
       />
 

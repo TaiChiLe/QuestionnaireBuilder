@@ -77,12 +77,12 @@ export const convertClinicalFormToHtml = (items, level = 0) => {
                     html = `${indent}<div style="margin: 6px 0; display: flex; align-items: center;" data-id="${item.id}">\n`;
                     html += `${indent}  <label style="display: inline-block; width: 100px; font-size: 11px; color: #333; margin-right: 8px;">${item.label}</label>\n`;
                     html += `${indent}  <select style="width: 200px; padding: 2px 4px; border: 1px solid #ccc; font-size: 11px; background-color: white;">\n`;
+                    // Always include a leading blank option so default selection is empty
+                    html += `${indent}    <option value=""></option>\n`;
                     if (item.options && item.options.length > 0) {
                         item.options.forEach((option) => {
                             html += `${indent}    <option value="${option.value || option.id}">${option.text}</option>\n`;
                         });
-                    } else {
-                        html += `${indent}    <option value="">Select an option</option>\n`;
                     }
                     html += `${indent}  </select>\n`;
                     html += `${indent}</div>\n`;
@@ -215,6 +215,8 @@ function convertTableFieldToHtml(item, indent) {
             html = `${indent}<div style="margin: 4px 0; display: flex; align-items: center;">\n`;
             html += `${indent}  <label style="display: inline-block; width: 80px; font-size: 10px; color: #333; margin-right: 6px;">${item.label}</label>\n`;
             html += `${indent}  <select style="flex: 1; padding: 1px 3px; border: 1px solid #ccc; font-size: 10px;">\n`;
+            // Leading blank option ensures default appears empty
+            html += `${indent}    <option value=""></option>\n`;
             if (item.options && item.options.length > 0) {
                 item.options.forEach((option) => {
                     html += `${indent}    <option value="${option.value || option.id}">${option.text}</option>\n`;
@@ -313,46 +315,45 @@ export const convertClinicalFormWithPanelGrouping = (items, level = 0) => {
  * Generate complete HTML document for clinical form preview
  */
 export const generateClinicalFormHtmlDocument = (items, title = 'Clinical Form Preview') => {
+    // IMPORTANT: Previously this function injected a full HTML document with a <style> block
+    // that targeted the global <body>. When rendered inside the React preview (via
+    // dangerouslySetInnerHTML) that <style> element still applied globally, shrinking fonts
+    // and altering layout (affecting modals). We now scope all styles under a root class.
     const bodyContent = convertClinicalFormWithPanelGrouping(items);
 
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      line-height: 1.2;
-      margin: 15px;
-      background-color: white;
-      color: #333;
-      font-size: 11px;
-    }
-    .clinical-form-container {
-      max-width: 900px;
-      margin: 0 auto;
-      background-color: white;
-      padding: 10px;
-    }
-    h1 {
-      color: #333;
-      font-size: 16px;
-      margin-bottom: 15px;
-      border-bottom: 1px solid #ccc;
-      padding-bottom: 5px;
-    }
-    input, select, textarea {
-      font-family: Arial, sans-serif;
-    }
-  </style>
-</head>
-<body>
-  <div class="clinical-form-container">
-    <h1>${title}</h1>
+    return `<div class="cf-preview-root">
+    <style>
+        .cf-preview-root {
+            font-family: Arial, sans-serif;
+            line-height: 1.2;
+            background-color: white;
+            color: #333;
+            font-size: 11px;
+            /* Do NOT set global margins here; keep preview self-contained */
+        }
+        .cf-preview-root .clinical-form-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 10px;
+        }
+        .cf-preview-root h1 {
+            color: #333;
+            font-size: 16px;
+            margin: 0 0 15px 0;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+            font-weight: normal;
+        }
+        .cf-preview-root input,
+        .cf-preview-root select,
+        .cf-preview-root textarea {
+            font-family: Arial, sans-serif;
+        }
+    </style>
+    <div class="clinical-form-container">
+        <h1>${title}</h1>
 ${bodyContent}
-  </div>
-</body>
-</html>`;
+    </div>
+</div>`;
 };
