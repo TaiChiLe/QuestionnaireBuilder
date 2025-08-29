@@ -7,14 +7,21 @@ import React, { useMemo } from 'react';
 //  - Missing keyField on Question / Field / Table
 //  - Duplicate keyField (record) across Question / Field / Table (ignores internal Text duplication)
 //  - Invalid key format (only letters, numbers, hyphens)
+//  - Clinical Form validations:
+//    - Missing cfcode on CF components
+//    - Empty cf-listbox/cf-radio (no options)
+//    - Empty cf-table/cf-panel (no children)
+//    - Invalid cfcode format
 // Format example:
 //   Page Title -> Component Label : Key Missing
 //   Page Title -> Component Label : Duplicate Key (my-key)
-const ErrorPreview = ({ droppedItems, onNavigateToItem }) => {
+const ErrorPreview = ({ droppedItems, onNavigateToItem, builderMode }) => {
   const errors = useMemo(() => {
     const list = [];
     const keyUsage = {}; // key -> [{id, path, label, type}]
+    const codeUsage = {}; // code -> [{id, path, label, type}] for clinical forms
     const validKeyRegex = /^[A-Za-z0-9-]+$/; // Only letters, numbers, hyphen
+    const validCodeRegex = /^[0-9]+$/; // Only numbers
 
     const pushMissingKey = (ctx) =>
       list.push({ ...ctx, errorType: 'missing-key', targetId: ctx.id });
@@ -44,6 +51,28 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem }) => {
         targetId: ctx.originalId,
       });
 
+    // Clinical Form specific error functions
+    const pushMissingCode = (ctx) =>
+      list.push({ ...ctx, errorType: 'missing-code', targetId: ctx.id });
+    const pushDuplicateCode = (ctx, code) =>
+      list.push({
+        ...ctx,
+        errorType: 'duplicate-code',
+        code,
+        targetId: ctx.id,
+      });
+    const pushInvalidCode = (ctx, code) =>
+      list.push({
+        ...ctx,
+        errorType: 'invalid-code-format',
+        code,
+        targetId: ctx.id,
+      });
+    const pushEmptyCfOptions = (ctx) =>
+      list.push({ ...ctx, errorType: 'empty-cf-options', targetId: ctx.id });
+    const pushEmptyCfContainer = (ctx) =>
+      list.push({ ...ctx, errorType: 'empty-cf-container', targetId: ctx.id });
+
     const walk = (items, ancestorPages) => {
       items.forEach((item) => {
         const newAncestors =
@@ -64,67 +93,167 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem }) => {
           }
         }
 
-        if (item.type === 'table') {
-          if (!item.children || item.children.length === 0) {
-            pushEmptyTable({
-              id: item.id,
-              path: newAncestors,
-              label: item.label || '(table)',
-              type: 'table',
-            });
-          }
-        }
-
-        if (['question', 'field', 'table'].includes(item.type)) {
-          const key = (item.keyField || '').trim();
-          const ctx = {
-            id: item.id,
-            path: newAncestors,
-            label: item.label || '(no label)',
-            type: item.type,
-          };
-          if (!key) {
-            pushMissingKey(ctx);
-          } else if (!validKeyRegex.test(key)) {
-            // Invalid format (spaces or disallowed symbols). Don't include in duplicate grouping.
-            pushInvalidKey(ctx, key);
-          } else {
-            if (!keyUsage[key]) keyUsage[key] = [];
-            keyUsage[key].push(ctx);
-          }
-        }
-
-        // Empty Question warning (no answers configured)
-        if (item.type === 'question') {
-          const answers = Array.isArray(item.answers) ? item.answers : [];
-          if (answers.length === 0) {
-            pushEmptyQuestion({
-              id: item.id + '-emptyq',
-              originalId: item.id,
-              path: newAncestors,
-              label: item.label || '(no label)',
-              type: 'question',
-            });
-          }
-        }
-
-        // Condition validation: blank record key
-        if (Array.isArray(item.conditions) && item.conditions.length > 0) {
-          item.conditions.forEach((cond, idx) => {
-            const rec = (cond.record || '').trim();
-            if (!rec) {
-              pushBlankConditionRecord({
-                id: `${item.id}-cond-${idx}`,
-                originalId: item.id,
-                path: newAncestors.concat([
-                  (item.label || item.title || item.type || 'Component') +
-                    ` (Condition ${idx + 1})`,
-                ]),
-                label: '(blank record)',
-                type: 'condition',
+        // Questionnaire mode validations
+        if (builderMode !== 'clinical') {
+          if (item.type === 'table') {
+            if (!item.children || item.children.length === 0) {
+              pushEmptyTable({
+                id: item.id,
+                path: newAncestors,
+                label: item.label || '(table)',
+                type: 'table',
               });
             }
-          });
+          }
+
+          if (['question', 'field', 'table'].includes(item.type)) {
+            const key = (item.keyField || '').trim();
+            const ctx = {
+              id: item.id,
+              path: newAncestors,
+              label: item.label || '(no label)',
+              type: item.type,
+            };
+            if (!key) {
+              pushMissingKey(ctx);
+            } else if (!validKeyRegex.test(key)) {
+              // Invalid format (spaces or disallowed symbols). Don't include in duplicate grouping.
+              pushInvalidKey(ctx, key);
+            } else {
+              if (!keyUsage[key]) keyUsage[key] = [];
+              keyUsage[key].push(ctx);
+            }
+          }
+
+          // Empty Question warning (no answers configured)
+          if (item.type === 'question') {
+            const answers = Array.isArray(item.answers) ? item.answers : [];
+            if (answers.length === 0) {
+              pushEmptyQuestion({
+                id: item.id + '-emptyq',
+                originalId: item.id,
+                path: newAncestors,
+                label: item.label || '(no label)',
+                type: 'question',
+              });
+            }
+          }
+
+          // Condition validation: blank record key
+          if (Array.isArray(item.conditions) && item.conditions.length > 0) {
+            item.conditions.forEach((cond, idx) => {
+              const rec = (cond.record || '').trim();
+              if (!rec) {
+                pushBlankConditionRecord({
+                  id: `${item.id}-cond-${idx}`,
+                  originalId: item.id,
+                  path: newAncestors.concat([
+                    (item.label || item.title || item.type || 'Component') +
+                      ` (Condition ${idx + 1})`,
+                  ]),
+                  label: '(blank record)',
+                  type: 'condition',
+                });
+              }
+            });
+          }
+        }
+
+        // Clinical Form mode validations
+        if (builderMode === 'clinical') {
+          const clinicalFormComponents = [
+            'cf-button',
+            'cf-checkbox',
+            'cf-date',
+            'cf-future-date',
+            'cf-group',
+            'cf-info',
+            'cf-listbox',
+            'cf-notes',
+            'cf-notes-history',
+            'cf-panel',
+            'cf-patient-data',
+            'cf-patient-data-all',
+            'cf-prescription',
+            'cf-provided-services',
+            'cf-radio',
+            'cf-snom-textbox',
+            'cf-table',
+            'cf-table-field',
+            'cf-textbox',
+          ];
+
+          // Components that require Code (excluding cf-group and cf-info)
+          const codeRequiredComponents = [
+            'cf-button',
+            'cf-checkbox',
+            'cf-date',
+            'cf-future-date',
+            'cf-listbox',
+            'cf-notes',
+            'cf-notes-history',
+            'cf-panel',
+            'cf-patient-data',
+            'cf-patient-data-all',
+            'cf-prescription',
+            'cf-provided-services',
+            'cf-radio',
+            'cf-snom-textbox',
+            'cf-table',
+            'cf-table-field',
+            'cf-textbox',
+          ];
+
+          if (codeRequiredComponents.includes(item.type)) {
+            const code = (item.code || '').trim();
+            const ctx = {
+              id: item.id,
+              path: newAncestors,
+              label: item.label || '(no label)',
+              type: item.type,
+            };
+
+            // Check for missing code
+            if (!code) {
+              pushMissingCode(ctx);
+            } else if (!validCodeRegex.test(code)) {
+              // Invalid code format
+              pushInvalidCode(ctx, code);
+            } else {
+              // Track code usage for duplicate detection
+              if (!codeUsage[code]) codeUsage[code] = [];
+              codeUsage[code].push(ctx);
+            }
+          }
+
+          // Empty CF listbox/radio validation (no options)
+          if (item.type === 'cf-listbox' || item.type === 'cf-radio') {
+            const options = Array.isArray(item.options) ? item.options : [];
+            if (options.length === 0) {
+              pushEmptyCfOptions({
+                id: item.id,
+                path: newAncestors,
+                label: item.label || '(no label)',
+                type: item.type,
+              });
+            }
+          }
+
+          // Empty CF container validation (no children)
+          if (
+            item.type === 'cf-table' ||
+            item.type === 'cf-panel' ||
+            item.type === 'cf-group'
+          ) {
+            if (!item.children || item.children.length === 0) {
+              pushEmptyCfContainer({
+                id: item.id,
+                path: newAncestors,
+                label: item.label || '(no label)',
+                type: item.type,
+              });
+            }
+          }
         }
 
         if (item.children && item.children.length > 0)
@@ -134,10 +263,19 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem }) => {
 
     walk(droppedItems, []);
 
-    // Add duplicate key errors (only if key appears >1)
-    Object.entries(keyUsage).forEach(([key, arr]) => {
-      if (arr.length > 1) arr.forEach((ctx) => pushDuplicateKey(ctx, key));
-    });
+    // Add duplicate key errors (only if key appears >1) - for questionnaire mode
+    if (builderMode !== 'clinical') {
+      Object.entries(keyUsage).forEach(([key, arr]) => {
+        if (arr.length > 1) arr.forEach((ctx) => pushDuplicateKey(ctx, key));
+      });
+    }
+
+    // Add duplicate code errors (only if code appears >1) - for clinical form mode
+    if (builderMode === 'clinical') {
+      Object.entries(codeUsage).forEach(([code, arr]) => {
+        if (arr.length > 1) arr.forEach((ctx) => pushDuplicateCode(ctx, code));
+      });
+    }
 
     return list;
   }, [droppedItems]);
@@ -173,7 +311,15 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem }) => {
           const isEmptyTable = err.errorType === 'empty-table';
           const isBlankCond = err.errorType === 'blank-condition-record';
           const isEmptyQuestion = err.errorType === 'empty-question';
-          const isWarning = isEmptyQuestion; // classify warnings (currently only empty-question)
+          // Clinical form specific error types
+          const isMissingCode = err.errorType === 'missing-code';
+          const isDuplicateCode = err.errorType === 'duplicate-code';
+          const isInvalidCode = err.errorType === 'invalid-code-format';
+          const isEmptyCfOptions = err.errorType === 'empty-cf-options';
+          const isEmptyCfContainer = err.errorType === 'empty-cf-container';
+
+          const isWarning =
+            isEmptyQuestion || isEmptyCfOptions || isEmptyCfContainer; // classify warnings
           const wrapperClasses = isWarning
             ? 'border border-orange-200 bg-orange-50 text-orange-700'
             : 'border border-red-200 bg-red-50 text-red-700';
@@ -202,6 +348,11 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem }) => {
                 {isEmptyTable && 'Empty Table (no fields)'}
                 {isBlankCond && 'Blank Condition Record'}
                 {isEmptyQuestion && 'Empty Question (no answers)'}
+                {isMissingCode && 'Missing Code'}
+                {isDuplicateCode && `Duplicate Code (${err.code})`}
+                {isInvalidCode && `Invalid Code (${err.code})`}
+                {isEmptyCfOptions && 'Empty Options'}
+                {isEmptyCfContainer && 'Empty Container'}
               </span>
               {isMissing && (
                 <span className="text-red-700">
@@ -239,6 +390,32 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem }) => {
                 <span className="text-orange-700">
                   Add one or more answers or convert this to a Field if
                   free-text.
+                </span>
+              )}
+              {isMissingCode && (
+                <span className="text-red-700">
+                  Provide a unique code for this clinical form component.
+                </span>
+              )}
+              {isDuplicateCode && (
+                <span className="text-red-700">
+                  Change this code; it is also used on other components.
+                </span>
+              )}
+              {isInvalidCode && (
+                <span className="text-red-700">
+                  Only numbers allowed. Remove letters, spaces, or other
+                  symbols.
+                </span>
+              )}
+              {isEmptyCfOptions && (
+                <span className="text-orange-700">
+                  Add one or more options or remove this component.
+                </span>
+              )}
+              {isEmptyCfContainer && (
+                <span className="text-orange-700">
+                  Add child components or remove this empty container.
                 </span>
               )}
             </li>
