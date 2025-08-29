@@ -300,9 +300,50 @@ function DroppableItem({
               [Table]
             </span>
           )}
+          {/* Clinical Form component data types */}
+          {item.type === 'cf-button' && (
+            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              [Button]
+            </span>
+          )}
+          {item.type === 'cf-checkbox' && (
+            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              [Checkbox]
+            </span>
+          )}
+          {item.type === 'cf-date' && (
+            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              [Date]
+            </span>
+          )}
+          {item.type === 'cf-future-date' && (
+            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              [Future Date]
+            </span>
+          )}
           {item.type === 'cf-group' && (
             <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
               [Group]
+            </span>
+          )}
+          {item.type === 'cf-info' && (
+            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              [Info]
+            </span>
+          )}
+          {item.type === 'cf-listbox' && (
+            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              [Listbox]
+            </span>
+          )}
+          {item.type === 'cf-notes' && (
+            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              [Notes]
+            </span>
+          )}
+          {item.type === 'cf-notes-history' && (
+            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              [Notes History]
             </span>
           )}
           {item.type === 'cf-panel' && (
@@ -310,11 +351,52 @@ function DroppableItem({
               [Panel]
             </span>
           )}
+          {item.type === 'cf-patient-data' && (
+            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              [Patient Data]
+            </span>
+          )}
+          {item.type === 'cf-patient-data-all' && (
+            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              [Patient Data All]
+            </span>
+          )}
+          {item.type === 'cf-prescription' && (
+            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              [Prescription]
+            </span>
+          )}
+          {item.type === 'cf-provided-services' && (
+            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              [Provided Services]
+            </span>
+          )}
+          {item.type === 'cf-radio' && (
+            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              [Radio]
+            </span>
+          )}
+          {item.type === 'cf-snom-textbox' && (
+            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              [SNOM Textbox]
+            </span>
+          )}
           {item.type === 'cf-table' && (
             <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
               [CF Table]
             </span>
           )}
+          {item.type === 'cf-table-field' && (
+            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              [{item.dataType ? item.dataType : 'CF Table Field'}]
+            </span>
+          )}
+          {item.type === 'cf-textbox' && (
+            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              [Textbox]
+            </span>
+          )}
+          {/* Questionnaire component data types */}
           {item.type === 'information' && (
             <span
               className={`text-xs ${

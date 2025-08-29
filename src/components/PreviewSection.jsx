@@ -6,6 +6,7 @@ const PreviewSection = ({
   droppedItems,
   currentXmlString,
   currentHtmlString,
+  builderMode,
   height,
   collapsed,
   onToggleCollapse,
@@ -412,6 +413,7 @@ const PreviewSection = ({
                   <ErrorPreview
                     droppedItems={droppedItems}
                     onNavigateToItem={onNavigateToItem}
+                    builderMode={builderMode}
                     isDarkMode={isDarkMode}
                   />
                 </div>

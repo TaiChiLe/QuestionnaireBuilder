@@ -26,6 +26,7 @@ import UserGuideModal from './components/UserGuideModal';
 import PasteXmlModal from './components/PasteXmlModal';
 import { generateId } from './components/utils/id';
 import { generateHtmlPreview } from './components/utils/htmlConverter';
+import { generateClinicalFormHtmlDocument } from './components/utils/clinicalFormHtmlConverter';
 import { createItemFromDraggedId } from './components/utils/itemFactory';
 import {
   validateDrop,
@@ -425,8 +426,15 @@ function App() {
 
   // Generate HTML preview from the structure
   const currentHtmlString = useMemo(() => {
-    return generateHtmlPreview(droppedItems);
-  }, [droppedItems]);
+    if (builderMode === 'clinical') {
+      return generateClinicalFormHtmlDocument(
+        droppedItems,
+        'Clinical Form Preview (WIP)'
+      );
+    } else {
+      return generateHtmlPreview(droppedItems);
+    }
+  }, [droppedItems, builderMode]);
 
   function handleDragStart(event) {
     setActiveId(event.active.id);
@@ -1117,10 +1125,97 @@ function App() {
     [droppedItems, focusId, normalizeSelection]
   );
 
+  // Helper function to group consecutive cf-panels for side-by-side display
+  const groupConsecutivePanels = useCallback((items) => {
+    const result = [];
+    let currentPanelGroup = [];
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+
+      if (item.type === 'cf-panel') {
+        currentPanelGroup.push(item);
+      } else {
+        // If we have accumulated panels, add them as a group
+        if (currentPanelGroup.length > 0) {
+          if (currentPanelGroup.length === 1) {
+            // Single panel, add normally
+            result.push(currentPanelGroup[0]);
+          } else {
+            // Multiple panels, group them
+            result.push({
+              type: 'cf-panel-group',
+              id: `panel-group-${currentPanelGroup.map((p) => p.id).join('-')}`,
+              panels: currentPanelGroup,
+            });
+          }
+          currentPanelGroup = [];
+        }
+
+        // Add the non-panel item
+        result.push(item);
+      }
+    }
+
+    // Handle any remaining panels at the end
+    if (currentPanelGroup.length > 0) {
+      if (currentPanelGroup.length === 1) {
+        result.push(currentPanelGroup[0]);
+      } else {
+        result.push({
+          type: 'cf-panel-group',
+          id: `panel-group-${currentPanelGroup.map((p) => p.id).join('-')}`,
+          panels: currentPanelGroup,
+        });
+      }
+    }
+
+    return result;
+  }, []);
+
   // Recursive renderer (lost in refactor) to display items and nested children
   const renderItems = useCallback(
-    (items, parentType = 'root') =>
-      items.map((item) => {
+    (items, parentType = 'root') => {
+      const groupedItems = groupConsecutivePanels(items);
+
+      return groupedItems.map((item) => {
+        // Handle panel groups (multiple panels side by side)
+        if (item.type === 'cf-panel-group') {
+          return (
+            <div key={item.id} className="my-1.5 relative">
+              <div className="absolute -top-2 left-2 bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-medium shadow-sm z-10">
+                {item.panels.length} Panels (Side by Side)
+              </div>
+              <div className="flex gap-2 p-2 pt-4 bg-blue-50 border border-blue-200 rounded-lg">
+                {item.panels.map((panel) => {
+                  const isContainerCollapsed = collapsedPageIds.has(panel.id);
+                  return (
+                    <div key={panel.id} className="flex-1 min-w-0">
+                      <DroppableItem
+                        item={panel}
+                        onRemove={showRemoveConfirmation}
+                        onEdit={handleEditItem}
+                        isCollapsed={isContainerCollapsed}
+                        onToggleCollapse={() => togglePageCollapse(panel.id)}
+                        parentType={parentType}
+                        isSelected={selectedIds.has(panel.id)}
+                        onSelect={(e) => handleSelectItem(e, panel.id)}
+                        expandedAnswerIds={expandedAnswerIds}
+                      >
+                        {!isContainerCollapsed &&
+                          panel.children &&
+                          panel.children.length > 0 &&
+                          renderItems(panel.children, panel.type)}
+                      </DroppableItem>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        }
+
+        // Handle regular items (including single panels)
         const isContainerCollapsed =
           (item.type === 'page' ||
             item.type === 'cf-group' ||
@@ -1143,7 +1238,7 @@ function App() {
                 : undefined
             }
             parentType={parentType}
-            selected={selectedIds.has(item.id)}
+            isSelected={selectedIds.has(item.id)}
             onSelect={(e) => handleSelectItem(e, item.id)}
             expandedAnswerIds={expandedAnswerIds}
             isDarkMode={isDarkMode}
@@ -1154,8 +1249,10 @@ function App() {
               renderItems(item.children, item.type)}
           </DroppableItem>
         );
-      }),
+      });
+    },
     [
+      groupConsecutivePanels,
       collapsedPageIds,
       showRemoveConfirmation,
       handleEditItem,
@@ -1837,11 +1934,8 @@ function App() {
               } Builder`}
             >
               {builderMode === 'questionnaire'
-                ? 'Questionnaire XML Builder'
-                : 'Clinical Form Builder'}
-              {builderMode === 'questionnaire'
-                ? 'Questionnaire XML Builder'
-                : 'Clinical Form Builder'}
+                ? 'Unofficial Questionnaire XML Builder'
+                : 'Unofficial Clinical Form Builder'}
             </button>
             <button
               type="button"
@@ -1869,12 +1963,20 @@ function App() {
             </button>
           </h1>
           <div className="flex items-center gap-3 justify-center">
-            <h1>Questionnaire Name:</h1>
+            <h1>
+              {builderMode === 'clinical'
+                ? 'Clinical Form Name:'
+                : 'Questionnaire Name:'}
+            </h1>
             <input
               type="text"
               value={questionnaireName}
               onChange={(e) => setQuestionnaireName(e.target.value)}
-              placeholder="Untitled Questionnaire"
+              placeholder={
+                builderMode === 'clinical'
+                  ? 'Untitled Clinical Form'
+                  : 'Untitled Questionnaire'
+              }
               className={`text-base px-3 py-1 border ${
                 isDarkMode
                   ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:ring-blue-500'
@@ -2332,46 +2434,40 @@ function App() {
                   );
                 })()}
 
-                {/* Advanced Features Toggle */}
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowAdvanced((v) => {
-                      const next = !v;
-                      try {
-                        // Broadcast change so other components (e.g., PreviewSection) can react immediately
-                        window.dispatchEvent(
-                          new CustomEvent('qb-advanced-toggle', {
-                            detail: next,
-                          })
-                          new CustomEvent('qb-advanced-toggle', {
-                            detail: next,
-                          })
-                        );
-                      } catch {
-                        // Ignore any errors when dispatching the event
-                      }
-                      return next;
-                    })
-                  }
-                  className={`ml-2 px-3 py-1.5 rounded text-xs font-semibold border transition-colors ${
-                    showAdvanced
-                      ? 'bg-white text-[#f03741] border-[#fbc5c8] hover:bg-[#fff5f5]'
-                      : 'bg-[#f03741] text-white border-[#f03741] hover:bg-[#d82f36]'
-                  }`}
-                  title={
-                    showAdvanced
-                      ? 'Hide advanced features'
-                      : 'Show advanced features'
-                  }
-                  title={
-                    showAdvanced
-                      ? 'Hide advanced features'
-                      : 'Show advanced features'
-                  }
-                >
-                  {showAdvanced ? 'Hide Advanced' : 'Show Advanced'}
-                </button>
+                {/* Advanced Features Toggle - Only show for questionnaire mode */}
+                {builderMode === 'questionnaire' && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowAdvanced((v) => {
+                        const next = !v;
+                        try {
+                          // Broadcast change so other components (e.g., PreviewSection) can react immediately
+                          window.dispatchEvent(
+                            new CustomEvent('qb-advanced-toggle', {
+                              detail: next,
+                            })
+                          );
+                        } catch {
+                          // Ignore any errors when dispatching the event
+                        }
+                        return next;
+                      })
+                    }
+                    className={`ml-2 px-3 py-1.5 rounded text-xs font-semibold border transition-colors ${
+                      showAdvanced
+                        ? 'bg-white text-[#f03741] border-[#fbc5c8] hover:bg-[#fff5f5]'
+                        : 'bg-[#f03741] text-white border-[#f03741] hover:bg-[#d82f36]'
+                    }`}
+                    title={
+                      showAdvanced
+                        ? 'Hide advanced features'
+                        : 'Show advanced features'
+                    }
+                  >
+                    {showAdvanced ? 'Hide Advanced' : 'Show Advanced'}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -2417,6 +2513,7 @@ function App() {
             droppedItems={droppedItems}
             currentXmlString={currentXmlString}
             currentHtmlString={currentHtmlString}
+            builderMode={builderMode}
             height={isPreviewCollapsed ? 36 : previewHeight}
             collapsed={isPreviewCollapsed}
             onToggleCollapse={() => setIsPreviewCollapsed((c) => !c)}
@@ -2518,7 +2615,7 @@ function App() {
       <PasteXmlModal
         isOpen={showPasteXml}
         onClose={() => setShowPasteXml(false)}
-         onLoadXml={(items, raw, detectedMode) =>
+        onLoadXml={(items, raw, detectedMode) =>
           handleLoadXml(items, raw, null, detectedMode)
         }
         builderMode={builderMode}
