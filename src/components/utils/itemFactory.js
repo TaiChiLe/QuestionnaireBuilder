@@ -1,4 +1,5 @@
 import { generateId } from './id';
+import { getNextCodeNumber } from './clinicalFormCodeManager';
 
 /**
  * Item Factory Utility
@@ -197,7 +198,7 @@ export const createItemFromDraggedId = (draggedItemId) => {
         type: 'cf-checkbox',
         label: 'Checkbox',
         children: [],
-        code: '',
+        code: `${getNextCodeNumber()}`,
         tag: '[Inherit from parent]',
         global: false,
         key: '',
@@ -217,8 +218,8 @@ export const createItemFromDraggedId = (draggedItemId) => {
         keyField: '',
         tag: '[Inherit from parent]',
         cfrequired: false,
-        dateFormat: 'MM/DD/YYYY',
         width: '',
+        code: `${getNextCodeNumber()}`,
       };
       break;
 
@@ -231,7 +232,7 @@ export const createItemFromDraggedId = (draggedItemId) => {
         children: [],
         dataType: 'Future Date',
         keyField: '',
-        code: '',
+        code: `${getNextCodeNumber()}`,
         tag: '[Inherit from parent]',
         global: false,
         cfrequired: false,
@@ -259,8 +260,6 @@ export const createItemFromDraggedId = (draggedItemId) => {
         type: 'cf-info',
         label: 'Information',
         children: [],
-        infoText: 'Information content goes here',
-        infoType: 'general',
       };
       break;
 
@@ -273,13 +272,12 @@ export const createItemFromDraggedId = (draggedItemId) => {
         children: [],
         dataType: 'List Box',
         keyField: '',
-        code: '',
+        code: `${getNextCodeNumber()}`,
         tag: '[Inherit from parent]',
         global: false,
         cfrequired: false,
         width: '',
-        options: [{ id: generateId('option'), text: 'Option 1', value: '1' }],
-        multiple: false,
+        options: [{ id: generateId('option'), text: 'Option 1', value: `${getNextCodeNumber()}` }],
       };
       break;
 
@@ -292,12 +290,11 @@ export const createItemFromDraggedId = (draggedItemId) => {
         children: [],
         dataType: 'Text Area',
         keyField: '',
-        code: '',
+        code: `${getNextCodeNumber()}`,
         tag: '[Inherit from parent]',
         global: false,
         cfrequired: false,
         width: '',
-        maxLength: 1000,
       };
       break;
 
@@ -310,13 +307,12 @@ export const createItemFromDraggedId = (draggedItemId) => {
         children: [],
         dataType: 'Text Area',
         keyField: '',
-        code: '',
+        code: `${getNextCodeNumber()}`,
         tag: '[Inherit from parent]',
         global: false,
         cfrequired: false,
         width: '',
         showHistory: true,
-        maxLength: 1000,
       };
       break;
 
@@ -329,9 +325,6 @@ export const createItemFromDraggedId = (draggedItemId) => {
         children: [],
         tag: '[Inherit from parent]',
         width: '250',
-        panelType: 'default',
-        collapsible: true,
-        collapsed: false,
       };
       break;
 
@@ -342,10 +335,8 @@ export const createItemFromDraggedId = (draggedItemId) => {
         type: 'cf-patient-data',
         label: 'Patient Data Field',
         children: [],
-        dataSource: 'patient',
         fieldName: '',
         cfrequired: false,
-        readonly: true,
       };
       break;
 
@@ -356,9 +347,6 @@ export const createItemFromDraggedId = (draggedItemId) => {
         type: 'cf-patient-data-all',
         label: 'Patient Data Fields (all)',
         children: [],
-        dataSource: 'patient',
-        displayMode: 'summary',
-        readonly: true,
       };
       break;
 
@@ -367,7 +355,6 @@ export const createItemFromDraggedId = (draggedItemId) => {
       newItem = {
         id: generateId('cf-prescription'),
         type: 'cf-prescription',
-        label: 'Prescription',
         children: [],
       };
       break;
@@ -377,11 +364,7 @@ export const createItemFromDraggedId = (draggedItemId) => {
       newItem = {
         id: generateId('cf-provided-services'),
         type: 'cf-provided-services',
-        label: 'Provided Services',
         children: [],
-        serviceType: 'all',
-        dateRange: 'current',
-        displayMode: 'list',
       };
       break;
 
@@ -395,10 +378,10 @@ export const createItemFromDraggedId = (draggedItemId) => {
         dataType: 'Radio Buttons',
         keyField: '',
         cfrequired: false,
-        code: '',
+        code: `${getNextCodeNumber()}`,
         options: [
-          { id: generateId('option'), text: 'Option 1', value: '1' },
-          { id: generateId('option'), text: 'Option 2', value: '2' }
+          { id: generateId('option'), text: 'Option 1', value: `${getNextCodeNumber()}` },
+          { id: generateId('option'), text: 'Option 2', value: `${getNextCodeNumber()}` }
         ],
       };
       break;
@@ -410,7 +393,7 @@ export const createItemFromDraggedId = (draggedItemId) => {
         type: 'cf-snom-textbox',
         label: 'SNOMED Text Box',
         children: [],
-        code: '',
+        code: `${getNextCodeNumber()}`,
         key: '',
         tag: '[Inherit from parent]',
         global: 'false',
@@ -427,7 +410,7 @@ export const createItemFromDraggedId = (draggedItemId) => {
         type: 'cf-table',
         label: 'Table',
         children: [],
-        code: '',
+        code: `${getNextCodeNumber()}`,
         key: '',
         tag: '[Inherit from parent]',
         global: '',
@@ -449,7 +432,7 @@ export const createItemFromDraggedId = (draggedItemId) => {
         children: [],
         dataType: 'textbox',
         // Common fields that might be needed based on datatype
-        code: '',
+        code: `${getNextCodeNumber()}`,
         key: '',
         tag: '[Inherit from parent]',
         global: '',
@@ -467,7 +450,7 @@ export const createItemFromDraggedId = (draggedItemId) => {
         type: 'cf-textbox',
         label: 'Text Box',
         children: [],
-        code: '',
+        code: `${getNextCodeNumber()}`,
         key: '',
         tag: '[Inherit from parent]',
         global: '',

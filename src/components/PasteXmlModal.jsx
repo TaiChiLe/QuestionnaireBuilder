@@ -1,7 +1,15 @@
 import React, { useState, useCallback } from 'react';
 
+// Import parsers for both modes
+import { parseXmlToItems, extractQuestionnaireName } from './utils/xmlParser';
+import {
+  parseClinicalFormXmlToItems,
+  extractFormTag,
+  isClinicalFormXml,
+} from './utils/clinicalFormXmlParser';
+
 // Modal for pasting raw XML text and parsing it into the questionnaire structure
-const PasteXmlModal = ({ isOpen, onClose, onLoadXml }) => {
+const PasteXmlModal = ({ isOpen, onClose, onLoadXml, builderMode }) => {
   const [xmlText, setXmlText] = useState('');
   const [isParsing, setIsParsing] = useState(false);
   const [error, setError] = useState('');
@@ -18,17 +26,6 @@ const PasteXmlModal = ({ isOpen, onClose, onLoadXml }) => {
     onClose();
   };
 
-  const createIdGenerator = () => {
-    const counters = {};
-    return (type) => {
-      counters[type] = (counters[type] || 0) + 1;
-      return `${type}-${Date.now()}-${counters[type]}-${Math.random()
-        .toString(36)
-        .slice(2, 8)}`;
-    };
-  };
-  const generateId = createIdGenerator();
-
   const parse = useCallback(() => {
     setIsParsing(true);
     setError('');
@@ -42,13 +39,39 @@ const PasteXmlModal = ({ isOpen, onClose, onLoadXml }) => {
       const parserError = xmlDoc.querySelector('parsererror');
       if (parserError) throw new Error('Invalid XML format');
 
-      const questionnaire = xmlDoc.querySelector('Questionnaire');
-      if (!questionnaire) throw new Error('Missing <Questionnaire> root');
-      const pages = questionnaire.querySelector('Pages');
-      if (!pages) throw new Error('Missing <Pages> section');
+      // Detect XML type and use appropriate parser
+      const isClinicalForm = isClinicalFormXml(text);
 
-      const parsedItems = parseXmlToItems(pages);
-      onLoadXml(parsedItems, text);
+      // Auto-switch modes if XML type doesn't match current mode
+      let actualMode = builderMode;
+      if (builderMode === 'clinical' && !isClinicalForm) {
+        // Clinical form mode but questionnaire XML detected - switch to questionnaire mode
+        actualMode = 'questionnaire';
+      } else if (builderMode === 'questionnaire' && isClinicalForm) {
+        // Questionnaire mode but clinical form XML detected - switch to clinical mode
+        actualMode = 'clinical';
+      }
+
+      let parsedItems;
+      let detectedMode;
+
+      if (isClinicalForm) {
+        // Parse as clinical form XML
+        parsedItems = parseClinicalFormXmlToItems(text);
+        detectedMode = 'clinical';
+      } else {
+        // Parse as questionnaire XML
+        const questionnaire = xmlDoc.querySelector('Questionnaire');
+        if (!questionnaire) throw new Error('Missing <Questionnaire> root');
+        const pages = questionnaire.querySelector('Pages');
+        if (!pages) throw new Error('Missing <Pages> section');
+
+        parsedItems = parseXmlToItems(text);
+        detectedMode = 'questionnaire';
+      }
+
+      // Pass the detected mode along with the parsed items
+      onLoadXml(parsedItems, text, detectedMode);
       reset();
       onClose();
     } catch (e) {
@@ -58,38 +81,7 @@ const PasteXmlModal = ({ isOpen, onClose, onLoadXml }) => {
     }
   }, [xmlText, onLoadXml, onClose]);
 
-  // --- Parsing helpers (duplicated from XmlLoader for now; could refactor to shared util) ---
-  const parseXmlToItems = (pagesElement) => {
-    const items = [];
-    const pageElements = pagesElement.querySelectorAll('Page');
-
-    pageElements.forEach((pageEl) => {
-      const pageItem = {
-        id: generateId('page'),
-        type: 'page',
-        title: pageEl.getAttribute('title') || 'Page',
-        label: pageEl.getAttribute('title') || 'Page',
-        children: [],
-      };
-
-      const pageVisibility = parseVisibility(pageEl);
-      if (pageVisibility) {
-        pageItem.visibilityType = pageVisibility.type;
-        pageItem.conditions = pageVisibility.conditions;
-      }
-
-      const children = Array.from(pageEl.children);
-      children.forEach((child) => {
-        if (child.tagName === 'Visibility') return;
-        const childItem = parseXmlElement(child);
-        if (childItem) pageItem.children.push(childItem);
-      });
-
-      items.push(pageItem);
-    });
-
-    return items;
-  };
+  if (!isOpen) return null;
 
   const parseXmlElement = (element) => {
     const tagName = element.tagName;

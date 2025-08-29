@@ -12,6 +12,11 @@ import XmlLoader from './components/XmlLoader';
 import DragOverlayContent from './components/DragOverlayContent';
 import SidebarDraggableComponents from './components/SidebarDraggableComponents';
 import { generateOrderedXML } from './components/utils/xmlBuilder2Solution';
+import { generateClinicalFormXML } from './components/utils/clinicalFormXmlGenerator';
+import {
+  updateCodeCounter,
+  resetCodeCounter,
+} from './components/utils/clinicalFormCodeManager';
 import { exportXmlStructure } from './components/utils/xmlExporter';
 import {
   parseXmlToItems,
@@ -192,6 +197,13 @@ function App() {
     }
   }, [autoEdit]);
 
+  // Update clinical form code counter when items change in clinical mode
+  useEffect(() => {
+    if (builderMode === 'clinical') {
+      updateCodeCounter(droppedItems);
+    }
+  }, [droppedItems, builderMode]);
+
   const handleUndo = useCallback(() => {
     if (historyIndex > 0) {
       const targetIndex = historyIndex - 1;
@@ -317,6 +329,11 @@ function App() {
       setBuilderMode(newMode);
       setClipboard(null); // Clear clipboard as it may contain incompatible items
 
+      // Reset clinical form code counter when switching to clinical mode
+      if (newMode === 'clinical') {
+        resetCodeCounter();
+      }
+
       // Reset history stack even when canvas is empty to prevent undo/redo with incompatible data
       const initialState = {
         droppedItems: [],
@@ -338,6 +355,11 @@ function App() {
       setClipboard(null); // Clear clipboard as it may contain incompatible items
       setBuilderMode(pendingBuilderMode);
       setPendingBuilderMode(null);
+
+      // Reset clinical form code counter when switching to clinical mode
+      if (pendingBuilderMode === 'clinical') {
+        resetCodeCounter();
+      }
 
       // Reset history stack to prevent undo/redo with incompatible data
       const initialState = {
@@ -374,10 +396,14 @@ function App() {
     setItemToRemove(null);
   }, []);
 
-  // Real-time XML generation using xmlbuilder2 for proper ordering
+  // Real-time XML generation using appropriate generator based on builder mode
   const currentXmlString = useMemo(() => {
-    return generateOrderedXML(droppedItems);
-  }, [droppedItems]);
+    if (builderMode === 'clinical') {
+      return generateClinicalFormXML(droppedItems);
+    } else {
+      return generateOrderedXML(droppedItems);
+    }
+  }, [droppedItems, builderMode]);
 
   // Generate HTML preview from the structure
   const currentHtmlString = useMemo(() => {
@@ -687,9 +713,9 @@ function App() {
     }
   }, [itemToRemove, removeItem, closeRemoveConfirmation]);
 
-  // Export XML using utility function
+  // Export XML using appropriate utility function based on builder mode
   function handleExportXml() {
-    exportXmlStructure(droppedItems, questionnaireName);
+    exportXmlStructure(droppedItems, questionnaireName, builderMode);
   }
   const findItemById = useCallback((items, itemId) => {
     for (const item of items) {
@@ -769,7 +795,12 @@ function App() {
     setShowNewXmlModal(false);
     // Clear questionnaire name when starting a brand new questionnaire
     setQuestionnaireName('');
-  }, [saveToHistory]);
+
+    // Reset clinical form code counter when creating new XML in clinical mode
+    if (builderMode === 'clinical') {
+      resetCodeCounter();
+    }
+  }, [saveToHistory, builderMode]);
 
   // Function to cancel new XML creation
   const cancelNewXml = useCallback(() => {
@@ -778,8 +809,24 @@ function App() {
 
   // Function to handle loading XML with file name detection & destructive warnings
   const handleLoadXml = useCallback(
-    (parsedItems, rawXmlText, fileName) => {
+    (parsedItems, rawXmlText, fileName, detectedMode) => {
       saveToHistory();
+
+      // Switch to detected mode if different from current mode
+      if (detectedMode && detectedMode !== builderMode) {
+        setBuilderMode(detectedMode);
+
+        // Reset clinical form code counter when switching to clinical mode
+        if (detectedMode === 'clinical') {
+          resetCodeCounter();
+        }
+
+        // Update code counter based on existing items
+        if (detectedMode === 'clinical') {
+          updateCodeCounter(parsedItems);
+        }
+      }
+
       setDroppedItems(parsedItems);
       if (fileName) {
         const base = fileName.replace(/\.xml$/i, '');
@@ -816,7 +863,13 @@ function App() {
         }
       }
     },
-    [showWarning, saveToHistory]
+    [
+      showWarning,
+      saveToHistory,
+      builderMode,
+      resetCodeCounter,
+      updateCodeCounter,
+    ]
   );
 
   // Function to handle direct XML editing
@@ -1895,9 +1948,9 @@ function App() {
 
             <XmlLoader
               ref={xmlLoaderRef}
-              onLoadXml={(items, raw, fileName) => {
+              onLoadXml={(items, raw, fileName, detectedMode) => {
                 setUploadMenuOpen(false);
-                handleLoadXml(items, raw, fileName);
+                handleLoadXml(items, raw, fileName, detectedMode);
               }}
             />
           </div>
@@ -2031,25 +2084,36 @@ function App() {
                 {/* Expand/Collapse Answers Button */}
                 {(() => {
                   // compute button label based on expandedAnswerIds
-                  const allQuestionIds = [];
+                  const allExpandableIds = [];
                   const walk = (list) => {
                     for (const itm of list) {
-                      if (itm.type === 'question') allQuestionIds.push(itm.id);
-                      if (itm.children && itm.children.length)
+                      // Include questionnaire questions and clinical form components with options
+                      if (
+                        itm.type === 'question' ||
+                        ((itm.type === 'cf-listbox' ||
+                          itm.type === 'cf-radio') &&
+                          itm.options &&
+                          itm.options.length > 0)
+                      ) {
+                        allExpandableIds.push(itm.id);
+                      }
+                      if (itm.children && itm.children.length) {
                         walk(itm.children);
+                      }
                     }
                   };
+
                   walk(droppedItems);
-                  const allCount = allQuestionIds.length;
+                  const allCount = allExpandableIds.length;
                   const alreadyAllOpen =
                     allCount > 0 &&
-                    allQuestionIds.every((id) => expandedAnswerIds.has(id));
+                    allExpandableIds.every((id) => expandedAnswerIds.has(id));
                   const label = alreadyAllOpen
                     ? 'Collapse Answers'
                     : 'Expand Answers';
                   const title = alreadyAllOpen
-                    ? 'Collapse all question answers'
-                    : 'Expand all question answers';
+                    ? 'Collapse all question answers and component options'
+                    : 'Expand all question answers and component options';
                   return (
                     <button
                       type="button"
@@ -2058,7 +2122,7 @@ function App() {
                         if (alreadyAllOpen) {
                           setExpandedAnswerIds(new Set());
                         } else {
-                          setExpandedAnswerIds(new Set(allQuestionIds));
+                          setExpandedAnswerIds(new Set(allExpandableIds));
                         }
                       }}
                       title={title}
@@ -2307,7 +2371,10 @@ function App() {
       <PasteXmlModal
         isOpen={showPasteXml}
         onClose={() => setShowPasteXml(false)}
-        onLoadXml={(items, raw) => handleLoadXml(items, raw)}
+        onLoadXml={(items, raw, detectedMode) =>
+          handleLoadXml(items, raw, null, detectedMode)
+        }
+        builderMode={builderMode}
       />
     </DndContext>
   );
