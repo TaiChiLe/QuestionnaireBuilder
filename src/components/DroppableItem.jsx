@@ -552,17 +552,17 @@ function DroppableItem({
           {children}
         </div>
       )}
-      {item.type === 'page' && !isCollapsed && <div className="h-8 w-full" />}
+      {item.type === 'page' && !isCollapsed && <div className="h-16 w-full" />}
       {item.type === 'cf-group' && !isCollapsed && (
-        <div className="h-8 w-full" />
+        <div className="h-16 w-full" />
       )}
       {item.type === 'cf-panel' && !isCollapsed && (
-        <div className="h-8 w-full" />
+        <div className="h-16 w-full" />
       )}
       {item.type === 'cf-table' && !isCollapsed && (
-        <div className="h-8 w-full" />
+        <div className="h-16 w-full" />
       )}
-      {item.type === 'table' && <div className="h-8 w-full" />}
+      {item.type === 'table' && <div className="h-16 w-full" />}
     </div>
   );
 }

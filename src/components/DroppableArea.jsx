@@ -32,7 +32,7 @@ function DroppableArea(props) {
       {props.children}
       {/* Add spacer at the bottom for dropping new components */}
       <div
-        className="h-24 w-full"
+        className="h-40 w-full"
         onClick={(e) => {
           e.stopPropagation();
         }}
