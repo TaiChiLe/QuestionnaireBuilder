@@ -325,7 +325,11 @@ const EditModal = ({
                             required: e.target.checked,
                           }))
                         }
-                        className="rounded border-gray-300 text-blue-600 shadow-sm"
+                        className={`rounded text-blue-600 shadow-sm ${
+                          isDarkMode
+                            ? 'border-gray-500 bg-gray-700'
+                            : 'border-gray-300'
+                        }`}
                       />
                       <span
                         className={`font-semibold ${
@@ -396,7 +400,11 @@ const EditModal = ({
                             required: e.target.checked,
                           }))
                         }
-                        className="rounded border-gray-300 text-blue-600"
+                        className={`rounded text-blue-600 ${
+                          isDarkMode
+                            ? 'border-gray-500 bg-gray-700'
+                            : 'border-gray-300'
+                        }`}
                       />
                       <span
                         className={`font-semibold ${
@@ -468,7 +476,11 @@ const EditModal = ({
                     </div>
                   )}
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Key:
                     </label>
                     <input
@@ -480,7 +492,11 @@ const EditModal = ({
                           keyField: e.target.value,
                         }))
                       }
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        isDarkMode
+                          ? 'bg-gray-700 border-gray-600 text-gray-100'
+                          : 'border-gray-300'
+                      }`}
                     />
                   </div>
                   <div>
@@ -494,9 +510,17 @@ const EditModal = ({
                             required: e.target.checked,
                           }))
                         }
-                        className="rounded border-gray-300 text-blue-600"
+                        className={`rounded text-blue-600 ${
+                          isDarkMode
+                            ? 'border-gray-500 bg-gray-700'
+                            : 'border-gray-300'
+                        }`}
                       />
-                      <span className="font-semibold text-gray-700">
+                      <span
+                        className={`font-semibold ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                        }`}
+                      >
                         Required Field
                       </span>
                     </label>
@@ -596,7 +620,11 @@ const EditModal = ({
                             required: e.target.checked,
                           }))
                         }
-                        className="rounded border-gray-300 text-blue-600"
+                        className={`rounded text-blue-600 ${
+                          isDarkMode
+                            ? 'border-gray-500 bg-gray-700'
+                            : 'border-gray-300'
+                        }`}
                       />
                       <span
                         className={`font-semibold ${

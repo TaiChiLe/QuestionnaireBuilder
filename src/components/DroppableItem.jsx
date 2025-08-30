@@ -100,7 +100,7 @@ function DroppableItem({
           isDarkMode ? 'hover:border-blue-500' : 'hover:border-blue-400'
         } hover:shadow-sm transition-colors`}
       >
-        <span className="font-bold flex items-center min-w-0 flex-1">
+        <span className="font-bold flex items-center flex-1 min-w-0 gap-1">
           {/* Fixed-width control column (drag handle + optional collapse) */}
           <span className="flex items-center gap-1 w-14 shrink-0">
             <button
@@ -183,7 +183,7 @@ function DroppableItem({
               />
             </svg>
           )}
-          <span className="min-w-0 flex-1">
+          <span className="min-w-0 flex-shrink">
             {item.type === 'page' ? item.title || 'Page' : item.label}
           </span>
           {item.required && (
