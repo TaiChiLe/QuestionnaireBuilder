@@ -11,6 +11,7 @@ const PreviewSection = ({
   onToggleCollapse,
   onXmlEdit, // New prop for handling XML edits
   onNavigateToItem, // navigate from errors list to canvas item
+  isDarkMode,
 }) => {
   const [previewMode, setPreviewMode] = useState('html');
   const [isEditMode, setIsEditMode] = useState(false);
@@ -126,18 +127,32 @@ const PreviewSection = ({
 
   return (
     <div
-      className={`border-t border-gray-300 bg-[#f03741] flex flex-col transition-[height] duration-150 ease-in-out select-none ${
+      className={`${
+        isDarkMode
+          ? 'border-gray-700 bg-[#b91c1c]'
+          : 'border-gray-300 bg-[#f03741]'
+      } border-t flex flex-col transition-[height] duration-150 ease-in-out select-none ${
         collapsed ? 'overflow-hidden' : ''
       }`}
       style={{ height: collapsed ? 36 : height }}
     >
       {/* Preview Header */}
-      <div className="px-3 py-1.5 border-b border-gray-300 bg-[#f03741] flex justify-between items-center h-11">
+      <div
+        className={`px-3 py-1.5 ${
+          isDarkMode
+            ? 'border-gray-700 bg-[#b91c1c]'
+            : 'border-gray-300 bg-[#f03741]'
+        } border-b flex justify-between items-center h-11`}
+      >
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={onToggleCollapse}
-            className="w-6 h-6 flex items-center justify-center rounded bg-white/20 hover:bg-white/30 text-white text-xs font-semibold"
+            className={`w-6 h-6 flex items-center justify-center rounded ${
+              isDarkMode
+                ? 'bg-white/30 hover:bg-white/40'
+                : 'bg-white/20 hover:bg-white/30'
+            } text-white text-xs font-semibold`}
             title={collapsed ? 'Expand preview' : 'Collapse preview'}
           >
             {collapsed ? '▴' : '▾'}
@@ -152,9 +167,15 @@ const PreviewSection = ({
               <button
                 key={mode}
                 onClick={() => setPreviewMode(mode)}
-                className={`px-3 py-1.5 border border-gray-300 rounded cursor-pointer text-sm ${
+                className={`px-3 py-1.5 border ${
+                  isDarkMode ? 'border-gray-600' : 'border-gray-300'
+                } rounded cursor-pointer text-sm ${
                   previewMode === mode
-                    ? 'bg-gray-400 text-white'
+                    ? isDarkMode
+                      ? 'bg-gray-600 text-white'
+                      : 'bg-gray-400 text-white'
+                    : isDarkMode
+                    ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
                     : 'bg-white text-gray-700'
                 }`}
               >
@@ -173,9 +194,17 @@ const PreviewSection = ({
 
       {/* Preview Content */}
       {!collapsed && (
-        <div className="flex-1 p-4 overflow-auto bg-white">
+        <div
+          className={`flex-1 p-4 overflow-auto ${
+            isDarkMode ? 'bg-gray-800' : 'bg-white'
+          }`}
+        >
           {droppedItems.length === 0 && previewMode !== 'text' ? (
-            <p className="text-center text-gray-400 italic my-10">
+            <p
+              className={`text-center ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-400'
+              } italic my-10`}
+            >
               Add components above to see the preview
             </p>
           ) : (
@@ -183,7 +212,13 @@ const PreviewSection = ({
               {previewMode === 'xml' && droppedItems.length > 0 && (
                 <div>
                   <div className="flex justify-between items-center mb-3">
-                    <h4 className="m-0 text-gray-600">Generated XML</h4>
+                    <h4
+                      className={`m-0 ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                      }`}
+                    >
+                      Generated XML
+                    </h4>
                     {isEditMode ? (
                       <div className="flex gap-2">
                         <button
@@ -254,11 +289,21 @@ const PreviewSection = ({
                     <textarea
                       value={editedXml}
                       onChange={(e) => setEditedXml(e.target.value)}
-                      className="w-full h-96 p-3 border border-gray-300 rounded font-mono text-xs leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className={`w-full h-96 p-3 border rounded font-mono text-xs leading-relaxed resize-none focus:outline-none focus:ring-2 ${
+                        isDarkMode
+                          ? 'bg-gray-700 border-gray-600 text-gray-100 focus:ring-blue-500'
+                          : 'border-gray-300 focus:ring-blue-400'
+                      }`}
                       placeholder="Edit XML content here..."
                     />
                   ) : (
-                    <pre className="bg-gray-100 border border-gray-300 rounded p-3 text-xs leading-relaxed overflow-auto m-0 whitespace-pre-wrap">
+                    <pre
+                      className={`border rounded p-3 text-xs leading-relaxed overflow-auto m-0 whitespace-pre-wrap ${
+                        isDarkMode
+                          ? 'bg-gray-700 border-gray-600 text-gray-100'
+                          : 'bg-gray-100 border-gray-300'
+                      }`}
+                    >
                       {currentXmlString}
                     </pre>
                   )}
@@ -267,9 +312,16 @@ const PreviewSection = ({
 
               {previewMode === 'html' && droppedItems.length > 0 && (
                 <div>
-                  <h4 className="m-0 mb-3 text-gray-600">HTML Preview</h4>
+                  <h4
+                    className={`m-0 mb-3 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                    }`}
+                  >
+                    HTML Preview
+                  </h4>
                   <div
-                    className="bg-white border border-gray-300 rounded p-5 text-sm leading-relaxed overflow-auto m-0 font-sans"
+                    className="bg-white border border-gray-300 rounded p-5 text-sm leading-relaxed overflow-auto m-0 font-sans text-black"
+                    style={{ color: '#000000' }}
                     dangerouslySetInnerHTML={{ __html: currentHtmlString }}
                   />
                 </div>
@@ -277,7 +329,11 @@ const PreviewSection = ({
               {previewMode === 'text' && (
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="m-0 text-gray-600">
+                    <h4
+                      className={`m-0 ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                      }`}
+                    >
                       <b>
                         Note: You will have to upload here for Advanced
                         Questionnaires.
@@ -294,7 +350,11 @@ const PreviewSection = ({
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="px-2.5 py-1 text-xs border border-gray-300 rounded bg-white hover:bg-gray-100 transition-colors"
+                        className={`px-2.5 py-1 text-xs border rounded transition-colors ${
+                          isDarkMode
+                            ? 'border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            : 'border-gray-300 bg-white hover:bg-gray-100'
+                        }`}
                         title="Upload external questionnaire XML to bypass internal parser"
                       >
                         Upload XML
@@ -302,10 +362,12 @@ const PreviewSection = ({
                       <button
                         type="button"
                         onClick={handleDownloadTextSummary}
-                        className={`px-2.5 py-1 text-xs border border-gray-300 rounded transition-colors ${
+                        className={`px-2.5 py-1 text-xs border rounded transition-colors ${
                           justDownloaded
                             ? 'bg-[#f03741] text-white'
-                            : 'bg-white hover:bg-gray-100'
+                            : isDarkMode
+                            ? 'border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            : 'border-gray-300 bg-white hover:bg-gray-100'
                         }`}
                         title="Download text summary as file"
                       >
@@ -315,7 +377,11 @@ const PreviewSection = ({
                         <button
                           type="button"
                           onClick={() => setRawTextXml('')}
-                          className="px-2.5 py-1 text-xs border border-gray-300 rounded bg-white hover:bg-gray-100 transition-colors"
+                          className={`px-2.5 py-1 text-xs border rounded transition-colors ${
+                            isDarkMode
+                              ? 'border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600'
+                              : 'border-gray-300 bg-white hover:bg-gray-100'
+                          }`}
                           title="Clear uploaded XML and revert to generated XML"
                         >
                           Clear
@@ -323,19 +389,30 @@ const PreviewSection = ({
                       )}
                     </div>
                   </div>
-                  <pre className="bg-gray-100 border border-gray-300 rounded p-3 text-xs leading-relaxed overflow-auto m-0 whitespace-pre-wrap">
+                  <pre
+                    className={`border rounded p-3 text-xs leading-relaxed overflow-auto m-0 whitespace-pre-wrap ${
+                      isDarkMode
+                        ? 'bg-gray-700 border-gray-600 text-gray-100'
+                        : 'bg-gray-100 border-gray-300'
+                    }`}
+                  >
                     {textSummary}
                   </pre>
                 </div>
               )}
               {previewMode === 'errors' && droppedItems.length > 0 && (
                 <div>
-                  <h4 className="m-0 mb-3 text-gray-600">
+                  <h4
+                    className={`m-0 mb-3 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                    }`}
+                  >
                     Error Check: Click To Move To Error
                   </h4>
                   <ErrorPreview
                     droppedItems={droppedItems}
                     onNavigateToItem={onNavigateToItem}
+                    isDarkMode={isDarkMode}
                   />
                 </div>
               )}
