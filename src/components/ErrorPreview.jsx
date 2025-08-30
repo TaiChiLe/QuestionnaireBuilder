@@ -54,20 +54,30 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem, builderMode }) => {
     // Clinical Form specific error functions
     const pushMissingCode = (ctx) =>
       list.push({ ...ctx, errorType: 'missing-code', targetId: ctx.id });
-    const pushDuplicateCode = (ctx, code) =>
+    const pushDuplicateCode = (ctx, code) => {
+      // For option-related errors, navigate to the parent component
+      const targetId = ctx.id.includes('-option-')
+        ? ctx.id.split('-option-')[0]
+        : ctx.id;
       list.push({
         ...ctx,
         errorType: 'duplicate-code',
         code,
-        targetId: ctx.id,
+        targetId,
       });
-    const pushInvalidCode = (ctx, code) =>
+    };
+    const pushInvalidCode = (ctx, code) => {
+      // For option-related errors, navigate to the parent component
+      const targetId = ctx.id.includes('-option-')
+        ? ctx.id.split('-option-')[0]
+        : ctx.id;
       list.push({
         ...ctx,
         errorType: 'invalid-code-format',
         code,
-        targetId: ctx.id,
+        targetId,
       });
+    };
     const pushEmptyCfOptions = (ctx) =>
       list.push({ ...ctx, errorType: 'empty-cf-options', targetId: ctx.id });
     const pushEmptyCfContainer = (ctx) =>
@@ -220,6 +230,32 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem, builderMode }) => {
             }
           }
 
+          // Check option values for duplicate codes (cf-listbox, cf-radio, cf-table-field)
+          if (
+            item.type === 'cf-listbox' ||
+            item.type === 'cf-radio' ||
+            item.type === 'cf-table-field'
+          ) {
+            const options = Array.isArray(item.options) ? item.options : [];
+            options.forEach((option, optionIndex) => {
+              if (option.value) {
+                const optionCode = (option.value || '').toString().trim();
+                if (optionCode && validCodeRegex.test(optionCode)) {
+                  const optionCtx = {
+                    id: `${item.id}-option-${optionIndex}`,
+                    path: newAncestors,
+                    label: `${item.label || '(no label)'} > Option: ${
+                      option.text || `#${optionIndex + 1}`
+                    }`,
+                    type: `${item.type}-option`,
+                  };
+                  if (!codeUsage[optionCode]) codeUsage[optionCode] = [];
+                  codeUsage[optionCode].push(optionCtx);
+                }
+              }
+            });
+          }
+
           // Empty CF listbox/radio validation (no options)
           if (item.type === 'cf-listbox' || item.type === 'cf-radio') {
             const options = Array.isArray(item.options) ? item.options : [];
@@ -320,9 +356,20 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem, builderMode }) => {
           return (
             <li
               key={err.id + '-' + err.errorType + '-' + idx}
-              onClick={() =>
-                onNavigateToItem && onNavigateToItem(err.targetId || err.id)
-              }
+              onClick={() => {
+                if (onNavigateToItem) {
+                  const isContainer = [
+                    'page',
+                    'group',
+                    'table',
+                    'cf-panel',
+                    'cf-table-field',
+                  ].includes(err.type);
+                  onNavigateToItem(err.targetId || err.id, {
+                    scrollToTop: isContainer,
+                  });
+                }
+              }}
               className={`${wrapperClasses} rounded p-3 text-sm cursor-pointer hover:shadow transition-shadow`}
               title="Click to focus this item"
               role="button"
@@ -330,7 +377,18 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem, builderMode }) => {
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  onNavigateToItem && onNavigateToItem(err.targetId || err.id);
+                  if (onNavigateToItem) {
+                    const isContainer = [
+                      'page',
+                      'group',
+                      'table',
+                      'cf-panel',
+                      'cf-table-field',
+                    ].includes(err.type);
+                    onNavigateToItem(err.targetId || err.id, {
+                      scrollToTop: isContainer,
+                    });
+                  }
                 }
               }}
             >

@@ -54,8 +54,24 @@ export const convertClinicalFormToHtml = (items, level = 0) => {
                     html += `${indent}    <div style="font-weight: bold; color: #333; font-size: 13px;">${item.label}</div>\n`;
                     html += `${indent}  </div>\n`;
                     if (item.children && item.children.length > 0) {
-                        html += `${indent}  <div style="border: 1px solid #ccc; border-top: none; padding: 8px; background-color: white;">\n`;
-                        html += convertClinicalFormToHtml(item.children, level + 2);
+                        html += `${indent}  <div style="border: 1px solid #ccc; border-top: none; background-color: white;">\n`;
+
+                        // Create table headers
+                        html += `${indent}    <div style="display: grid; grid-template-columns: repeat(${item.children.length}, 1fr); background-color: #f0f0f0; border-bottom: 1px solid #ccc;">\n`;
+                        item.children.forEach(child => {
+                            html += `${indent}      <div style="padding: 6px 8px; border-right: 1px solid #ccc; font-weight: bold; font-size: 10px; color: #333;">${child.label}${getRequiredAsterisk(child)}</div>\n`;
+                        });
+                        html += `${indent}    </div>\n`;
+
+                        // Create table row with inputs
+                        html += `${indent}    <div style="display: grid; grid-template-columns: repeat(${item.children.length}, 1fr);">\n`;
+                        item.children.forEach(child => {
+                            html += `${indent}      <div style="padding: 8px; border-right: 1px solid #ccc;">\n`;
+                            html += convertTableFieldToHtml(child, indent + '        ');
+                            html += `${indent}      </div>\n`;
+                        });
+                        html += `${indent}    </div>\n`;
+
                         html += `${indent}  </div>\n`;
                     }
                     html += `${indent}</div>\n`;
@@ -69,8 +85,8 @@ export const convertClinicalFormToHtml = (items, level = 0) => {
 
                 case 'cf-checkbox':
                     html = `${indent}<div style="margin: 6px 0; display: flex; align-items: center;" data-id="${item.id}">\n`;
-                    html += `${indent}  <input type="checkbox" style="margin-right: 6px; width: 13px; height: 13px;" />\n`;
-                    html += `${indent}  <label style="font-size: 11px; color: #333; cursor: pointer;">${item.label}${getRequiredAsterisk(item)}</label>\n`;
+                    html += `${indent}  <label style="font-size: 11px; color: #333; cursor: pointer; margin-right: 6px;">${item.label}${getRequiredAsterisk(item)}</label>\n`;
+                    html += `${indent}  <input type="checkbox" style="width: 13px; height: 13px;" />\n`;
                     html += `${indent}</div>\n`;
                     break;
 
@@ -202,50 +218,35 @@ function convertTableFieldToHtml(item, indent) {
     switch (item.dataType) {
         case 'textbox':
         case 'Text Box':
-            html = `${indent}<div style="margin: 4px 0; display: flex; align-items: center;">\n`;
-            html += `${indent}  <label style="display: inline-block; width: 80px; font-size: 10px; color: #333; margin-right: 6px;">${item.label}${getRequiredAsterisk(item)}</label>\n`;
-            html += `${indent}  <input type="text" style="flex: 1; padding: 1px 3px; border: 1px solid #ccc; font-size: 10px;" />\n`;
-            html += `${indent}</div>\n`;
+            html = `${indent}<input type="text" style="width: 100%; padding: 2px 4px; border: 1px solid #ccc; font-size: 10px; box-sizing: border-box;" />\n`;
             break;
 
         case 'notes':
         case 'Text Area':
-            html = `${indent}<div style="margin: 4px 0;">\n`;
-            html += `${indent}  <label style="display: block; margin-bottom: 1px; font-size: 10px; color: #333;">${item.label}${getRequiredAsterisk(item)}</label>\n`;
-            html += `${indent}  <textarea style="width: 100%; height: 40px; padding: 2px 3px; border: 1px solid #ccc; font-size: 10px; resize: none;"></textarea>\n`;
-            html += `${indent}</div>\n`;
+            html = `${indent}<textarea style="width: 100%; height: 40px; padding: 2px 3px; border: 1px solid #ccc; font-size: 10px; resize: none; box-sizing: border-box;"></textarea>\n`;
             break;
 
         case 'date':
         case 'Date':
         case 'cf-date':
-            html = `${indent}<div style="margin: 4px 0; display: flex; align-items: center;">\n`;
-            html += `${indent}  <label style="display: inline-block; width: 80px; font-size: 10px; color: #333; margin-right: 6px;">${item.label}${getRequiredAsterisk(item)}</label>\n`;
-            html += `${indent}  <input type="text" style="width: 70px; padding: 1px 3px; border: 1px solid #ccc; font-size: 10px;" />\n`;
-            html += `${indent}</div>\n`;
+            html = `${indent}<input type="text" style="width: 100%; padding: 2px 4px; border: 1px solid #ccc; font-size: 10px; box-sizing: border-box;" />\n`;
             break;
 
         case 'cf-listbox':
         case 'List Box':
-            html = `${indent}<div style="margin: 4px 0; display: flex; align-items: center;">\n`;
-            html += `${indent}  <label style="display: inline-block; width: 80px; font-size: 10px; color: #333; margin-right: 6px;">${item.label}${getRequiredAsterisk(item)}</label>\n`;
-            html += `${indent}  <select style="flex: 1; padding: 1px 3px; border: 1px solid #ccc; font-size: 10px;">\n`;
+            html = `${indent}<select style="width: 100%; padding: 2px 4px; border: 1px solid #ccc; font-size: 10px; box-sizing: border-box;">\n`;
             // Leading blank option ensures default appears empty
-            html += `${indent}    <option value=""></option>\n`;
+            html += `${indent}  <option value=""></option>\n`;
             if (item.options && item.options.length > 0) {
                 item.options.forEach((option) => {
-                    html += `${indent}    <option value="${option.value || option.id}">${option.text}</option>\n`;
+                    html += `${indent}  <option value="${option.value || option.id}">${option.text}</option>\n`;
                 });
             }
-            html += `${indent}  </select>\n`;
-            html += `${indent}</div>\n`;
+            html += `${indent}</select>\n`;
             break;
 
         case 'cf-checkbox':
-            html = `${indent}<div style="margin: 4px 0; display: flex; align-items: center;">\n`;
-            html += `${indent}  <input type="checkbox" style="margin-right: 4px; width: 11px; height: 11px;" />\n`;
-            html += `${indent}  <label style="font-size: 10px; color: #333; cursor: pointer;">${item.label}${getRequiredAsterisk(item)}</label>\n`;
-            html += `${indent}</div>\n`;
+            html = `${indent}<input type="checkbox" style="width: 13px; height: 13px;" />\n`;
             break;
 
         default:
