@@ -183,7 +183,7 @@ function DroppableItem({
               />
             </svg>
           )}
-          <span className="min-w-0 flex-shrink">
+          <span className="min-w-0 break-after-auto">
             {item.type === 'page' ? item.title || 'Page' : item.label}
           </span>
           {item.required && (

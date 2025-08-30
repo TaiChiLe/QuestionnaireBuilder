@@ -16,35 +16,35 @@ const EditModal = ({
     conditionIndex: null,
   });
 
-  // Helper function to determine if we should use textarea based on text length
-  const shouldUseTextarea = (text, threshold = 80) => {
-    return text && text.length > threshold;
-  };
+  // Track whether to use textarea based on initial content length when modal opens
+  const [useTextareaForLabel, setUseTextareaForLabel] = useState(false);
 
-  // Helper function to render adaptive input/textarea
-  const renderAdaptiveInput = (
-    value,
-    onChange,
-    placeholder = '',
-    ref = null,
-    threshold = 80
-  ) => {
-    const isTextarea = shouldUseTextarea(value, threshold);
+  // Initialize textarea state when modal opens or item changes
+  useEffect(() => {
+    if (isOpen && editingItem) {
+      const initialText =
+        editingItem.type === 'page' ? editingItem.title : editingItem.label;
+      setUseTextareaForLabel((initialText || '').length > 80);
+    }
+  }, [isOpen, editingItem?.id, editingItem?.type]);
+
+  // Helper function to render input (uses consistent input type throughout editing session)
+  const renderInput = (value, onChange, placeholder = '', ref = null) => {
     const commonClassName = `w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
       isDarkMode
         ? 'bg-gray-700 border-gray-600 text-gray-100'
         : 'border-gray-300'
     }`;
 
-    if (isTextarea) {
+    if (useTextareaForLabel) {
       return (
         <textarea
           value={value || ''}
           onChange={onChange}
           ref={ref}
-          className={`${commonClassName} resize-none min-h-[80px]`}
+          className={`${commonClassName} resize-none`}
           placeholder={placeholder}
-          rows={Math.min(Math.ceil((value || '').length / 40), 4)}
+          rows={Math.min(Math.ceil((value || '').length / 60), 4)}
         />
       );
     }
@@ -135,10 +135,10 @@ const EditModal = ({
 
   const handleFormKeyDown = (e) => {
     if (e.key === 'Enter') {
-      const tag = (e.target && e.target.tagName) || '';
-      if (keyPickerState.open) return; // allow key picker interaction
-      if (tag === 'TEXTAREA' || e.shiftKey) return; // allow multiline future
-      // Prevent accidental form submission bubbling to underlying DnD elements
+      // Don't save if key picker modal is open
+      if (keyPickerState.open) return;
+
+      // Save the form regardless of what element has focus
       e.preventDefault();
       handleSave();
     }
@@ -235,7 +235,7 @@ const EditModal = ({
                   >
                     Title:
                   </label>
-                  {renderAdaptiveInput(
+                  {renderInput(
                     editingItem.title,
                     (e) =>
                       onItemUpdate((prev) => ({
@@ -256,7 +256,7 @@ const EditModal = ({
                   >
                     Label:
                   </label>
-                  {renderAdaptiveInput(
+                  {renderInput(
                     editingItem.label,
                     (e) =>
                       onItemUpdate((prev) => ({
@@ -278,7 +278,7 @@ const EditModal = ({
                     >
                       Label:
                     </label>
-                    {renderAdaptiveInput(
+                    {renderInput(
                       editingItem.label,
                       (e) =>
                         onItemUpdate((prev) => ({
@@ -352,7 +352,7 @@ const EditModal = ({
                     >
                       Label:
                     </label>
-                    {renderAdaptiveInput(
+                    {renderInput(
                       editingItem.label,
                       (e) =>
                         onItemUpdate((prev) => ({
@@ -427,7 +427,7 @@ const EditModal = ({
                     >
                       Label:
                     </label>
-                    {renderAdaptiveInput(
+                    {renderInput(
                       editingItem.label,
                       (e) => {
                         const newLabel = e.target.value;
@@ -537,7 +537,7 @@ const EditModal = ({
                     >
                       Label:
                     </label>
-                    {renderAdaptiveInput(
+                    {renderInput(
                       editingItem.label,
                       (e) => {
                         const newLabel = e.target.value;
