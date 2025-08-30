@@ -137,7 +137,6 @@ const parseXmlElement = (element, generateIdFn) => {
             const panelItem = {
                 id: generateIdFn('cf-panel'),
                 type: 'cf-panel',
-                label: element.getAttribute('label') || 'Panel',
                 tag: mapTagXmlToDisplay(element.getAttribute('tag')),
                 width: element.getAttribute('width') || '',
                 children: []
@@ -350,7 +349,6 @@ const parseXmlElement = (element, generateIdFn) => {
             return {
                 id: generateIdFn('cf-patient-data-all'),
                 type: 'cf-patient-data-all',
-                label: element.getAttribute('label') || 'All Patient Data'
             };
 
         case 'prescriptions':

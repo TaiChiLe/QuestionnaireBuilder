@@ -347,9 +347,12 @@ function DroppableItem({
             </span>
           )}
           {item.type === 'cf-panel' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
-              [Panel]
-            </span>
+            <>
+              <span className="font-bold">Panel</span>
+              <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+                [Panel]
+              </span>
+            </>
           )}
           {item.type === 'cf-patient-data' && (
             <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
@@ -357,9 +360,12 @@ function DroppableItem({
             </span>
           )}
           {item.type === 'cf-patient-data-all' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
-              [Patient Data All]
-            </span>
+            <>
+              <span className="font-bold">Patient Data All</span>
+              <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+                [Patient Data All]
+              </span>
+            </>
           )}
           {item.type === 'cf-prescription' && (
             <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
@@ -383,7 +389,7 @@ function DroppableItem({
           )}
           {item.type === 'cf-table' && (
             <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
-              [CF Table]
+              [Table]
             </span>
           )}
           {item.type === 'cf-table-field' && (
