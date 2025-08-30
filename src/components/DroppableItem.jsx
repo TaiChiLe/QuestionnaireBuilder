@@ -202,7 +202,7 @@ function DroppableItem({
             </svg>
           )}
           {item.type === 'page' ? item.title || 'Page' : item.label}
-          {item.required && (
+          {(item.required || item.cfrequired) && (
             <span className="text-red-500 ml-1" title="Required">
               *
             </span>
