@@ -31,10 +31,6 @@ import {
   validateDrop,
   canParentAccept,
 } from './components/utils/dragDropValidation';
-import {
-  validateDrop,
-  canParentAccept,
-} from './components/utils/dragDropValidation';
 
 // The central state to represent the XML tree
 const initialXmlTree = {};
@@ -484,13 +480,6 @@ function App() {
         draggedType = 'field';
       }
 
-      const validation = validateDrop(
-        draggedType,
-        over.id,
-        droppedItems,
-        findItemById,
-        getParentContext
-      );
       // Clinical Form components
       if (active.id === 'cf-button-tag') draggedType = 'cf-button';
       if (active.id === 'cf-check-tag') draggedType = 'cf-checkbox';
@@ -559,13 +548,6 @@ function App() {
       }
     }
 
-    const validation = validateDrop(
-      draggedItem.type,
-      over.id,
-      droppedItems,
-      findItemById,
-      getParentContext
-    );
     const validation = validateDrop(
       draggedItem.type,
       over.id,
@@ -1801,13 +1783,6 @@ function App() {
         overId,
         droppedItems,
         findItemById,
-        getParentContext
-      );
-      const validation = validateDrop(
-        draggedType,
-        overId,
-        droppedItems,
-        findItemById,
         getParentContext,
         builderMode
       );
@@ -1874,13 +1849,6 @@ function App() {
       }
     }
 
-    const validation = validateDrop(
-      draggedItem.type,
-      overId,
-      droppedItems,
-      findItemById,
-      getParentContext
-    );
     const validation = validateDrop(
       draggedItem.type,
       overId,
@@ -2036,18 +2004,8 @@ function App() {
           <h1 className="m-0 text-2xl flex items-center gap-4 flex-1 justify-start whitespace-nowrap">
             <button
               type="button"
-              onClick={() =>
-                setBuilderMode(
-                  builderMode === 'questionnaire' ? 'clinical' : 'questionnaire'
-                )
-              }
               onClick={handleModeSwitch}
               className="px-4 py-2 rounded-lg border-2 border-[#f03741] bg-white hover:bg-[#f03741] hover:text-white transition-colors font-semibold text-lg"
-              title={`Switch to ${
-                builderMode === 'questionnaire'
-                  ? 'Clinical Form'
-                  : 'Questionnaire'
-              } Builder`}
               title={`Switch to ${
                 builderMode === 'questionnaire'
                   ? 'Clinical Form'
@@ -2305,10 +2263,6 @@ function App() {
             <div className="block overflow-hidden">
               {/* Basic Components */}
               {/* Draggable Components (previously gated by basic mode) */}
-              <SidebarDraggableComponents
-                isValidDrop={isValidDrop}
-                builderMode={builderMode}
-              />
               <SidebarDraggableComponents
                 isValidDrop={isValidDrop}
                 builderMode={builderMode}
