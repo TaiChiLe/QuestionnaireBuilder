@@ -24,6 +24,8 @@ const XmlLoader = forwardRef(
 
       if (!file.name.endsWith('.xml')) {
         alert('Please select a valid XML file');
+        // Reset the input value to allow re-selecting the same file
+        event.target.value = '';
         return;
       }
 
@@ -78,10 +80,12 @@ const XmlLoader = forwardRef(
         // Pass the detected mode along with the parsed items
         onLoadXml(parsedItems, text, file.name, detectedMode);
 
-        // Reset the file input
+        // Reset the file input to allow re-uploading the same file
         event.target.value = '';
       } catch (error) {
         alert(`Error loading XML: ${error.message}`);
+        // Reset the input value even on error to allow re-selecting the same file
+        event.target.value = '';
       } finally {
         setIsLoading(false);
       }
@@ -90,6 +94,8 @@ const XmlLoader = forwardRef(
     useImperativeHandle(ref, () => ({
       openFileDialog: () => {
         if (inputRef.current && !isLoading) {
+          // Reset the input value before opening the dialog to ensure onChange fires
+          inputRef.current.value = '';
           inputRef.current.click();
         }
       },
