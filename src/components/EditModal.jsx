@@ -25,7 +25,7 @@ const KeyField = ({ value, onChange, required = false }) => (
     <label className="block mb-1 font-semibold text-gray-700">Key:</label>
     <p className="text-sm text-gray-600 mb-2">
       Leave this blank unless you need to have the same label on more than one
-      control.
+      item.
     </p>
     <input
       type="text"
@@ -42,7 +42,7 @@ const TagField = ({ value, onChange, required = false }) => (
     <label className="block mb-1 font-semibold text-gray-700">Tag:</label>
     <p className="text-sm text-gray-600 mb-2">
       Categorise questions to assist in filtering the medical history. Inherited
-      tag is Consultation
+      tag is Consultation.
     </p>
     <select
       value={value || 'Outcome'}
@@ -696,7 +696,7 @@ const EditModal = ({
                       onChange={(e) =>
                         onItemUpdate((prev) => ({
                           ...prev,
-                          cfrequired: e.target.value,
+                          cfbuttonrequired: e.target.value,
                         }))
                       }
                       className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -765,11 +765,11 @@ const EditModal = ({
                     }
                   />
                   <RequiredCheckboxField
-                    value={editingItem.required}
+                    value={editingItem.cfrequired}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
                         ...prev,
-                        required: value,
+                        cfrequired: value,
                       }))
                     }
                   />

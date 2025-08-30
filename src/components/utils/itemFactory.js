@@ -187,7 +187,7 @@ export const createItemFromDraggedId = (draggedItemId) => {
         label: 'Button',
         children: [],
         action: 'Print',
-        cfrequired: 'Ignore',
+        cfbuttonrequired: 'Ignore',
       };
       break;
 
@@ -418,8 +418,6 @@ export const createItemFromDraggedId = (draggedItemId) => {
         columns: [
           { header: 'Column 1', dataType: 'Text Box', required: false },
         ],
-        allowAdd: true,
-        allowDelete: true,
       };
       break;
 
@@ -439,7 +437,6 @@ export const createItemFromDraggedId = (draggedItemId) => {
         subset: '', // for cf-snom-textbox
         width: '',
         options: [], // for cf-listbox and cf-radio
-        columnIndex: 0,
       };
       break;
 

@@ -364,7 +364,7 @@ function generateButtonXML(item, indentLevel) {
 
     const attributes = [
         getButtonActionAttribute(),
-        `required="${item.cfrequired}"`,
+        `required="${item.cfbuttonrequired}"`,
         `label="${escapeXML(item.label)}"`,
         item.parameters ? `parameters="${item.parameters}"` : ''
     ].filter(attr => attr).join(' ');
@@ -557,12 +557,6 @@ function getRequiredAttribute(item) {
     if (item.cfrequired !== undefined) {
         // Only include the attribute if it's true
         return item.cfrequired === true ? `required="true"` : '';
-    }
-
-    // Fallback to required property
-    if (item.required !== undefined) {
-        // Only include the attribute if it's true
-        return item.required === true ? `required="true"` : '';
     }
 
     // No required property found, omit the attribute

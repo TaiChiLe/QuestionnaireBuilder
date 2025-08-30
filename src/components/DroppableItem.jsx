@@ -236,7 +236,7 @@ function DroppableItem({
           <span className="min-w-0 break-after-auto">
             {item.type === 'page' ? item.title || 'Page' : item.label}
           </span>
-          {item.required && (
+          {(item.required || item.cfrequired) && (
             <span className="text-red-500 ml-1" title="Required">
               *
             </span>

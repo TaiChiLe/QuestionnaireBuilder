@@ -4,6 +4,21 @@
  */
 
 /**
+ * Helper function to check if an item is required and return asterisk HTML
+ * @param {Object} item - The clinical form item
+ * @returns {string} HTML string for required asterisk or empty string
+ */
+function getRequiredAsterisk(item) {
+    // Check different required field patterns
+    const isRequired =
+        (item.cfrequired && item.cfrequired !== 'Ignore' && item.cfrequired !== false) ||
+        (item.cfbuttonrequired && item.cfbuttonrequired !== 'Ignore' && item.cfbuttonrequired !== false) ||
+        item.required === true;
+
+    return isRequired ? '<span style="color: red; margin-left: 2px;">*</span>' : '';
+}
+
+/**
  * Converts an array of clinical form items to HTML string
  * @param {Array} items - Array of clinical form items
  * @param {number} level - Current nesting level for indentation
@@ -55,14 +70,14 @@ export const convertClinicalFormToHtml = (items, level = 0) => {
                 case 'cf-checkbox':
                     html = `${indent}<div style="margin: 6px 0; display: flex; align-items: center;" data-id="${item.id}">\n`;
                     html += `${indent}  <input type="checkbox" style="margin-right: 6px; width: 13px; height: 13px;" />\n`;
-                    html += `${indent}  <label style="font-size: 11px; color: #333; cursor: pointer;">${item.label}</label>\n`;
+                    html += `${indent}  <label style="font-size: 11px; color: #333; cursor: pointer;">${item.label}${getRequiredAsterisk(item)}</label>\n`;
                     html += `${indent}</div>\n`;
                     break;
 
                 case 'cf-date':
                 case 'cf-future-date':
                     html = `${indent}<div style="margin: 6px 0; display: flex; align-items: center;" data-id="${item.id}">\n`;
-                    html += `${indent}  <label style="display: inline-block; width: 100px; font-size: 11px; color: #333; margin-right: 8px;">${item.label}</label>\n`;
+                    html += `${indent}  <label style="display: inline-block; width: 100px; font-size: 11px; color: #333; margin-right: 8px;">${item.label}${getRequiredAsterisk(item)}</label>\n`;
                     html += `${indent}  <input type="text" value="1/1/1971" style="width: 80px; padding: 2px 4px; border: 1px solid #ccc; font-size: 11px;" />\n`;
                     html += `${indent}</div>\n`;
                     break;
@@ -75,7 +90,7 @@ export const convertClinicalFormToHtml = (items, level = 0) => {
 
                 case 'cf-listbox':
                     html = `${indent}<div style="margin: 6px 0; display: flex; align-items: center;" data-id="${item.id}">\n`;
-                    html += `${indent}  <label style="display: inline-block; width: 100px; font-size: 11px; color: #333; margin-right: 8px;">${item.label}</label>\n`;
+                    html += `${indent}  <label style="display: inline-block; width: 100px; font-size: 11px; color: #333; margin-right: 8px;">${item.label}${getRequiredAsterisk(item)}</label>\n`;
                     html += `${indent}  <select style="width: 200px; padding: 2px 4px; border: 1px solid #ccc; font-size: 11px; background-color: white;">\n`;
                     // Always include a leading blank option so default selection is empty
                     html += `${indent}    <option value=""></option>\n`;
@@ -90,14 +105,14 @@ export const convertClinicalFormToHtml = (items, level = 0) => {
 
                 case 'cf-notes':
                     html = `${indent}<div style="margin: 6px 0;" data-id="${item.id}">\n`;
-                    html += `${indent}  <label style="display: block; margin-bottom: 2px; font-size: 11px; color: #333;">${item.label}</label>\n`;
+                    html += `${indent}  <label style="display: block; margin-bottom: 2px; font-size: 11px; color: #333;">${item.label}${getRequiredAsterisk(item)}</label>\n`;
                     html += `${indent}  <textarea style="width: 300px; height: 60px; padding: 4px; border: 1px solid #ccc; font-size: 11px; font-family: Arial, sans-serif; resize: none;"></textarea>\n`;
                     html += `${indent}</div>\n`;
                     break;
 
                 case 'cf-notes-history':
                     html = `${indent}<div style="margin: 6px 0;" data-id="${item.id}">\n`;
-                    html += `${indent}  <label style="display: block; margin-bottom: 2px; font-size: 11px; color: #333;">${item.label}</label>\n`;
+                    html += `${indent}  <label style="display: block; margin-bottom: 2px; font-size: 11px; color: #333;">${item.label}${getRequiredAsterisk(item)}</label>\n`;
                     html += `${indent}  <div style="position: relative; display: inline-block;">\n`;
                     html += `${indent}    <textarea style="width: 300px; height: 80px; padding: 4px 24px 4px 4px; border: 1px solid #ccc; font-size: 11px; font-family: Arial, sans-serif; resize: none;"></textarea>\n`;
                     html += `${indent}    <button style="position: absolute; top: 4px; right: 4px; width: 16px; height: 16px; background: #ddd; border: 1px solid #999; font-size: 9px; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="History">+</button>\n`;
@@ -107,7 +122,7 @@ export const convertClinicalFormToHtml = (items, level = 0) => {
 
                 case 'cf-patient-data':
                     html = `${indent}<div style="margin: 6px 0; display: flex; align-items: center;" data-id="${item.id}">\n`;
-                    html += `${indent}  <label style="display: inline-block; width: 140px; font-size: 11px; color: #333; margin-right: 8px;">${item.label}</label>\n`;
+                    html += `${indent}  <label style="display: inline-block; width: 140px; font-size: 11px; color: #333; margin-right: 8px;">${item.label}${getRequiredAsterisk(item)}</label>\n`;
                     html += `${indent}  <input type="text" value="123.0" readonly style="width: 60px; padding: 2px 4px; border: 1px solid #ccc; font-size: 11px; background-color: #f9f9f9;" />\n`;
                     html += `${indent}</div>\n`;
                     break;
@@ -137,7 +152,7 @@ export const convertClinicalFormToHtml = (items, level = 0) => {
 
                 case 'cf-radio':
                     html = `${indent}<div style="margin: 6px 0;" data-id="${item.id}">\n`;
-                    html += `${indent}  <label style="display: block; margin-bottom: 4px; font-size: 11px; color: #333;">${item.label}</label>\n`;
+                    html += `${indent}  <label style="display: block; margin-bottom: 4px; font-size: 11px; color: #333;">${item.label}${getRequiredAsterisk(item)}</label>\n`;
                     if (item.options && item.options.length > 0) {
                         item.options.forEach((option, index) => {
                             html += `${indent}  <div style="margin: 2px 0; margin-left: 16px;">\n`;
@@ -153,14 +168,14 @@ export const convertClinicalFormToHtml = (items, level = 0) => {
 
                 case 'cf-snom-textbox':
                     html = `${indent}<div style="margin: 6px 0; display: flex; align-items: center;" data-id="${item.id}">\n`;
-                    html += `${indent}  <label style="display: inline-block; width: 140px; font-size: 11px; color: #333; margin-right: 8px;">${item.label}</label>\n`;
+                    html += `${indent}  <label style="display: inline-block; width: 140px; font-size: 11px; color: #333; margin-right: 8px;">${item.label}${getRequiredAsterisk(item)}</label>\n`;
                     html += `${indent}  <input type="text" placeholder="Restricted to subset" style="width: 200px; padding: 2px 4px; border: 1px solid #ccc; font-size: 11px;" />\n`;
                     html += `${indent}</div>\n`;
                     break;
 
                 case 'cf-textbox':
                     html = `${indent}<div style="margin: 6px 0; display: flex; align-items: center;" data-id="${item.id}">\n`;
-                    html += `${indent}  <label style="display: inline-block; width: 100px; font-size: 11px; color: #333; margin-right: 8px;">${item.label}</label>\n`;
+                    html += `${indent}  <label style="display: inline-block; width: 100px; font-size: 11px; color: #333; margin-right: 8px;">${item.label}${getRequiredAsterisk(item)}</label>\n`;
                     html += `${indent}  <input type="text" style="width: 200px; padding: 2px 4px; border: 1px solid #ccc; font-size: 11px;" />\n`;
                     html += `${indent}</div>\n`;
                     break;
@@ -188,7 +203,7 @@ function convertTableFieldToHtml(item, indent) {
         case 'textbox':
         case 'Text Box':
             html = `${indent}<div style="margin: 4px 0; display: flex; align-items: center;">\n`;
-            html += `${indent}  <label style="display: inline-block; width: 80px; font-size: 10px; color: #333; margin-right: 6px;">${item.label}</label>\n`;
+            html += `${indent}  <label style="display: inline-block; width: 80px; font-size: 10px; color: #333; margin-right: 6px;">${item.label}${getRequiredAsterisk(item)}</label>\n`;
             html += `${indent}  <input type="text" style="flex: 1; padding: 1px 3px; border: 1px solid #ccc; font-size: 10px;" />\n`;
             html += `${indent}</div>\n`;
             break;
@@ -196,7 +211,7 @@ function convertTableFieldToHtml(item, indent) {
         case 'notes':
         case 'Text Area':
             html = `${indent}<div style="margin: 4px 0;">\n`;
-            html += `${indent}  <label style="display: block; margin-bottom: 1px; font-size: 10px; color: #333;">${item.label}</label>\n`;
+            html += `${indent}  <label style="display: block; margin-bottom: 1px; font-size: 10px; color: #333;">${item.label}${getRequiredAsterisk(item)}</label>\n`;
             html += `${indent}  <textarea style="width: 100%; height: 40px; padding: 2px 3px; border: 1px solid #ccc; font-size: 10px; resize: none;"></textarea>\n`;
             html += `${indent}</div>\n`;
             break;
@@ -205,7 +220,7 @@ function convertTableFieldToHtml(item, indent) {
         case 'Date':
         case 'cf-date':
             html = `${indent}<div style="margin: 4px 0; display: flex; align-items: center;">\n`;
-            html += `${indent}  <label style="display: inline-block; width: 80px; font-size: 10px; color: #333; margin-right: 6px;">${item.label}</label>\n`;
+            html += `${indent}  <label style="display: inline-block; width: 80px; font-size: 10px; color: #333; margin-right: 6px;">${item.label}${getRequiredAsterisk(item)}</label>\n`;
             html += `${indent}  <input type="text" style="width: 70px; padding: 1px 3px; border: 1px solid #ccc; font-size: 10px;" />\n`;
             html += `${indent}</div>\n`;
             break;
@@ -213,7 +228,7 @@ function convertTableFieldToHtml(item, indent) {
         case 'cf-listbox':
         case 'List Box':
             html = `${indent}<div style="margin: 4px 0; display: flex; align-items: center;">\n`;
-            html += `${indent}  <label style="display: inline-block; width: 80px; font-size: 10px; color: #333; margin-right: 6px;">${item.label}</label>\n`;
+            html += `${indent}  <label style="display: inline-block; width: 80px; font-size: 10px; color: #333; margin-right: 6px;">${item.label}${getRequiredAsterisk(item)}</label>\n`;
             html += `${indent}  <select style="flex: 1; padding: 1px 3px; border: 1px solid #ccc; font-size: 10px;">\n`;
             // Leading blank option ensures default appears empty
             html += `${indent}    <option value=""></option>\n`;
@@ -229,7 +244,7 @@ function convertTableFieldToHtml(item, indent) {
         case 'cf-checkbox':
             html = `${indent}<div style="margin: 4px 0; display: flex; align-items: center;">\n`;
             html += `${indent}  <input type="checkbox" style="margin-right: 4px; width: 11px; height: 11px;" />\n`;
-            html += `${indent}  <label style="font-size: 10px; color: #333; cursor: pointer;">${item.label}</label>\n`;
+            html += `${indent}  <label style="font-size: 10px; color: #333; cursor: pointer;">${item.label}${getRequiredAsterisk(item)}</label>\n`;
             html += `${indent}</div>\n`;
             break;
 

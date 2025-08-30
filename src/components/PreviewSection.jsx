@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { buildAdvancedTextSummary } from './utils/xmlTextSummary';
+import { buildClinicalFormTextSummary } from './utils/clinicalFormTextSummary';
 import ErrorPreview from './ErrorPreview';
 
 const PreviewSection = ({
@@ -52,8 +53,11 @@ const PreviewSection = ({
 
   // Memoized advanced text summary so it isn't rebuilt on every re-render & can be copied easily
   const textSummary = useMemo(
-    () => buildAdvancedTextSummary(effectiveTextXml),
-    [effectiveTextXml]
+    () =>
+      builderMode === 'clinical'
+        ? buildClinicalFormTextSummary(effectiveTextXml)
+        : buildAdvancedTextSummary(effectiveTextXml),
+    [effectiveTextXml, builderMode]
   );
 
   const handleDownloadTextSummary = () => {
@@ -64,7 +68,10 @@ const PreviewSection = ({
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'questionnaire-summary.txt';
+      a.download =
+        builderMode === 'clinical'
+          ? 'clinical-form-summary.txt'
+          : 'questionnaire-summary.txt';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -337,7 +344,10 @@ const PreviewSection = ({
                     >
                       <b>
                         Note: You will have to upload here for Advanced
-                        Questionnaires.
+                        {builderMode === 'clinical'
+                          ? ' Clinical Forms'
+                          : ' Questionnaires'}
+                        .
                       </b>
                     </h4>
                     <div className="flex gap-2">

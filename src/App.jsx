@@ -2611,6 +2611,7 @@ function App() {
       <UserGuideModal
         isOpen={showUserGuide}
         onClose={() => setShowUserGuide(false)}
+        builderMode={builderMode}
         isDarkMode={isDarkMode}
       />
       <PasteXmlModal
