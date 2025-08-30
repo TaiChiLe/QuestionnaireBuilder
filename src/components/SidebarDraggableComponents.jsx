@@ -302,102 +302,10 @@ const SidebarDraggableComponents = ({
     </>
   );
 
-  // Clinical form builder components (based on XSD schema)
+  // Clinical form builder components (ordered by usage frequency)
   const clinicalComponents = (
     <>
-      {/* Button Elements */}
-      <div className="mb-2">
-        <DraggableItem id="cf-button-tag" isValidDrop={isValidDrop}>
-          <span className="inline-flex items-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
-            >
-              <rect x="3" y="8" width="18" height="8" rx="2" />
-              <path d="M12 12h.01" />
-            </svg>
-            <span>Button</span>
-          </span>
-        </DraggableItem>
-      </div>
-
-      {/* Input Elements */}
-      <div className="mb-2">
-        <DraggableItem id="cf-check-tag" isValidDrop={isValidDrop}>
-          <span className="inline-flex items-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
-            >
-              <rect x="3" y="5" width="6" height="6" rx="1" />
-              <path d="M21 7L13 15l-3-3" />
-            </svg>
-            <span>Checkbox</span>
-          </span>
-        </DraggableItem>
-      </div>
-
-      {/* Date Elements */}
-      <div className="mb-2">
-        <DraggableItem id="cf-date-tag" isValidDrop={isValidDrop}>
-          <span className="inline-flex items-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
-            >
-              <rect x="3" y="4" width="18" height="18" rx="2" />
-              <line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
-            <span>Date</span>
-          </span>
-        </DraggableItem>
-      </div>
-
-      <div className="mb-2">
-        <DraggableItem id="cf-future-date-tag" isValidDrop={isValidDrop}>
-          <span className="inline-flex items-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
-            >
-              <rect x="3" y="4" width="18" height="18" rx="2" />
-              <line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
-              <path d="M8 14l2 2 4-4" />
-            </svg>
-            <span>Future Date</span>
-          </span>
-        </DraggableItem>
-      </div>
-
-      {/* Container Elements */}
+      {/* Structure Elements - Most fundamental */}
       <div className="mb-2">
         <DraggableItem id="cf-group-tag" isValidDrop={isValidDrop}>
           <span className="inline-flex items-center gap-2">
@@ -421,6 +329,49 @@ const SidebarDraggableComponents = ({
       </div>
 
       <div className="mb-2">
+        <DraggableItem id="cf-panel-tag" isValidDrop={isValidDrop}>
+          <span className="inline-flex items-center gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-5 h-5 text-gray-600"
+            >
+              <rect x="3" y="4" width="18" height="16" rx="2" />
+              <path d="M3 10h18" />
+            </svg>
+            <span>Panel</span>
+          </span>
+        </DraggableItem>
+      </div>
+
+      {/* Most Common Input - Text Box */}
+      <div className="mb-2">
+        <DraggableItem id="cf-textbox-tag" isValidDrop={isValidDrop}>
+          <span className="inline-flex items-center gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-5 h-5 text-gray-600"
+            >
+              <rect x="4" y="6" width="16" height="4" rx="1" />
+              <path d="M6 8h12" />
+            </svg>
+            <span>Text Box</span>
+          </span>
+        </DraggableItem>
+      </div>
+
+      <div className="mb-2">
         <DraggableItem id="cf-info-tag" isValidDrop={isValidDrop}>
           <span className="inline-flex items-center gap-2">
             <svg
@@ -438,6 +389,51 @@ const SidebarDraggableComponents = ({
               <path d="M10.5 12h1.5v4h1.5" />
             </svg>
             <span>Information</span>
+          </span>
+        </DraggableItem>
+      </div>
+
+      {/* Common Basic Inputs */}
+      <div className="mb-2">
+        <DraggableItem id="cf-check-tag" isValidDrop={isValidDrop}>
+          <span className="inline-flex items-center gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-5 h-5 text-gray-600"
+            >
+              <rect x="3" y="5" width="6" height="6" rx="1" />
+              <path d="M21 7L13 15l-3-3" />
+            </svg>
+            <span>Checkbox</span>
+          </span>
+        </DraggableItem>
+      </div>
+
+      <div className="mb-2">
+        <DraggableItem id="cf-date-tag" isValidDrop={isValidDrop}>
+          <span className="inline-flex items-center gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-5 h-5 text-gray-600"
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            <span>Date</span>
           </span>
         </DraggableItem>
       </div>
@@ -466,6 +462,29 @@ const SidebarDraggableComponents = ({
       </div>
 
       <div className="mb-2">
+        <DraggableItem id="cf-radio-tag" isValidDrop={isValidDrop}>
+          <span className="inline-flex items-center gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-5 h-5 text-gray-600"
+            >
+              <circle cx="7" cy="7" r="3" />
+              <circle cx="7" cy="17" r="3" />
+              <path d="M14 7h7" />
+              <path d="M14 17h7" />
+            </svg>
+            <span>Radio Button</span>
+          </span>
+        </DraggableItem>
+      </div>
+
+      <div className="mb-2">
         <DraggableItem id="cf-notes-tag" isValidDrop={isValidDrop}>
           <span className="inline-flex items-center gap-2">
             <svg
@@ -488,8 +507,32 @@ const SidebarDraggableComponents = ({
         </DraggableItem>
       </div>
 
+      {/* Tables and Advanced Inputs */}
       <div className="mb-2">
-        <DraggableItem id="cf-notes-history-tag" isValidDrop={isValidDrop}>
+        <DraggableItem id="cf-table-tag" isValidDrop={isValidDrop}>
+          <span className="inline-flex items-center gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-5 h-5 text-gray-600"
+            >
+              <rect x="3" y="6" width="18" height="12" rx="2" />
+              <path d="M3 10h18" />
+              <path d="M9 6v12" />
+              <path d="M15 6v12" />
+            </svg>
+            <span>Table</span>
+          </span>
+        </DraggableItem>
+      </div>
+
+      <div className="mb-2">
+        <DraggableItem id="cf-table-field-tag" isValidDrop={isValidDrop}>
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -502,18 +545,16 @@ const SidebarDraggableComponents = ({
               className="w-5 h-5 text-gray-600"
             >
               <rect x="4" y="4" width="16" height="16" rx="2" />
-              <path d="M8 8h8" />
-              <path d="M8 12h8" />
-              <path d="M8 16h6" />
-              <circle cx="18" cy="6" r="2" />
+              <path d="M4 9h16" />
+              <path d="M9 4v16" />
             </svg>
-            <span>Notes with History</span>
+            <span>Table Field</span>
           </span>
         </DraggableItem>
       </div>
 
       <div className="mb-2">
-        <DraggableItem id="cf-panel-tag" isValidDrop={isValidDrop}>
+        <DraggableItem id="cf-button-tag" isValidDrop={isValidDrop}>
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -525,10 +566,10 @@ const SidebarDraggableComponents = ({
               strokeLinejoin="round"
               className="w-5 h-5 text-gray-600"
             >
-              <rect x="3" y="4" width="18" height="16" rx="2" />
-              <path d="M3 10h18" />
+              <rect x="3" y="8" width="18" height="8" rx="2" />
+              <path d="M12 12h.01" />
             </svg>
-            <span>Panel</span>
+            <span>Button</span>
           </span>
         </DraggableItem>
       </div>
@@ -622,8 +663,9 @@ const SidebarDraggableComponents = ({
         </DraggableItem>
       </div>
 
+      {/* Extended Date and Advanced Elements */}
       <div className="mb-2">
-        <DraggableItem id="cf-radio-tag" isValidDrop={isValidDrop}>
+        <DraggableItem id="cf-future-date-tag" isValidDrop={isValidDrop}>
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -635,16 +677,42 @@ const SidebarDraggableComponents = ({
               strokeLinejoin="round"
               className="w-5 h-5 text-gray-600"
             >
-              <circle cx="7" cy="7" r="3" />
-              <circle cx="7" cy="17" r="3" />
-              <path d="M14 7h7" />
-              <path d="M14 17h7" />
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+              <path d="M8 14l2 2 4-4" />
             </svg>
-            <span>Radio Button</span>
+            <span>Future Date</span>
           </span>
         </DraggableItem>
       </div>
 
+      <div className="mb-2">
+        <DraggableItem id="cf-notes-history-tag" isValidDrop={isValidDrop}>
+          <span className="inline-flex items-center gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-5 h-5 text-gray-600"
+            >
+              <rect x="4" y="4" width="16" height="16" rx="2" />
+              <path d="M8 8h8" />
+              <path d="M8 12h8" />
+              <path d="M8 16h6" />
+              <circle cx="18" cy="6" r="2" />
+            </svg>
+            <span>Notes with History</span>
+          </span>
+        </DraggableItem>
+      </div>
+
+      {/* Specialized Elements - Less commonly used */}
       <div className="mb-2">
         <DraggableItem id="cf-snom-text-box" isValidDrop={isValidDrop}>
           <span className="inline-flex items-center gap-2">
@@ -662,72 +730,6 @@ const SidebarDraggableComponents = ({
               <path d="M6 8h12" />
             </svg>
             <span>SNOMED sub-set text box</span>
-          </span>
-        </DraggableItem>
-      </div>
-
-      <div className="mb-2">
-        <DraggableItem id="cf-table-tag" isValidDrop={isValidDrop}>
-          <span className="inline-flex items-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
-            >
-              <rect x="3" y="6" width="18" height="12" rx="2" />
-              <path d="M3 10h18" />
-              <path d="M9 6v12" />
-              <path d="M15 6v12" />
-            </svg>
-            <span>Table</span>
-          </span>
-        </DraggableItem>
-      </div>
-
-      <div className="mb-2">
-        <DraggableItem id="cf-table-field-tag" isValidDrop={isValidDrop}>
-          <span className="inline-flex items-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
-            >
-              <rect x="4" y="4" width="16" height="16" rx="2" />
-              <path d="M4 9h16" />
-              <path d="M9 4v16" />
-            </svg>
-            <span>Table Field</span>
-          </span>
-        </DraggableItem>
-      </div>
-
-      <div className="mb-2">
-        <DraggableItem id="cf-textbox-tag" isValidDrop={isValidDrop}>
-          <span className="inline-flex items-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
-            >
-              <rect x="4" y="6" width="16" height="4" rx="1" />
-              <path d="M6 8h12" />
-            </svg>
-            <span>Text Box</span>
           </span>
         </DraggableItem>
       </div>
