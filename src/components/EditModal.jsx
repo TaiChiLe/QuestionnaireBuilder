@@ -9,11 +9,57 @@ const EditModal = ({
   onItemUpdate,
   droppedItems = [],
   showAdvanced = false,
+  isDarkMode = false,
 }) => {
   const [keyPickerState, setKeyPickerState] = useState({
     open: false,
     conditionIndex: null,
   });
+
+  // Helper function to determine if we should use textarea based on text length
+  const shouldUseTextarea = (text, threshold = 80) => {
+    return text && text.length > threshold;
+  };
+
+  // Helper function to render adaptive input/textarea
+  const renderAdaptiveInput = (
+    value,
+    onChange,
+    placeholder = '',
+    ref = null,
+    threshold = 80
+  ) => {
+    const isTextarea = shouldUseTextarea(value, threshold);
+    const commonClassName = `w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+      isDarkMode
+        ? 'bg-gray-700 border-gray-600 text-gray-100'
+        : 'border-gray-300'
+    }`;
+
+    if (isTextarea) {
+      return (
+        <textarea
+          value={value || ''}
+          onChange={onChange}
+          ref={ref}
+          className={`${commonClassName} resize-none min-h-[80px]`}
+          placeholder={placeholder}
+          rows={Math.min(Math.ceil((value || '').length / 40), 4)}
+        />
+      );
+    }
+
+    return (
+      <input
+        type="text"
+        value={value || ''}
+        onChange={onChange}
+        ref={ref}
+        className={commonClassName}
+        placeholder={placeholder}
+      />
+    );
+  };
 
   const sanitizeForKey = (text) =>
     (text || '')
@@ -101,7 +147,9 @@ const EditModal = ({
   return (
     <div className="fixed inset-0 flex justify-center items-center z-[2000] bg-black/10">
       <div
-        className="bg-white rounded-lg px-6 w-[600px] max-w-[90vw] max-h-[80vh] overflow-auto shadow-2xl"
+        className={`rounded-lg px-6 w-[600px] max-w-[90vw] max-h-[80vh] overflow-auto shadow-2xl ${
+          isDarkMode ? 'bg-gray-800' : 'bg-white'
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         <form
@@ -113,9 +161,32 @@ const EditModal = ({
           noValidate
         >
           {/* Fixed Header with Title and Action Buttons */}
-          <div className="sticky top-0 bg-white z-10 border-b border-gray-200 -mx-6 px-6 py-4 mb-4">
-            <div className="flex items-center justify-between gap-4">
-              <h2 className="m-0 font-bold text-xl text-gray-800 flex-1">
+          <div
+            className={`sticky top-0 z-10 border-b -mx-6 px-6 py-4 mb-4 ${
+              isDarkMode
+                ? 'bg-gray-800 border-gray-600'
+                : 'bg-white border-gray-200'
+            }`}
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <h2
+                className={`m-0 font-bold text-xl sm:flex-1 ${
+                  isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                } truncate pr-4`}
+                title={`Edit ${
+                  editingItem.type === 'page'
+                    ? 'Page'
+                    : editingItem.type === 'field'
+                    ? 'Field'
+                    : editingItem.type === 'information'
+                    ? 'Information'
+                    : editingItem.type === 'table'
+                    ? 'Table'
+                    : editingItem.type === 'table-field'
+                    ? 'Table Field'
+                    : 'Question'
+                }: ${editingItem.label}`}
+              >
                 Edit{' '}
                 {editingItem.type === 'page'
                   ? 'Page'
@@ -130,11 +201,15 @@ const EditModal = ({
                   : 'Question'}
                 : {editingItem.label}
               </h2>
-              <div className="flex gap-3">
+              <div className="flex gap-3 flex-shrink-0">
                 <button
                   type="button"
                   onClick={onCancel}
-                  className="px-5 py-2.5 bg-gray-100 text-gray-800 border border-gray-300 rounded-md hover:bg-gray-200 cursor-pointer"
+                  className={`px-5 py-2.5 border rounded-md hover:bg-opacity-80 cursor-pointer ${
+                    isDarkMode
+                      ? 'bg-gray-700 text-gray-300 border-gray-600 hover:bg-gray-600'
+                      : 'bg-gray-100 text-gray-800 border-gray-300 hover:bg-gray-200'
+                  }`}
                 >
                   Cancel
                 </button>
@@ -153,64 +228,74 @@ const EditModal = ({
             <div className="flex flex-col space-y-4">
               {editingItem.type === 'page' && (
                 <div>
-                  <label className="block mb-1 font-semibold text-gray-700">
+                  <label
+                    className={`block mb-1 font-semibold ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}
+                  >
                     Title:
                   </label>
-                  <input
-                    type="text"
-                    value={editingItem.title || ''}
-                    onChange={(e) =>
+                  {renderAdaptiveInput(
+                    editingItem.title,
+                    (e) =>
                       onItemUpdate((prev) => ({
                         ...prev,
                         title: e.target.value,
-                      }))
-                    }
-                    ref={firstFieldRef}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+                      })),
+                    'Enter page title...',
+                    firstFieldRef
+                  )}
                 </div>
               )}
               {editingItem.type === 'information' && (
                 <div>
-                  <label className="block mb-1 font-semibold text-gray-700">
+                  <label
+                    className={`block mb-1 font-semibold ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}
+                  >
                     Label:
                   </label>
-                  <input
-                    type="text"
-                    value={editingItem.label || ''}
-                    onChange={(e) =>
+                  {renderAdaptiveInput(
+                    editingItem.label,
+                    (e) =>
                       onItemUpdate((prev) => ({
                         ...prev,
                         label: e.target.value,
-                      }))
-                    }
-                    ref={firstFieldRef}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+                      })),
+                    'Enter information text...',
+                    firstFieldRef
+                  )}
                 </div>
               )}
               {editingItem.type === 'table' && (
                 <>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Label:
                     </label>
-                    <input
-                      type="text"
-                      value={editingItem.label || ''}
-                      onChange={(e) =>
+                    {renderAdaptiveInput(
+                      editingItem.label,
+                      (e) =>
                         onItemUpdate((prev) => ({
                           ...prev,
                           label: e.target.value,
                           keyField: sanitizeForKey(e.target.value),
-                        }))
-                      }
-                      ref={firstFieldRef}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                        })),
+                      'Enter table label...',
+                      firstFieldRef
+                    )}
                   </div>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Key Field:
                     </label>
                     <input
@@ -222,7 +307,11 @@ const EditModal = ({
                           keyField: e.target.value,
                         }))
                       }
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        isDarkMode
+                          ? 'bg-gray-700 border-gray-600 text-gray-100'
+                          : 'border-gray-300'
+                      }`}
                     />
                   </div>
                   <div>
@@ -238,7 +327,11 @@ const EditModal = ({
                         }
                         className="rounded border-gray-300 text-blue-600 shadow-sm"
                       />
-                      <span className="font-semibold text-gray-700">
+                      <span
+                        className={`font-semibold ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                        }`}
+                      >
                         Required
                       </span>
                     </label>
@@ -248,24 +341,30 @@ const EditModal = ({
               {editingItem.type === 'table-field' && (
                 <>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Label:
                     </label>
-                    <input
-                      type="text"
-                      value={editingItem.label || ''}
-                      onChange={(e) =>
+                    {renderAdaptiveInput(
+                      editingItem.label,
+                      (e) =>
                         onItemUpdate((prev) => ({
                           ...prev,
                           label: e.target.value,
-                        }))
-                      }
-                      ref={firstFieldRef}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                        })),
+                      'Enter table field label...',
+                      firstFieldRef
+                    )}
                   </div>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Data Type:
                     </label>
                     <select
@@ -276,7 +375,11 @@ const EditModal = ({
                           dataType: e.target.value,
                         }))
                       }
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        isDarkMode
+                          ? 'bg-gray-700 border-gray-600 text-gray-100'
+                          : 'border-gray-300'
+                      }`}
                     >
                       <option value="Text Box">Text Box</option>
                       <option value="Date">Date</option>
@@ -295,7 +398,11 @@ const EditModal = ({
                         }
                         className="rounded border-gray-300 text-blue-600"
                       />
-                      <span className="font-semibold text-gray-700">
+                      <span
+                        className={`font-semibold ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                        }`}
+                      >
                         Required
                       </span>
                     </label>
@@ -305,13 +412,16 @@ const EditModal = ({
               {editingItem.type === 'field' && (
                 <>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Label:
                     </label>
-                    <input
-                      type="text"
-                      value={editingItem.label || ''}
-                      onChange={(e) => {
+                    {renderAdaptiveInput(
+                      editingItem.label,
+                      (e) => {
                         const newLabel = e.target.value;
                         const sanitizedKey = sanitizeForKey(newLabel);
                         onItemUpdate((prev) => ({
@@ -323,14 +433,18 @@ const EditModal = ({
                               ? sanitizedKey
                               : prev.keyField,
                         }));
-                      }}
-                      ref={firstFieldRef}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                      },
+                      'Enter field label...',
+                      firstFieldRef
+                    )}
                   </div>
                   {showAdvanced && (
                     <div>
-                      <label className="block mb-1 font-semibold text-gray-700">
+                      <label
+                        className={`block mb-1 font-semibold ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                        }`}
+                      >
                         Data Type:
                       </label>
                       <select
@@ -341,7 +455,11 @@ const EditModal = ({
                             dataType: e.target.value,
                           }))
                         }
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          isDarkMode
+                            ? 'bg-gray-700 border-gray-600 text-gray-100'
+                            : 'border-gray-300'
+                        }`}
                       >
                         <option value="Text Box">Text Box</option>
                         <option value="Text Area">Text Area</option>
@@ -388,13 +506,16 @@ const EditModal = ({
               {editingItem.type === 'question' && (
                 <>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Label:
                     </label>
-                    <input
-                      type="text"
-                      value={editingItem.label || ''}
-                      onChange={(e) => {
+                    {renderAdaptiveInput(
+                      editingItem.label,
+                      (e) => {
                         const newLabel = e.target.value;
                         const sanitizedKey = sanitizeForKey(newLabel);
                         onItemUpdate((prev) => ({
@@ -406,14 +527,18 @@ const EditModal = ({
                               ? sanitizedKey
                               : prev.keyField,
                         }));
-                      }}
-                      ref={firstFieldRef}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                      },
+                      'Enter question label...',
+                      firstFieldRef
+                    )}
                   </div>
                   {showAdvanced && (
                     <div>
-                      <label className="block mb-1 font-semibold text-gray-700">
+                      <label
+                        className={`block mb-1 font-semibold ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                        }`}
+                      >
                         Data Type:
                       </label>
                       <select
@@ -424,7 +549,11 @@ const EditModal = ({
                             dataType: e.target.value,
                           }))
                         }
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          isDarkMode
+                            ? 'bg-gray-700 border-gray-600 text-gray-100'
+                            : 'border-gray-300'
+                        }`}
                       >
                         <option value="List Box">List Box</option>
                         <option value="Multi Select">Multi Select</option>
@@ -433,7 +562,11 @@ const EditModal = ({
                     </div>
                   )}
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Key:
                     </label>
                     <input
@@ -445,7 +578,11 @@ const EditModal = ({
                           keyField: e.target.value,
                         }))
                       }
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        isDarkMode
+                          ? 'bg-gray-700 border-gray-600 text-gray-100'
+                          : 'border-gray-300'
+                      }`}
                     />
                   </div>
                   <div>
@@ -461,13 +598,21 @@ const EditModal = ({
                         }
                         className="rounded border-gray-300 text-blue-600"
                       />
-                      <span className="font-semibold text-gray-700">
+                      <span
+                        className={`font-semibold ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                        }`}
+                      >
                         Required Field
                       </span>
                     </label>
                   </div>
                   <div>
-                    <label className="block mb-2 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-2 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Answer Options:
                     </label>
                     {(editingItem.answers || []).map((answer, index) => (
@@ -486,7 +631,11 @@ const EditModal = ({
                               answers: newAnswers,
                             }));
                           }}
-                          className="flex-1 p-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className={`flex-1 p-1.5 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            isDarkMode
+                              ? 'bg-gray-700 border-gray-600 text-gray-100'
+                              : 'border-gray-300'
+                          }`}
                           placeholder={`Option ${index + 1}`}
                         />
                         <button
@@ -500,7 +649,11 @@ const EditModal = ({
                               answers: newAnswers,
                             }));
                           }}
-                          className="px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-md hover:bg-red-100 cursor-pointer"
+                          className={`px-3 py-1.5 border rounded-md hover:bg-opacity-80 cursor-pointer ${
+                            isDarkMode
+                              ? 'bg-red-900 text-red-300 border-red-700 hover:bg-red-800'
+                              : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                          }`}
                         >
                           Remove
                         </button>
@@ -522,7 +675,11 @@ const EditModal = ({
                           answers: [...(prev.answers || []), newAnswer],
                         }));
                       }}
-                      className="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 cursor-pointer"
+                      className={`px-4 py-2 border rounded-md hover:bg-opacity-80 cursor-pointer ${
+                        isDarkMode
+                          ? 'bg-blue-900 text-blue-300 border-blue-700 hover:bg-blue-800'
+                          : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+                      }`}
                     >
                       Add Answer Option
                     </button>
@@ -534,13 +691,25 @@ const EditModal = ({
                   editingItem.type === 'question' ||
                   editingItem.type === 'field' ||
                   editingItem.type === 'table') && (
-                  <div className="border-t pt-4">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-3">
+                  <div
+                    className={`border-t pt-4 ${
+                      isDarkMode ? 'border-gray-600' : 'border-gray-200'
+                    }`}
+                  >
+                    <h3
+                      className={`text-lg font-semibold mb-3 ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Visibility Settings
                     </h3>
                     <div className="px-2">
                       <div className="mb-4 ">
-                        <label className="block mb-1  font-semibold text-gray-700">
+                        <label
+                          className={`block mb-1 font-semibold ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                          }`}
+                        >
                           Visibility Type:
                         </label>
                         <select
@@ -551,24 +720,42 @@ const EditModal = ({
                               visibilityType: e.target.value,
                             }))
                           }
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            isDarkMode
+                              ? 'bg-gray-700 border-gray-600 text-gray-100'
+                              : 'border-gray-300'
+                          }`}
                         >
                           <option value="Any">Any</option>
                           <option value="All">All</option>
                         </select>
                       </div>
                       <div>
-                        <label className="block mb-2 font-semibold text-gray-700">
+                        <label
+                          className={`block mb-2 font-semibold ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                          }`}
+                        >
                           Conditions:
                         </label>
                         {(editingItem.conditions || []).map(
                           (condition, index) => (
                             <div
                               key={condition.id}
-                              className="flex gap-2 mb-3 p-3 border border-gray-200 rounded-md bg-gray-50"
+                              className={`flex gap-2 mb-3 p-3 border rounded-md ${
+                                isDarkMode
+                                  ? 'border-gray-600 bg-gray-700'
+                                  : 'border-gray-200 bg-gray-50'
+                              }`}
                             >
                               <div className="flex-1">
-                                <label className="block mb-1 text-sm font-medium text-gray-600">
+                                <label
+                                  className={`block mb-1 text-sm font-medium ${
+                                    isDarkMode
+                                      ? 'text-gray-400'
+                                      : 'text-gray-600'
+                                  }`}
+                                >
                                   Record Key:
                                 </label>
                                 <div className="flex gap-2 items-start">
@@ -588,7 +775,11 @@ const EditModal = ({
                                         conditions: newConditions,
                                       }));
                                     }}
-                                    className="flex-1 p-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                    className={`flex-1 p-1.5 border rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
+                                      isDarkMode
+                                        ? 'bg-gray-600 border-gray-500 text-gray-100'
+                                        : 'border-gray-300'
+                                    }`}
                                     placeholder="Enter or pick a key"
                                   />
                                   <button
@@ -599,14 +790,24 @@ const EditModal = ({
                                         conditionIndex: index,
                                       })
                                     }
-                                    className="px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 cursor-pointer"
+                                    className={`px-3 py-1.5 border rounded-md hover:bg-opacity-80 cursor-pointer ${
+                                      isDarkMode
+                                        ? 'bg-blue-900 text-blue-300 border-blue-700 hover:bg-blue-800'
+                                        : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+                                    }`}
                                   >
                                     Browse
                                   </button>
                                 </div>
                               </div>
                               <div className="flex-1">
-                                <label className="block mb-1 text-sm font-medium text-gray-600">
+                                <label
+                                  className={`block mb-1 text-sm font-medium ${
+                                    isDarkMode
+                                      ? 'text-gray-400'
+                                      : 'text-gray-600'
+                                  }`}
+                                >
                                   Answer:
                                 </label>
                                 <input
@@ -625,7 +826,11 @@ const EditModal = ({
                                       conditions: newConditions,
                                     }));
                                   }}
-                                  className="w-full p-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                  className={`w-full p-1.5 border rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
+                                    isDarkMode
+                                      ? 'bg-gray-600 border-gray-500 text-gray-100'
+                                      : 'border-gray-300'
+                                  }`}
                                   placeholder="Enter answer value"
                                 />
                               </div>
@@ -641,7 +846,11 @@ const EditModal = ({
                                       conditions: newConditions,
                                     }));
                                   }}
-                                  className="px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-md hover:bg-red-100 cursor-pointer"
+                                  className={`px-3 py-1.5 border rounded-md hover:bg-opacity-80 cursor-pointer ${
+                                    isDarkMode
+                                      ? 'bg-red-900 text-red-300 border-red-700 hover:bg-red-800'
+                                      : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                                  }`}
                                 >
                                   Remove
                                 </button>
@@ -667,7 +876,11 @@ const EditModal = ({
                               ],
                             }));
                           }}
-                          className="px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-md hover:bg-green-100 cursor-pointer"
+                          className={`px-4 py-2 border rounded-md hover:bg-opacity-80 cursor-pointer ${
+                            isDarkMode
+                              ? 'bg-green-900 text-green-300 border-green-700 hover:bg-green-800'
+                              : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                          }`}
                         >
                           Add Condition
                         </button>
@@ -693,6 +906,7 @@ const EditModal = ({
           };
           onItemUpdate((prev) => ({ ...prev, conditions: newConditions }));
         }}
+        isDarkMode={isDarkMode}
       />
     </div>
   );

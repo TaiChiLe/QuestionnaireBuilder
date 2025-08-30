@@ -14,10 +14,30 @@ function DraggableItem(props) {
   const getBackgroundClass = () => {
     if (isDragging) {
       return props.isValidDrop === false
-        ? 'bg-red-50 border-red-300'
+        ? props.isDarkMode
+          ? 'bg-red-900 border-red-600'
+          : 'bg-red-50 border-red-300'
+        : props.isDarkMode
+        ? 'bg-blue-900 border-blue-600'
         : 'bg-blue-50 border-blue-300';
     }
-    return 'bg-white';
+    return props.isDarkMode ? 'bg-gray-700' : 'bg-white';
+  };
+
+  const getTextColor = () => {
+    return props.isDarkMode ? 'text-gray-200' : 'text-gray-800';
+  };
+
+  const getBorderColor = () => {
+    if (isDragging) return '';
+    return props.isDarkMode ? 'border-gray-600' : 'border-gray-300';
+  };
+
+  const getHoverClass = () => {
+    if (isDragging) return '';
+    return props.isDarkMode
+      ? 'hover:shadow-lg hover:border-gray-500'
+      : 'hover:shadow-md';
   };
 
   return (
@@ -25,12 +45,12 @@ function DraggableItem(props) {
       ref={setNodeRef}
       className={`
         p-2.5 my-1 border rounded cursor-grab select-none text-sm min-w-20 w-full relative
-        flex items-center gap-2 text-gray-800
+        flex items-center gap-2 ${getTextColor()}
         ${getBackgroundClass()}
         ${
           isDragging
             ? 'opacity-0 shadow-lg z-[1000]'
-            : 'border-gray-300 shadow-sm z-[1] hover:shadow-md'
+            : `${getBorderColor()} shadow-sm z-[1] ${getHoverClass()}`
         }
         ${!isDragging ? 'transition-all duration-200 ease-in-out' : ''}
       `}

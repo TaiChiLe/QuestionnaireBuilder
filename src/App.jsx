@@ -84,6 +84,16 @@ function App() {
     }
   });
 
+  // Dark mode state (persisted)
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    try {
+      const stored = localStorage.getItem('qb_dark_mode');
+      return stored === 'true';
+    } catch {
+      return false;
+    }
+  });
+
   useEffect(() => {
     try {
       localStorage.setItem('qb_show_advanced', showAdvanced ? 'true' : 'false');
@@ -91,6 +101,14 @@ function App() {
       // Ignore localStorage errors
     }
   }, [showAdvanced]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('qb_dark_mode', isDarkMode ? 'true' : 'false');
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, [isDarkMode]);
 
   // Undo/Redo functionality
   const [historyStack, setHistoryStack] = useState([]);
@@ -942,6 +960,7 @@ function App() {
             selected={selectedIds.has(item.id)}
             onSelect={(e) => handleSelectItem(e, item.id)}
             expandedAnswerIds={expandedAnswerIds}
+            isDarkMode={isDarkMode}
           >
             {!isPageCollapsed &&
               item.children &&
@@ -958,6 +977,7 @@ function App() {
       selectedIds,
       expandedAnswerIds,
       handleSelectItem,
+      isDarkMode,
     ]
   );
 
@@ -1494,15 +1514,29 @@ function App() {
       onDragEnd={handleDragEnd}
       collisionDetection={pointerWithin}
     >
-      <div className="flex flex-col h-screen w-screen m-0 p-0 overflow-hidden fixed top-0 left-0">
+      <div
+        className={`flex flex-col h-screen w-screen m-0 p-0 overflow-hidden fixed top-0 left-0 ${
+          isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'
+        }`}
+      >
         {/* Header with export button */}
-        <div className="px-4 py-2 border-b border-gray-300 bg-gray-50 flex-shrink-0 flex justify-between items-center w-full">
+        <div
+          className={`px-4 py-2 border-b ${
+            isDarkMode
+              ? 'border-gray-700 bg-gray-800'
+              : 'border-gray-300 bg-gray-50'
+          } flex-shrink-0 flex justify-between items-center w-full`}
+        >
           <h1 className="m-0 text-2xl flex items-center gap-4 flex-1 justify-start whitespace-nowrap">
             <span>Unofficial Questionnaire XML Builder</span>
             <button
               type="button"
               onClick={() => setShowUserGuide(true)}
-              className="w-6 h-6 flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 text-[#f03741] transition-colors"
+              className={`w-6 h-6 flex items-center justify-center rounded-full ${
+                isDarkMode
+                  ? 'bg-red-900 hover:bg-red-800'
+                  : 'bg-red-100 hover:bg-red-200'
+              } text-[#f03741] transition-colors`}
               title="User Guide"
               aria-label="Open user guide"
             >
@@ -1527,10 +1561,42 @@ function App() {
               value={questionnaireName}
               onChange={(e) => setQuestionnaireName(e.target.value)}
               placeholder="Untitled Questionnaire"
-              className="text-base px-3 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white min-w-[200px]"
+              className={`text-base px-3 py-1 border ${
+                isDarkMode
+                  ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:ring-blue-500'
+                  : 'border-gray-300 bg-white text-gray-900 focus:ring-blue-400'
+              } rounded focus:outline-none focus:ring-2 min-w-[200px]`}
             />
           </div>
           <div className="flex gap-2 items-center flex-1 justify-end whitespace-nowrap">
+            {/* Dark Mode Toggle Switch */}
+            <div className="flex items-center gap-2">
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isDarkMode}
+                  onChange={(e) => setIsDarkMode(e.target.checked)}
+                  className="sr-only"
+                />
+                <div
+                  className={`relative w-11 h-6 rounded-full transition-colors ${
+                    isDarkMode ? 'bg-blue-600' : 'bg-gray-200'
+                  }`}
+                >
+                  <div
+                    className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
+                      isDarkMode ? 'translate-x-full' : 'translate-x-0'
+                    }`}
+                  ></div>
+                </div>
+                <span
+                  className={`ml-2 text-sm font-medium ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}
+                ></span>
+              </label>
+            </div>
+
             {/* New Button */}
             <button
               type="button"
@@ -1559,7 +1625,11 @@ function App() {
               <button
                 type="button"
                 onClick={() => setUploadMenuOpen((o) => !o)}
-                className="px-3 py-2 bg-white text-gray-800 border border-gray-300 rounded cursor-pointer text-sm hover:bg-gray-100 transition-colors flex items-center gap-2"
+                className={`px-3 py-2 ${
+                  isDarkMode
+                    ? 'bg-gray-700 text-gray-200 border-gray-600 hover:bg-gray-600'
+                    : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-100'
+                } border rounded cursor-pointer text-sm transition-colors flex items-center gap-2`}
                 title="Upload Questionnaire"
               >
                 <svg
@@ -1585,9 +1655,17 @@ function App() {
                 </span>
               </button>
               {uploadMenuOpen && (
-                <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded shadow-lg z-50 text-sm py-1">
+                <div
+                  className={`absolute right-0 mt-1 w-44 ${
+                    isDarkMode
+                      ? 'bg-gray-800 border-gray-600'
+                      : 'bg-white border-gray-200'
+                  } border rounded shadow-lg z-50 text-sm py-1`}
+                >
                   <button
-                    className="flex w-full justify-between items-center text-left px-3 py-2 hover:bg-gray-100"
+                    className={`flex w-full justify-between items-center text-left px-3 py-2 ${
+                      isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                    }`}
                     onClick={() => {
                       setUploadMenuOpen(false);
                       xmlLoaderRef.current?.openFileDialog();
@@ -1596,7 +1674,9 @@ function App() {
                     <span>From File...</span>
                   </button>
                   <button
-                    className="flex w-full justify-between items-center text-left px-3 py-2 hover:bg-gray-100"
+                    className={`flex w-full justify-between items-center text-left px-3 py-2 ${
+                      isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                    }`}
                     onClick={() => {
                       setUploadMenuOpen(false);
                       setShowPasteXml(true);
@@ -1613,7 +1693,11 @@ function App() {
               type="button"
               onClick={handleExportXml}
               disabled={droppedItems.length === 0}
-              className="px-3 py-2 bg-white text-gray-800 border border-gray-300 rounded cursor-pointer text-sm hover:bg-gray-100 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`px-3 py-2 ${
+                isDarkMode
+                  ? 'bg-gray-700 text-gray-200 border-gray-600 hover:bg-gray-600'
+                  : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-100'
+              } border rounded cursor-pointer text-sm transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
               title="Save XML"
             >
               <svg
@@ -1647,15 +1731,29 @@ function App() {
           style={{ height: `calc(100vh - ${previewHeight + 56}px)` }}
         >
           {/* The Sidebar with Draggable items */}
-          <div className="w-64 min-w-64 p-4 bg-gray-100 border-r border-gray-300 overflow-x-hidden overflow-y-auto h-full">
+          <div
+            className={`w-64 min-w-64 p-4 ${
+              isDarkMode
+                ? 'bg-gray-800 border-gray-700'
+                : 'bg-gray-100 border-gray-300'
+            } border-r overflow-x-hidden overflow-y-auto h-full`}
+          >
             {/* Toggle Button for Auto-Edit */}
             <div className="mb-4">
               <button
                 onClick={() => setAutoEdit(!autoEdit)}
                 className="w-full px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200"
                 style={{
-                  backgroundColor: autoEdit ? '#f03741' : '#e5e7eb',
-                  color: autoEdit ? 'white' : '#374151',
+                  backgroundColor: autoEdit
+                    ? '#f03741'
+                    : isDarkMode
+                    ? '#4b5563'
+                    : '#e5e7eb',
+                  color: autoEdit
+                    ? 'white'
+                    : isDarkMode
+                    ? '#d1d5db'
+                    : '#374151',
                 }}
                 title={
                   autoEdit
@@ -1670,19 +1768,36 @@ function App() {
             <div className="block overflow-hidden">
               {/* Basic Components */}
               {/* Draggable Components (previously gated by basic mode) */}
-              <SidebarDraggableComponents isValidDrop={isValidDrop} />
+              <SidebarDraggableComponents
+                isValidDrop={isValidDrop}
+                isDarkMode={isDarkMode}
+              />
             </div>
           </div>
 
           {/* The Droppable Canvas */}
-          <div className="flex-1 p-4 overflow-auto h-full w-auto relative">
+          <div
+            className={`flex-1 p-4 overflow-auto h-full w-auto relative ${
+              isDarkMode ? 'bg-gray-900' : 'bg-white'
+            }`}
+          >
             {/* Floating Toolbar */}
-            <div className="sticky top-0 z-10 mb-4 bg-white/50 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg px-4 py-1.5">
+            <div
+              className={`sticky top-0 z-10 mb-4 ${
+                isDarkMode
+                  ? 'bg-gray-800/50 border-gray-600'
+                  : 'bg-white/50 border-gray-200'
+              } backdrop-blur-sm border rounded-lg shadow-lg px-4 py-1.5`}
+            >
               <div className="flex items-center gap-2">
                 {/* Copy/Cut/Paste Buttons */}
                 <button
                   type="button"
-                  className="px-3 py-1.5 text-xs rounded border bg-white hover:bg-gray-100 disabled:opacity-40 transition-colors"
+                  className={`px-3 py-1.5 text-xs rounded border ${
+                    isDarkMode
+                      ? 'bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-200'
+                      : 'bg-white hover:bg-gray-100 border-gray-300 text-gray-800'
+                  } disabled:opacity-40 transition-colors`}
                   disabled={selectedIds.size === 0}
                   onClick={() => handleCopy(false)}
                   title="Copy (Ctrl+C)"
@@ -1691,7 +1806,11 @@ function App() {
                 </button>
                 <button
                   type="button"
-                  className="px-3 py-1.5 text-xs rounded border bg-white hover:bg-gray-100 disabled:opacity-40 transition-colors"
+                  className={`px-3 py-1.5 text-xs rounded border ${
+                    isDarkMode
+                      ? 'bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-200'
+                      : 'bg-white hover:bg-gray-100 border-gray-300 text-gray-800'
+                  } disabled:opacity-40 transition-colors`}
                   disabled={selectedIds.size === 0}
                   onClick={() => handleCopy(true)}
                   title="Cut (Ctrl+X)"
@@ -1700,7 +1819,11 @@ function App() {
                 </button>
                 <button
                   type="button"
-                  className="px-3 py-1.5 text-xs rounded border bg-white hover:bg-gray-100 disabled:opacity-40 transition-colors"
+                  className={`px-3 py-1.5 text-xs rounded border ${
+                    isDarkMode
+                      ? 'bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-200'
+                      : 'bg-white hover:bg-gray-100 border-gray-300 text-gray-800'
+                  } disabled:opacity-40 transition-colors`}
                   disabled={
                     !clipboard ||
                     (!focusId &&
@@ -1717,7 +1840,11 @@ function App() {
 
                 <button
                   type="button"
-                  className="px-3 py-1.5 text-xs rounded border bg-white hover:bg-gray-100 disabled:opacity-40 transition-colors"
+                  className={`px-3 py-1.5 text-xs rounded border ${
+                    isDarkMode
+                      ? 'bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-200'
+                      : 'bg-white hover:bg-gray-100 border-gray-300 text-gray-800'
+                  } disabled:opacity-40 transition-colors`}
                   disabled={historyIndex <= 0}
                   onClick={handleUndo}
                   title="Undo (Ctrl+Z)"
@@ -1726,7 +1853,11 @@ function App() {
                 </button>
                 <button
                   type="button"
-                  className="px-3 py-1.5 text-xs rounded border bg-white hover:bg-gray-100 disabled:opacity-40 transition-colors"
+                  className={`px-3 py-1.5 text-xs rounded border ${
+                    isDarkMode
+                      ? 'bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-200'
+                      : 'bg-white hover:bg-gray-100 border-gray-300 text-gray-800'
+                  } disabled:opacity-40 transition-colors`}
                   disabled={historyIndex >= historyStack.length - 1}
                   onClick={handleRedo}
                   title="Redo (Ctrl+Y)"
@@ -1762,7 +1893,11 @@ function App() {
                   return (
                     <button
                       type="button"
-                      className="px-3 py-1.5 text-xs rounded border bg-white hover:bg-gray-100 transition-colors"
+                      className={`px-3 py-1.5 text-xs rounded border ${
+                        isDarkMode
+                          ? 'bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-200'
+                          : 'bg-white hover:bg-gray-100 border-gray-300 text-gray-800'
+                      } transition-colors`}
                       onClick={() => {
                         if (alreadyAllOpen) {
                           setExpandedAnswerIds(new Set());
@@ -1802,7 +1937,11 @@ function App() {
                   return (
                     <button
                       type="button"
-                      className="ml-2 px-3 py-1.5 text-xs rounded border bg-white hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className={`ml-2 px-3 py-1.5 text-xs rounded border ${
+                        isDarkMode
+                          ? 'bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-200'
+                          : 'bg-white hover:bg-gray-100 border-gray-300 text-gray-800'
+                      } transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                       disabled={!anyPages}
                       onClick={() => {
                         if (nextActionExpand) {
@@ -1857,12 +1996,17 @@ function App() {
 
             <DroppableArea
               id="main-canvas"
+              isDarkMode={isDarkMode}
               onBackgroundClick={() => {
                 clearSelection();
               }}
             >
               {droppedItems.length === 0 ? (
-                <p className="text-center text-lg text-gray-500 my-10">
+                <p
+                  className={`text-center text-lg ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                  } my-10`}
+                >
                   Drag an item here to start building!
                 </p>
               ) : (
@@ -1897,6 +2041,7 @@ function App() {
             onToggleCollapse={() => setIsPreviewCollapsed((c) => !c)}
             onXmlEdit={handleXmlEdit}
             onNavigateToItem={navigateToItem}
+            isDarkMode={isDarkMode}
           />
         </div>
       </div>
@@ -1924,6 +2069,7 @@ function App() {
         onItemUpdate={setEditingItem}
         droppedItems={droppedItems}
         showAdvanced={showAdvanced}
+        isDarkMode={isDarkMode}
       />
 
       {/* Warning Modal */}
@@ -1931,6 +2077,7 @@ function App() {
         isOpen={showWarningModal}
         message={warningMessage}
         onClose={closeWarning}
+        isDarkMode={isDarkMode}
       />
 
       {/* Remove Confirmation Modal */}
@@ -1939,6 +2086,7 @@ function App() {
         itemToRemove={itemToRemove}
         onConfirm={confirmRemove}
         onCancel={closeRemoveConfirmation}
+        isDarkMode={isDarkMode}
       />
 
       {/* New XML Confirmation Modal */}
@@ -1946,17 +2094,20 @@ function App() {
         isOpen={showNewXmlModal}
         onConfirm={confirmNewXml}
         onCancel={cancelNewXml}
+        isDarkMode={isDarkMode}
       />
 
       {/* User Guide Modal */}
       <UserGuideModal
         isOpen={showUserGuide}
         onClose={() => setShowUserGuide(false)}
+        isDarkMode={isDarkMode}
       />
       <PasteXmlModal
         isOpen={showPasteXml}
         onClose={() => setShowPasteXml(false)}
         onLoadXml={(items, raw) => handleLoadXml(items, raw)}
+        isDarkMode={isDarkMode}
       />
     </DndContext>
   );

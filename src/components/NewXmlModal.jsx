@@ -1,12 +1,20 @@
-function NewXmlModal({ isOpen, onConfirm, onCancel }) {
+function NewXmlModal({ isOpen, onConfirm, onCancel, isDarkMode }) {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-[1000]">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+      <div
+        className={`${
+          isDarkMode ? 'bg-gray-800' : 'bg-white'
+        } rounded-lg shadow-xl max-w-md w-full mx-4`}
+      >
         <div className="p-6">
           <div className="flex items-center mb-4">
-            <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center mr-3">
+            <div
+              className={`w-8 h-8 rounded-full ${
+                isDarkMode ? 'bg-red-900' : 'bg-red-100'
+              } flex items-center justify-center mr-3`}
+            >
               <svg
                 className="w-4 h-4 text-red-600"
                 fill="none"
@@ -21,12 +29,18 @@ function NewXmlModal({ isOpen, onConfirm, onCancel }) {
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3
+              className={`text-lg font-semibold ${
+                isDarkMode ? 'text-gray-200' : 'text-gray-900'
+              }`}
+            >
               Create New XML
             </h3>
           </div>
 
-          <p className="text-gray-600 mb-6">
+          <p
+            className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-6`}
+          >
             Are you sure you want to create a new questionnaire? This will clear
             the current questionnaire and all unsaved changes will be lost.
           </p>
@@ -34,7 +48,11 @@ function NewXmlModal({ isOpen, onConfirm, onCancel }) {
           <div className="flex justify-end gap-3">
             <button
               onClick={onCancel}
-              className="px-4 py-2 text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 transition-colors"
+              className={`px-4 py-2 ${
+                isDarkMode
+                  ? 'text-gray-300 bg-gray-700 border-gray-600 hover:bg-gray-600'
+                  : 'text-gray-700 bg-gray-100 border-gray-300 hover:bg-gray-200'
+              } border rounded-md transition-colors`}
             >
               Cancel
             </button>

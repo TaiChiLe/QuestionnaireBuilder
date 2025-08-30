@@ -12,6 +12,7 @@ function DroppableItem({
   selected = false,
   onSelect,
   expandedAnswerIds,
+  isDarkMode,
 }) {
   // Draggable (suppress keyboard activators later)
   const {
@@ -48,14 +49,26 @@ function DroppableItem({
       className={`group my-1.5 p-2.5 rounded cursor-default select-none relative w-full text-sm
         ${
           isOver
-            ? 'border-2 border-green-500 bg-green-50'
-            : `border border-gray-300 ${
+            ? isDarkMode
+              ? 'border-2 border-green-400 bg-green-900/20'
+              : 'border-2 border-green-500 bg-green-50'
+            : `border ${isDarkMode ? 'border-gray-600' : 'border-gray-300'} ${
                 parentType === 'page' && item.type !== 'page'
-                  ? 'bg-gray-50'
+                  ? isDarkMode
+                    ? 'bg-gray-700'
+                    : 'bg-gray-50'
+                  : isDarkMode
+                  ? 'bg-gray-800'
                   : 'bg-gray-100'
               }`
         }
-        ${isDragging ? 'opacity-30 bg-blue-50' : ''}
+        ${
+          isDragging
+            ? isDarkMode
+              ? 'opacity-30 bg-blue-900/20'
+              : 'opacity-30 bg-blue-50'
+            : ''
+        }
         ${!isDragging ? 'transition-all duration-200' : ''}
         ${isDragging ? 'z-[1000]' : 'z-[1]'}
   ${selected && !isDragging ? 'outline outline-blue-400' : ''}
@@ -82,14 +95,24 @@ function DroppableItem({
         }
       }}
     >
-      <div className="flex justify-between items-center rounded-md -m-1.5 p-1.5 border border-transparent hover:border-blue-400 hover:shadow-sm transition-colors">
-        <span className="font-bold flex items-center">
+      <div
+        className={`flex justify-between items-center rounded-md -m-1.5 p-1.5 border border-transparent ${
+          isDarkMode ? 'hover:border-blue-500' : 'hover:border-blue-400'
+        } hover:shadow-sm transition-colors`}
+      >
+        <span className="font-bold flex items-center min-w-0 flex-1">
           {/* Fixed-width control column (drag handle + optional collapse) */}
           <span className="flex items-center gap-1 w-14 shrink-0">
             <button
               type="button"
               className={`w-6 h-6 flex items-center justify-center rounded border text-xs font-semibold cursor-grab active:cursor-grabbing transition-colors ${
-                isDragging ? 'bg-gray-300' : 'bg-white hover:bg-gray-100'
+                isDragging
+                  ? isDarkMode
+                    ? 'bg-gray-600'
+                    : 'bg-gray-300'
+                  : isDarkMode
+                  ? 'bg-gray-700 hover:bg-gray-600 border-gray-600'
+                  : 'bg-white hover:bg-gray-100'
               }`}
               aria-label="Drag item"
               onMouseDown={(e) => e.stopPropagation()}
@@ -101,7 +124,9 @@ function DroppableItem({
               {...attributes}
             >
               <svg
-                className="w-3 h-3 text-gray-600"
+                className={`w-3 h-3 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                }`}
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -123,7 +148,11 @@ function DroppableItem({
                 }}
                 className={`w-6 h-6 flex items-center justify-center rounded border text-xs font-semibold transition-colors cursor-pointer ${
                   isCollapsed
-                    ? 'bg-gray-200 hover:bg-gray-300'
+                    ? isDarkMode
+                      ? 'bg-gray-600 hover:bg-gray-500 border-gray-600'
+                      : 'bg-gray-200 hover:bg-gray-300'
+                    : isDarkMode
+                    ? 'bg-gray-700 hover:bg-gray-600 border-gray-600'
                     : 'bg-white hover:bg-gray-100'
                 }`}
                 title={isCollapsed ? 'Expand Page' : 'Collapse Page'}
@@ -138,8 +167,11 @@ function DroppableItem({
             )}
           </span>
           {item.conditions && item.conditions.length > 0 && (
+            //Visibility Icon
             <svg
-              className="w-4 h-4 text-gray-600 mr-2 inline"
+              className={`w-4 h-4 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              } mr-2 inline flex-shrink-0`}
               fill="currentColor"
               viewBox="0 0 20 20"
             >
@@ -151,7 +183,9 @@ function DroppableItem({
               />
             </svg>
           )}
-          {item.type === 'page' ? item.title || 'Page' : item.label}
+          <span className="min-w-0 flex-1">
+            {item.type === 'page' ? item.title || 'Page' : item.label}
+          </span>
           {item.required && (
             <span className="text-red-500 ml-1" title="Required">
               *
@@ -159,7 +193,11 @@ function DroppableItem({
           )}
           {(item.type === 'question' || item.type === 'field') &&
             item.dataType && (
-              <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              <span
+                className={`text-xs ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                } ml-2 font-normal mr-2`}
+              >
                 [{item.dataType}]
               </span>
             )}
@@ -174,7 +212,11 @@ function DroppableItem({
                   // Toggle locally and rely on parent to update central set through a callback (future enhancement)
                   setShowAnswers((s) => !s);
                 }}
-                className="ml-1 w-6 h-6 flex items-center justify-center rounded border border-gray-300 bg-white hover:bg-gray-100 cursor-pointer"
+                className={`ml-1 w-6 h-6 flex items-center justify-center rounded border ${
+                  isDarkMode
+                    ? 'border-gray-600 bg-gray-700 hover:bg-gray-600'
+                    : 'border-gray-300 bg-white hover:bg-gray-100'
+                } cursor-pointer`}
                 title={showAnswers ? 'Hide Answers' : 'Show Answers'}
                 aria-expanded={showAnswers}
               >
@@ -195,17 +237,29 @@ function DroppableItem({
               </button>
             )}
           {item.type === 'table' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+            <span
+              className={`text-xs ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              } ml-2 font-normal mr-2`}
+            >
               [Table]
             </span>
           )}
           {item.type === 'information' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+            <span
+              className={`text-xs ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              } ml-2 font-normal mr-2`}
+            >
               [info]
             </span>
           )}
           {item.type === 'table-field' && item.dataType && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+            <span
+              className={`text-xs ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              } ml-2 font-normal mr-2`}
+            >
               [{item.dataType.toLowerCase()}]
             </span>
           )}
@@ -227,7 +281,11 @@ function DroppableItem({
                   onEdit(item.id);
                 }
               }}
-              className="px-4 py-3 bg-blue-50 text-blue-600 border border-blue-200 rounded text-xs font-bold relative z-10 cursor-pointer hover:bg-blue-100"
+              className={`px-4 py-3 ${
+                isDarkMode
+                  ? 'bg-blue-900/50 text-blue-300 border-blue-600 hover:bg-blue-800/50'
+                  : 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
+              } border rounded text-xs font-bold relative z-10 cursor-pointer`}
               onMouseDown={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
             >
@@ -240,7 +298,11 @@ function DroppableItem({
               e.stopPropagation();
               onRemove(item.id);
             }}
-            className="px-4 py-3 bg-red-50 text-[#f03741] border border-red-200 rounded text-xs font-bold relative z-10 cursor-pointer hover:bg-red-100"
+            className={`px-4 py-3 ${
+              isDarkMode
+                ? 'bg-red-900/50 text-red-300 border-red-600 hover:bg-red-800/50'
+                : 'bg-red-50 text-[#f03741] border-red-200 hover:bg-red-100'
+            } border rounded text-xs font-bold relative z-10 cursor-pointer`}
             onMouseDown={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
           >
@@ -252,13 +314,28 @@ function DroppableItem({
         item.type === 'question' &&
         item.answers &&
         item.answers.length > 0 && (
-          <div className="mt-2 ml-14 mb-1 p-2 bg-white border border-gray-200 rounded shadow-inner">
-            <div className="text-xs font-semibold text-gray-600 mb-1">
+          <div
+            className={`mt-2 ml-14 mb-1 p-2 ${
+              isDarkMode
+                ? 'bg-gray-700 border-gray-600'
+                : 'bg-white border-gray-200'
+            } border rounded shadow-inner`}
+          >
+            <div
+              className={`text-xs font-semibold ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-600'
+              } mb-1`}
+            >
               Answers ({item.answers.length})
             </div>
             <ul className="list-disc ml-4 space-y-0.5">
               {item.answers.map((ans) => (
-                <li key={ans.id} className="text-xs text-gray-700 break-all">
+                <li
+                  key={ans.id}
+                  className={`text-xs ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  } break-all`}
+                >
                   {ans.text || '(empty)'}
                 </li>
               ))}
@@ -266,7 +343,11 @@ function DroppableItem({
           </div>
         )}
       {!isCollapsed && children && (
-        <div className="mt-2.5 pl-5 border-l-2 border-dashed border-gray-300">
+        <div
+          className={`mt-2.5 pl-5 border-l-2 border-dashed ${
+            isDarkMode ? 'border-gray-600' : 'border-gray-300'
+          }`}
+        >
           {children}
         </div>
       )}
