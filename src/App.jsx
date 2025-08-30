@@ -2291,18 +2291,28 @@ function App() {
                   const title = alreadyAllOpen
                     ? 'Collapse all question answers and component options'
                     : 'Expand all question answers and component options';
+                  const isDisabled =
+                    droppedItems.length === 0 || allCount === 0;
                   return (
                     <button
                       type="button"
-                      className="px-3 py-1.5 text-xs rounded border bg-white hover:bg-gray-100 transition-colors"
+                      className={`px-3 py-1.5 text-xs rounded border transition-colors ${
+                        isDisabled
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-white hover:bg-gray-100'
+                      }`}
                       onClick={() => {
+                        if (isDisabled) return;
                         if (alreadyAllOpen) {
                           setExpandedAnswerIds(new Set());
                         } else {
                           setExpandedAnswerIds(new Set(allExpandableIds));
                         }
                       }}
-                      title={title}
+                      disabled={isDisabled}
+                      title={
+                        isDisabled ? 'No expandable items on canvas' : title
+                      }
                     >
                       {label}
                     </button>
