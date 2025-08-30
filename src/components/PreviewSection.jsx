@@ -45,6 +45,10 @@ const PreviewSection = ({
     const reader = new FileReader();
     reader.onload = (evt) => {
       setRawTextXml(String(evt.target?.result || ''));
+      // Clear the file input value so the same file can be uploaded again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     };
     reader.readAsText(file, 'utf-8');
   };

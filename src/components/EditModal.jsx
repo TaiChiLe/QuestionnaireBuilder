@@ -409,7 +409,7 @@ const EditModal = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 bg-blue-600 text-white border-0 rounded-md hover:bg-blue-700 cursor-pointer font-semibold"
+                  className="px-5 py-2.5 bg-[#f03741] text-white border-0 rounded-md hover:bg-red-700 cursor-pointer font-semibold"
                 >
                   Save Changes
                 </button>
@@ -1930,7 +1930,7 @@ const EditModal = ({
                             <div className="flex-1">
                               <input
                                 type="number"
-                                value={getNextCodeNumber()}
+                                value={option.value || ''}
                                 onChange={(e) => {
                                   const newOptions = [
                                     ...(editingItem.options || []),

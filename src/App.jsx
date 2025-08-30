@@ -5,7 +5,6 @@ import DroppableArea from './components/DroppableArea';
 import DroppableItem from './components/DroppableItem';
 import EditModal from './components/EditModal';
 import WarningModal from './components/WarningModal';
-import RemoveConfirmationModal from './components/RemoveConfirmationModal';
 import NewXmlModal from './components/NewXmlModal';
 import PreviewSection from './components/PreviewSection';
 import XmlLoader from './components/XmlLoader';
@@ -50,9 +49,7 @@ function App() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [warningMessage, setWarningMessage] = useState('');
   const [showWarningModal, setShowWarningModal] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showNewXmlModal, setShowNewXmlModal] = useState(false);
-  const [itemToRemove, setItemToRemove] = useState(null);
   const [showUserGuide, setShowUserGuide] = useState(false);
   const [showPasteXml, setShowPasteXml] = useState(false);
   const [showModeSwitch, setShowModeSwitch] = useState(false);
@@ -170,9 +167,11 @@ function App() {
       newIndex = currentIndex + 1;
     }
 
-    // Update both states
+    // Update both states atomically
     setHistoryStack(finalStack);
     setHistoryIndex(newIndex);
+
+    console.log('saveToHistory:', { newIndex, stackLength: finalStack.length });
   }, [droppedItems, xmlTree, historyIndex, historyStack, maxHistorySize]);
 
   // Save to history after drag operations complete
@@ -180,32 +179,10 @@ function App() {
 
   useEffect(() => {
     if (pendingHistorySave && historyStack.length > 0) {
-      const currentState = {
-        droppedItems: JSON.parse(JSON.stringify(droppedItems)),
-        xmlTree: JSON.parse(JSON.stringify(xmlTree)),
-      };
-
-      setHistoryStack((prevStack) => {
-        const newStack = prevStack.slice(0, historyIndex + 1);
-        newStack.push(currentState);
-
-        if (newStack.length > maxHistorySize) {
-          return newStack.slice(1);
-        }
-        return newStack;
-      });
-
-      setHistoryIndex((prev) => Math.min(prev + 1, maxHistorySize - 1));
+      saveToHistory();
       setPendingHistorySave(false);
     }
-  }, [
-    droppedItems,
-    xmlTree,
-    pendingHistorySave,
-    historyStack.length,
-    historyIndex,
-    maxHistorySize,
-  ]);
+  }, [droppedItems, xmlTree, pendingHistorySave, saveToHistory]);
 
   // Save auto-edit preference to localStorage
   useEffect(() => {
@@ -228,6 +205,12 @@ function App() {
       const targetIndex = historyIndex - 1;
       const targetState = historyStack[targetIndex];
 
+      console.log('handleUndo:', {
+        currentIndex: historyIndex,
+        targetIndex,
+        stackLength: historyStack.length,
+      });
+
       if (targetState) {
         setDroppedItems(targetState.droppedItems);
         setXmlTree(targetState.xmlTree);
@@ -243,6 +226,12 @@ function App() {
     if (historyIndex < historyStack.length - 1) {
       const targetIndex = historyIndex + 1;
       const targetState = historyStack[targetIndex];
+
+      console.log('handleRedo:', {
+        currentIndex: historyIndex,
+        targetIndex,
+        stackLength: historyStack.length,
+      });
 
       if (targetState) {
         setDroppedItems(targetState.droppedItems);
@@ -404,17 +393,6 @@ function App() {
   }, []);
 
   // Function to show remove confirmation
-  const showRemoveConfirmation = useCallback((itemId) => {
-    setItemToRemove({ id: itemId });
-    setShowConfirmModal(true);
-  }, []);
-
-  // Function to close remove confirmation
-  const closeRemoveConfirmation = useCallback(() => {
-    setShowConfirmModal(false);
-    setItemToRemove(null);
-  }, []);
-
   // Real-time XML generation using appropriate generator based on builder mode
   const currentXmlString = useMemo(() => {
     if (builderMode === 'clinical') {
@@ -731,14 +709,6 @@ function App() {
     [saveToHistory]
   );
 
-  // Function to confirm remove
-  const confirmRemove = useCallback(() => {
-    if (itemToRemove) {
-      removeItem(itemToRemove.id);
-      closeRemoveConfirmation();
-    }
-  }, [itemToRemove, removeItem, closeRemoveConfirmation]);
-
   // Export XML using appropriate utility function based on builder mode
   function handleExportXml() {
     exportXmlStructure(droppedItems, questionnaireName, builderMode);
@@ -860,29 +830,173 @@ function App() {
       }
       if (typeof rawXmlText === 'string') {
         try {
-          const hasClinicalForms = /<clinicalforms\b/i.test(rawXmlText);
-          const hasStatuses = /<statuses\b/i.test(rawXmlText);
-          const hasSexAttr = /\bsex\s*=\s*['"]/i.test(rawXmlText);
-          // Detect any Information (or information) element with a style attribute
-          const hasInformationStyle =
-            /<information\b[^>]*\bstyle\s*=\s*['"]/i.test(rawXmlText);
-          if (
-            hasClinicalForms ||
-            hasStatuses ||
-            hasSexAttr ||
-            hasInformationStyle
-          ) {
-            const reasons = [];
-            if (hasClinicalForms) reasons.push('ClinicalForms tag detected');
-            if (hasStatuses) reasons.push('Statuses tag detected');
-            if (hasSexAttr) reasons.push('sex attribute detected');
+          // Detect advanced features based on detected mode
+          if (detectedMode === 'clinical') {
+            // Clinical Form advanced feature detection
+            const advancedFeatures = [];
+
+            // Check for advanced attributes
+            const advancedAttributes = [
+              'script',
+              'bind',
+              'readonly',
+              'show',
+              'editablebind',
+              'function',
+            ];
+            advancedAttributes.forEach((attr) => {
+              const regex = new RegExp(`\\b${attr}\\s*=\\s*['"]`, 'i');
+              if (regex.test(rawXmlText)) {
+                advancedFeatures.push(`${attr} attribute detected`);
+              }
+            });
+
+            // Check for unsupported clinical form elements
+            const supportedClinicalElements = [
+              'form',
+              'group',
+              'panel',
+              'table',
+              'textbox',
+              'textarea',
+              'chart',
+              'form_button',
+              'notes',
+              'notes_with_history',
+              'date',
+              'future_date',
+              'list',
+              'radio',
+              'check',
+              'button',
+              'info',
+              'metafield',
+              'metafields',
+              'prescriptions',
+              'services',
+              'snomedsubtextbox',
+              'item',
+            ];
+
+            // Parse XML to find all element types
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(rawXmlText, 'text/xml');
+            const allElements = xmlDoc.querySelectorAll('*');
+            const foundElements = new Set();
+
+            allElements.forEach((el) => {
+              const tagName = el.tagName.toLowerCase();
+              if (!supportedClinicalElements.includes(tagName)) {
+                foundElements.add(tagName);
+              }
+            });
+
+            foundElements.forEach((tagName) => {
+              advancedFeatures.push(`unsupported element: ${tagName}`);
+            });
+
+            if (advancedFeatures.length > 0) {
+              showWarning(
+                `Advanced Clinical Form Detected: ${advancedFeatures.join(
+                  ', '
+                )} - advanced features present; editing this clinical form may not preserve all functionality.`
+              );
+            }
+          } else {
+            // Questionnaire advanced feature detection (existing logic + new checks)
+            const advancedFeatures = [];
+
+            // Existing questionnaire advanced feature checks
+            const hasClinicalForms = /<clinicalforms\b/i.test(rawXmlText);
+            const hasStatuses = /<statuses\b/i.test(rawXmlText);
+            const hasSexAttr = /\bsex\s*=\s*['"]/i.test(rawXmlText);
+            const hasInformationStyle =
+              /<information\b[^>]*\bstyle\s*=\s*['"]/i.test(rawXmlText);
+
+            if (hasClinicalForms)
+              advancedFeatures.push('ClinicalForms tag detected');
+            if (hasStatuses) advancedFeatures.push('Statuses tag detected');
+            if (hasSexAttr) advancedFeatures.push('sex attribute detected');
             if (hasInformationStyle)
-              reasons.push('Information style attribute detected');
-            showWarning(
-              `Advanced Questionnaire Detected: ${reasons.join(
-                ' and '
-              )} - advanced features present; editing this questionnaire is destructive.`
-            );
+              advancedFeatures.push('Information style attribute detected');
+
+            // Check for advanced attributes in questionnaires
+            const advancedAttributes = [
+              'script',
+              'bind',
+              'readonly',
+              'show',
+              'editablebind',
+              'function',
+            ];
+            advancedAttributes.forEach((attr) => {
+              const regex = new RegExp(`\\b${attr}\\s*=\\s*['"]`, 'i');
+              if (regex.test(rawXmlText)) {
+                advancedFeatures.push(`${attr} attribute detected`);
+              }
+            });
+
+            // Check for unsupported questionnaire elements
+            const supportedQuestionnaireElements = [
+              'questionnaire',
+              'pages',
+              'page',
+              'question',
+              'field',
+              'group',
+              'information',
+              'table',
+              'column',
+              'text',
+              'answers',
+              'answer',
+              'visibility',
+              'condition',
+              'show',
+              'hide',
+            ];
+
+            // Parse XML to find all element types
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(rawXmlText, 'text/xml');
+            const allElements = xmlDoc.querySelectorAll('*');
+            const foundElements = new Set();
+
+            allElements.forEach((el) => {
+              const tagName = el.tagName.toLowerCase();
+              if (!supportedQuestionnaireElements.includes(tagName)) {
+                foundElements.add(tagName);
+              }
+            });
+
+            foundElements.forEach((tagName) => {
+              advancedFeatures.push(`unsupported element: ${tagName}`);
+            });
+
+            // Check for advanced visibility operators
+            const conditions = xmlDoc.querySelectorAll('Condition');
+            conditions.forEach((condEl) => {
+              const operator = condEl.getAttribute('operator');
+              const supportedOperators = [
+                'equals',
+                'not-equals',
+                'contains',
+                'not-contains',
+              ];
+              if (operator && !supportedOperators.includes(operator)) {
+                advancedFeatures.push(
+                  `unsupported visibility operator: ${operator}`
+                );
+              }
+            });
+
+            if (advancedFeatures.length > 0) {
+              showWarning(
+                `Advanced Questionnaire Detected: ${advancedFeatures.join(
+                  ', '
+                )} - advanced features present; editing this questionnaire is destructive.`
+              );
+            }
           }
         } catch {
           // Ignore parse errors
@@ -952,7 +1066,7 @@ function App() {
 
   // Navigate from error panel to a specific item on canvas
   const navigateToItem = useCallback(
-    (id) => {
+    (id, options = {}) => {
       if (!id) return;
       // Expand ancestor page if collapsed
       const findPath = (items, targetId, path = []) => {
@@ -981,7 +1095,8 @@ function App() {
       requestAnimationFrame(() => {
         const el = document.querySelector(`[data-item-id="${id}"]`);
         if (el && typeof el.scrollIntoView === 'function') {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const scrollBlock = options.scrollToTop ? 'start' : 'center';
+          el.scrollIntoView({ behavior: 'smooth', block: scrollBlock });
           // Flash effect
           el.classList.add('ring', 'ring-2', 'ring-[#f03741]');
           setTimeout(() => {
@@ -1193,7 +1308,7 @@ function App() {
                     <div key={panel.id} className="flex-1 min-w-0">
                       <DroppableItem
                         item={panel}
-                        onRemove={showRemoveConfirmation}
+                        onRemove={removeItem}
                         onEdit={handleEditItem}
                         isCollapsed={isContainerCollapsed}
                         onToggleCollapse={() => togglePageCollapse(panel.id)}
@@ -1226,7 +1341,7 @@ function App() {
           <DroppableItem
             key={item.id}
             item={item}
-            onRemove={showRemoveConfirmation}
+            onRemove={removeItem}
             onEdit={handleEditItem}
             isCollapsed={isContainerCollapsed}
             onToggleCollapse={
@@ -1254,7 +1369,7 @@ function App() {
     [
       groupConsecutivePanels,
       collapsedPageIds,
-      showRemoveConfirmation,
+      removeItem,
       handleEditItem,
       togglePageCollapse,
       selectedIds,
@@ -1394,6 +1509,8 @@ function App() {
           : roots.map((n) => deepCloneWithNewIdsAndCollect(n, collectedIds));
         return [...prev, ...insertion];
       });
+      // Increment history index after the action completes
+      setHistoryIndex((prev) => prev + 1);
       const newIds = clipboard.isCut ? roots.map((r) => r.id) : collectedIds;
       setSelectedIds(new Set(newIds));
       setFocusId(newIds[newIds.length - 1] || null);
@@ -1457,6 +1574,8 @@ function App() {
           });
         return update(prev);
       });
+      // Increment history index after the action completes
+      setHistoryIndex((prev) => prev + 1);
       const newIds = clipboard.isCut ? allowed.map((n) => n.id) : collectedIds;
       setSelectedIds(new Set(newIds));
       setFocusId(newIds[newIds.length - 1]);
@@ -1509,6 +1628,8 @@ function App() {
         });
       return spliceInto(prev);
     });
+    // Increment history index after the action completes
+    setHistoryIndex((prev) => prev + 1);
     const newIds = clipboard.isCut ? allowed.map((n) => n.id) : collectedIds;
     setSelectedIds(new Set(newIds));
     setFocusId(newIds[newIds.length - 1]);
