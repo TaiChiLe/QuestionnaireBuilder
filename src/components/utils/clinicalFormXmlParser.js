@@ -355,14 +355,12 @@ const parseXmlElement = (element, generateIdFn) => {
             return {
                 id: generateIdFn('cf-prescription'),
                 type: 'cf-prescription',
-                label: 'Prescriptions'
             };
 
         case 'services':
             return {
                 id: generateIdFn('cf-provided-services'),
                 type: 'cf-provided-services',
-                label: 'Provided Services'
             };
 
         case 'snomedsubtextbox':

@@ -368,14 +368,20 @@ function DroppableItem({
             </>
           )}
           {item.type === 'cf-prescription' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
-              [Prescription]
-            </span>
+            <>
+              <span className="font-bold">Prescription</span>
+              <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+                [Prescription]
+              </span>
+            </>
           )}
           {item.type === 'cf-provided-services' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
-              [Provided Services]
-            </span>
+            <>
+              <span className="font-bold">Provided Services</span>
+              <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+                [Provided Services]
+              </span>
+            </>
           )}
           {item.type === 'cf-radio' && (
             <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
