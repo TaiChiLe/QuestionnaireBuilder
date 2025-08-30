@@ -1270,7 +1270,7 @@ function App() {
     return result;
   }, []);
 
-  // Recursive renderer (lost in refactor) to display items and nested children
+  // Recursive renderer to display items and nested children
   const renderItems = useCallback(
     (items, parentType = 'root') => {
       const groupedItems = groupConsecutivePanels(items);
