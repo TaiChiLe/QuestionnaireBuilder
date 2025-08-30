@@ -1,11 +1,13 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { buildAdvancedTextSummary } from './utils/xmlTextSummary';
+import { buildClinicalFormTextSummary } from './utils/clinicalFormTextSummary';
 import ErrorPreview from './ErrorPreview';
 
 const PreviewSection = ({
   droppedItems,
   currentXmlString,
   currentHtmlString,
+  builderMode,
   height,
   collapsed,
   onToggleCollapse,
@@ -42,6 +44,10 @@ const PreviewSection = ({
     const reader = new FileReader();
     reader.onload = (evt) => {
       setRawTextXml(String(evt.target?.result || ''));
+      // Clear the file input value so the same file can be uploaded again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     };
     reader.readAsText(file, 'utf-8');
   };
@@ -50,8 +56,11 @@ const PreviewSection = ({
 
   // Memoized advanced text summary so it isn't rebuilt on every re-render & can be copied easily
   const textSummary = useMemo(
-    () => buildAdvancedTextSummary(effectiveTextXml),
-    [effectiveTextXml]
+    () =>
+      builderMode === 'clinical'
+        ? buildClinicalFormTextSummary(effectiveTextXml)
+        : buildAdvancedTextSummary(effectiveTextXml),
+    [effectiveTextXml, builderMode]
   );
 
   const handleDownloadTextSummary = () => {
@@ -62,7 +71,10 @@ const PreviewSection = ({
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'questionnaire-summary.txt';
+      a.download =
+        builderMode === 'clinical'
+          ? 'clinical-form-summary.txt'
+          : 'questionnaire-summary.txt';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -280,7 +292,10 @@ const PreviewSection = ({
                     <h4 className="m-0 text-gray-600">
                       <b>
                         Note: You will have to upload here for Advanced
-                        Questionnaires.
+                        {builderMode === 'clinical'
+                          ? ' Clinical Forms'
+                          : ' Questionnaires'}
+                        .
                       </b>
                     </h4>
                     <div className="flex gap-2">
@@ -336,6 +351,7 @@ const PreviewSection = ({
                   <ErrorPreview
                     droppedItems={droppedItems}
                     onNavigateToItem={onNavigateToItem}
+                    builderMode={builderMode}
                   />
                 </div>
               )}

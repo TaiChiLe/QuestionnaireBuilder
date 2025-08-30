@@ -1,18 +1,21 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { DndContext, pointerWithin, DragOverlay } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
-import DraggableItem from './components/DraggableItem';
 import DroppableArea from './components/DroppableArea';
 import DroppableItem from './components/DroppableItem';
 import EditModal from './components/EditModal';
 import WarningModal from './components/WarningModal';
-import RemoveConfirmationModal from './components/RemoveConfirmationModal';
 import NewXmlModal from './components/NewXmlModal';
 import PreviewSection from './components/PreviewSection';
 import XmlLoader from './components/XmlLoader';
 import DragOverlayContent from './components/DragOverlayContent';
 import SidebarDraggableComponents from './components/SidebarDraggableComponents';
 import { generateOrderedXML } from './components/utils/xmlBuilder2Solution';
+import { generateClinicalFormXML } from './components/utils/clinicalFormXmlGenerator';
+import {
+  updateCodeCounter,
+  resetCodeCounter,
+} from './components/utils/clinicalFormCodeManager';
 import { exportXmlStructure } from './components/utils/xmlExporter';
 import {
   parseXmlToItems,
@@ -22,6 +25,7 @@ import UserGuideModal from './components/UserGuideModal';
 import PasteXmlModal from './components/PasteXmlModal';
 import { generateId } from './components/utils/id';
 import { generateHtmlPreview } from './components/utils/htmlConverter';
+import { generateClinicalFormHtmlDocument } from './components/utils/clinicalFormHtmlConverter';
 import { createItemFromDraggedId } from './components/utils/itemFactory';
 import {
   validateDrop,
@@ -41,16 +45,18 @@ function App() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [warningMessage, setWarningMessage] = useState('');
   const [showWarningModal, setShowWarningModal] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showNewXmlModal, setShowNewXmlModal] = useState(false);
-  const [itemToRemove, setItemToRemove] = useState(null);
   const [showUserGuide, setShowUserGuide] = useState(false);
   const [showPasteXml, setShowPasteXml] = useState(false);
+  const [showModeSwitch, setShowModeSwitch] = useState(false);
+  const [pendingBuilderMode, setPendingBuilderMode] = useState(null);
+  // Builder mode toggle - 'questionnaire' or 'clinical'
+  const [builderMode, setBuilderMode] = useState('questionnaire');
   // Multi-select & clipboard state
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [focusId, setFocusId] = useState(null);
   const [clipboard, setClipboard] = useState(null); // { items: [], isCut: bool }
-  // Track collapsed page IDs for UI collapsing/expanding large forms
+  // Track collapsed container IDs (pages, cf-groups, cf-panels) for UI collapsing/expanding large forms
   const [collapsedPageIds, setCollapsedPageIds] = useState(() => new Set());
   // XML dropdown state & ref to hidden file input component
   const xmlLoaderRef = useRef(null);
@@ -139,9 +145,11 @@ function App() {
       newIndex = currentIndex + 1;
     }
 
-    // Update both states
+    // Update both states atomically
     setHistoryStack(finalStack);
     setHistoryIndex(newIndex);
+
+    console.log('saveToHistory:', { newIndex, stackLength: finalStack.length });
   }, [droppedItems, xmlTree, historyIndex, historyStack, maxHistorySize]);
 
   // Save to history after drag operations complete
@@ -149,32 +157,10 @@ function App() {
 
   useEffect(() => {
     if (pendingHistorySave && historyStack.length > 0) {
-      const currentState = {
-        droppedItems: JSON.parse(JSON.stringify(droppedItems)),
-        xmlTree: JSON.parse(JSON.stringify(xmlTree)),
-      };
-
-      setHistoryStack((prevStack) => {
-        const newStack = prevStack.slice(0, historyIndex + 1);
-        newStack.push(currentState);
-
-        if (newStack.length > maxHistorySize) {
-          return newStack.slice(1);
-        }
-        return newStack;
-      });
-
-      setHistoryIndex((prev) => Math.min(prev + 1, maxHistorySize - 1));
+      saveToHistory();
       setPendingHistorySave(false);
     }
-  }, [
-    droppedItems,
-    xmlTree,
-    pendingHistorySave,
-    historyStack.length,
-    historyIndex,
-    maxHistorySize,
-  ]);
+  }, [droppedItems, xmlTree, pendingHistorySave, saveToHistory]);
 
   // Save auto-edit preference to localStorage
   useEffect(() => {
@@ -185,10 +171,23 @@ function App() {
     }
   }, [autoEdit]);
 
+  // Update clinical form code counter when items change in clinical mode
+  useEffect(() => {
+    if (builderMode === 'clinical') {
+      updateCodeCounter(droppedItems);
+    }
+  }, [droppedItems, builderMode]);
+
   const handleUndo = useCallback(() => {
     if (historyIndex > 0) {
       const targetIndex = historyIndex - 1;
       const targetState = historyStack[targetIndex];
+
+      console.log('handleUndo:', {
+        currentIndex: historyIndex,
+        targetIndex,
+        stackLength: historyStack.length,
+      });
 
       if (targetState) {
         setDroppedItems(targetState.droppedItems);
@@ -205,6 +204,12 @@ function App() {
     if (historyIndex < historyStack.length - 1) {
       const targetIndex = historyIndex + 1;
       const targetState = historyStack[targetIndex];
+
+      console.log('handleRedo:', {
+        currentIndex: historyIndex,
+        targetIndex,
+        stackLength: historyStack.length,
+      });
 
       if (targetState) {
         setDroppedItems(targetState.droppedItems);
@@ -281,11 +286,11 @@ function App() {
     };
   }, [uploadMenuOpen]);
 
-  const togglePageCollapse = useCallback((pageId) => {
+  const togglePageCollapse = useCallback((containerId) => {
     setCollapsedPageIds((prev) => {
       const next = new Set(prev);
-      if (next.has(pageId)) next.delete(pageId);
-      else next.add(pageId);
+      if (next.has(containerId)) next.delete(containerId);
+      else next.add(containerId);
       return next;
     });
   }, []);
@@ -296,6 +301,69 @@ function App() {
     setShowWarningModal(true);
   }, []);
 
+  // Function to handle builder mode switch request
+  const handleModeSwitch = useCallback(() => {
+    const newMode =
+      builderMode === 'questionnaire' ? 'clinical' : 'questionnaire';
+
+    // If canvas has items, show confirmation
+    if (droppedItems.length > 0) {
+      setPendingBuilderMode(newMode);
+      setShowModeSwitch(true);
+    } else {
+      // Canvas is empty, switch directly and clear history
+      setBuilderMode(newMode);
+      setClipboard(null); // Clear clipboard as it may contain incompatible items
+
+      // Reset clinical form code counter when switching to clinical mode
+      if (newMode === 'clinical') {
+        resetCodeCounter();
+      }
+
+      // Reset history stack even when canvas is empty to prevent undo/redo with incompatible data
+      const initialState = {
+        droppedItems: [],
+        xmlTree: {},
+      };
+      setHistoryStack([initialState]);
+      setHistoryIndex(0);
+    }
+  }, [builderMode, droppedItems.length]);
+
+  // Function to confirm mode switch and clear canvas
+  const confirmModeSwitch = useCallback(() => {
+    if (pendingBuilderMode) {
+      // Clear all state without saving to history since we're switching modes
+      setDroppedItems([]);
+      setXmlTree({});
+      setSelectedIds(new Set());
+      setFocusId(null);
+      setClipboard(null); // Clear clipboard as it may contain incompatible items
+      setBuilderMode(pendingBuilderMode);
+      setPendingBuilderMode(null);
+
+      // Reset clinical form code counter when switching to clinical mode
+      if (pendingBuilderMode === 'clinical') {
+        resetCodeCounter();
+      }
+
+      // Reset history stack to prevent undo/redo with incompatible data
+      const initialState = {
+        droppedItems: [],
+        xmlTree: {},
+      };
+      setHistoryStack([initialState]);
+      setHistoryIndex(0);
+    }
+    setShowModeSwitch(false);
+  }, [pendingBuilderMode]);
+
+  // Function to cancel mode switch
+  const cancelModeSwitch = useCallback(() => {
+    setPendingBuilderMode(null);
+    setShowModeSwitch(false);
+  }, []);
+
   // Function to close warning modal
   const closeWarning = useCallback(() => {
     setShowWarningModal(false);
@@ -303,26 +371,26 @@ function App() {
   }, []);
 
   // Function to show remove confirmation
-  const showRemoveConfirmation = useCallback((itemId) => {
-    setItemToRemove({ id: itemId });
-    setShowConfirmModal(true);
-  }, []);
-
-  // Function to close remove confirmation
-  const closeRemoveConfirmation = useCallback(() => {
-    setShowConfirmModal(false);
-    setItemToRemove(null);
-  }, []);
-
-  // Real-time XML generation using xmlbuilder2 for proper ordering
+  // Real-time XML generation using appropriate generator based on builder mode
   const currentXmlString = useMemo(() => {
-    return generateOrderedXML(droppedItems);
-  }, [droppedItems]);
+    if (builderMode === 'clinical') {
+      return generateClinicalFormXML(droppedItems);
+    } else {
+      return generateOrderedXML(droppedItems);
+    }
+  }, [droppedItems, builderMode]);
 
   // Generate HTML preview from the structure
   const currentHtmlString = useMemo(() => {
-    return generateHtmlPreview(droppedItems);
-  }, [droppedItems]);
+    if (builderMode === 'clinical') {
+      return generateClinicalFormHtmlDocument(
+        droppedItems,
+        'Clinical Form Preview (WIP)'
+      );
+    } else {
+      return generateHtmlPreview(droppedItems);
+    }
+  }, [droppedItems, builderMode]);
 
   function handleDragStart(event) {
     setActiveId(event.active.id);
@@ -352,6 +420,26 @@ function App() {
       'text-box-tag',
       'notes-tag',
       'date-tag',
+      // Clinical Form components
+      'cf-button-tag',
+      'cf-check-tag',
+      'cf-date-tag',
+      'cf-future-date-tag',
+      'cf-group-tag',
+      'cf-info-tag',
+      'cf-listbox-tag',
+      'cf-notes-tag',
+      'cf-notes-history-tag',
+      'cf-panel-tag',
+      'cf-patient-data-tag',
+      'cf-patient-data-all-tag',
+      'cf-prescription-tag',
+      'cf-provided-services-tag',
+      'cf-radio-tag',
+      'cf-snom-text-box',
+      'cf-table-tag',
+      'cf-table-field-tag',
+      'cf-textbox-tag',
     ].includes(active.id);
 
     if (isSidebarItem) {
@@ -374,18 +462,46 @@ function App() {
         draggedType = 'field';
       }
 
+      // Clinical Form components
+      if (active.id === 'cf-button-tag') draggedType = 'cf-button';
+      if (active.id === 'cf-check-tag') draggedType = 'cf-checkbox';
+      if (active.id === 'cf-date-tag') draggedType = 'cf-date';
+      if (active.id === 'cf-future-date-tag') draggedType = 'cf-future-date';
+      if (active.id === 'cf-group-tag') draggedType = 'cf-group';
+      if (active.id === 'cf-info-tag') draggedType = 'cf-info';
+      if (active.id === 'cf-listbox-tag') draggedType = 'cf-listbox';
+      if (active.id === 'cf-notes-tag') draggedType = 'cf-notes';
+      if (active.id === 'cf-notes-history-tag')
+        draggedType = 'cf-notes-history';
+      if (active.id === 'cf-panel-tag') draggedType = 'cf-panel';
+      if (active.id === 'cf-patient-data-tag') draggedType = 'cf-patient-data';
+      if (active.id === 'cf-patient-data-all-tag')
+        draggedType = 'cf-patient-data-all';
+      if (active.id === 'cf-prescription-tag') draggedType = 'cf-prescription';
+      if (active.id === 'cf-provided-services-tag')
+        draggedType = 'cf-provided-services';
+      if (active.id === 'cf-radio-tag') draggedType = 'cf-radio';
+      if (active.id === 'cf-snom-text-box') draggedType = 'cf-snom-textbox';
+      if (active.id === 'cf-table-tag') draggedType = 'cf-table';
+      if (active.id === 'cf-table-field-tag') draggedType = 'cf-table-field';
+      if (active.id === 'cf-textbox-tag') draggedType = 'cf-textbox';
+
       const validation = validateDrop(
         draggedType,
         over.id,
         droppedItems,
         findItemById,
-        getParentContext
+        getParentContext,
+        builderMode
       );
       if (!validation.valid) {
         const targetItem = findItemById(droppedItems, over.id);
         if (targetItem) {
           const ctx = getParentContext(droppedItems, over.id);
-          if (ctx && canParentAccept(ctx.parentType, draggedType)) {
+          if (
+            ctx &&
+            canParentAccept(ctx.parentType, draggedType, builderMode)
+          ) {
             setIsValidDrop(true);
             return;
           }
@@ -419,12 +535,16 @@ function App() {
       over.id,
       droppedItems,
       findItemById,
-      getParentContext
+      getParentContext,
+      builderMode
     );
     if (!validation.valid) {
       // Allow slot insertion for existing item drag
       const ctx = getParentContext(droppedItems, over.id);
-      if (ctx && canParentAccept(ctx.parentType, draggedItem.type)) {
+      if (
+        ctx &&
+        canParentAccept(ctx.parentType, draggedItem.type, builderMode)
+      ) {
         setIsValidDrop(true);
       } else {
         setIsValidDrop(false);
@@ -553,17 +673,9 @@ function App() {
     [saveToHistory]
   );
 
-  // Function to confirm remove
-  const confirmRemove = useCallback(() => {
-    if (itemToRemove) {
-      removeItem(itemToRemove.id);
-      closeRemoveConfirmation();
-    }
-  }, [itemToRemove, removeItem, closeRemoveConfirmation]);
-
-  // Export XML using utility function
+  // Export XML using appropriate utility function based on builder mode
   function handleExportXml() {
-    exportXmlStructure(droppedItems, questionnaireName);
+    exportXmlStructure(droppedItems, questionnaireName, builderMode);
   }
   const findItemById = useCallback((items, itemId) => {
     for (const item of items) {
@@ -643,7 +755,12 @@ function App() {
     setShowNewXmlModal(false);
     // Clear questionnaire name when starting a brand new questionnaire
     setQuestionnaireName('');
-  }, [saveToHistory]);
+
+    // Reset clinical form code counter when creating new XML in clinical mode
+    if (builderMode === 'clinical') {
+      resetCodeCounter();
+    }
+  }, [saveToHistory, builderMode]);
 
   // Function to cancel new XML creation
   const cancelNewXml = useCallback(() => {
@@ -652,8 +769,24 @@ function App() {
 
   // Function to handle loading XML with file name detection & destructive warnings
   const handleLoadXml = useCallback(
-    (parsedItems, rawXmlText, fileName) => {
+    (parsedItems, rawXmlText, fileName, detectedMode) => {
       saveToHistory();
+
+      // Switch to detected mode if different from current mode
+      if (detectedMode && detectedMode !== builderMode) {
+        setBuilderMode(detectedMode);
+
+        // Reset clinical form code counter when switching to clinical mode
+        if (detectedMode === 'clinical') {
+          resetCodeCounter();
+        }
+
+        // Update code counter based on existing items
+        if (detectedMode === 'clinical') {
+          updateCodeCounter(parsedItems);
+        }
+      }
+
       setDroppedItems(parsedItems);
       if (fileName) {
         const base = fileName.replace(/\.xml$/i, '');
@@ -661,36 +794,186 @@ function App() {
       }
       if (typeof rawXmlText === 'string') {
         try {
-          const hasClinicalForms = /<clinicalforms\b/i.test(rawXmlText);
-          const hasStatuses = /<statuses\b/i.test(rawXmlText);
-          const hasSexAttr = /\bsex\s*=\s*['"]/i.test(rawXmlText);
-          // Detect any Information (or information) element with a style attribute
-          const hasInformationStyle =
-            /<information\b[^>]*\bstyle\s*=\s*['"]/i.test(rawXmlText);
-          if (
-            hasClinicalForms ||
-            hasStatuses ||
-            hasSexAttr ||
-            hasInformationStyle
-          ) {
-            const reasons = [];
-            if (hasClinicalForms) reasons.push('ClinicalForms tag detected');
-            if (hasStatuses) reasons.push('Statuses tag detected');
-            if (hasSexAttr) reasons.push('sex attribute detected');
+          // Detect advanced features based on detected mode
+          if (detectedMode === 'clinical') {
+            // Clinical Form advanced feature detection
+            const advancedFeatures = [];
+
+            // Check for advanced attributes
+            const advancedAttributes = [
+              'script',
+              'bind',
+              'readonly',
+              'show',
+              'editablebind',
+              'function',
+            ];
+            advancedAttributes.forEach((attr) => {
+              const regex = new RegExp(`\\b${attr}\\s*=\\s*['"]`, 'i');
+              if (regex.test(rawXmlText)) {
+                advancedFeatures.push(`${attr} attribute detected`);
+              }
+            });
+
+            // Check for unsupported clinical form elements
+            const supportedClinicalElements = [
+              'form',
+              'group',
+              'panel',
+              'table',
+              'textbox',
+              'textarea',
+              'chart',
+              'form_button',
+              'notes',
+              'notes_with_history',
+              'date',
+              'future_date',
+              'list',
+              'radio',
+              'check',
+              'button',
+              'info',
+              'metafield',
+              'metafields',
+              'prescriptions',
+              'services',
+              'snomedsubtextbox',
+              'item',
+            ];
+
+            // Parse XML to find all element types
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(rawXmlText, 'text/xml');
+            const allElements = xmlDoc.querySelectorAll('*');
+            const foundElements = new Set();
+
+            allElements.forEach((el) => {
+              const tagName = el.tagName.toLowerCase();
+              if (!supportedClinicalElements.includes(tagName)) {
+                foundElements.add(tagName);
+              }
+            });
+
+            foundElements.forEach((tagName) => {
+              advancedFeatures.push(`unsupported element: ${tagName}`);
+            });
+
+            if (advancedFeatures.length > 0) {
+              showWarning(
+                `Advanced Clinical Form Detected: ${advancedFeatures.join(
+                  ', '
+                )} - advanced features present; editing this clinical form may not preserve all functionality.`
+              );
+            }
+          } else {
+            // Questionnaire advanced feature detection (existing logic + new checks)
+            const advancedFeatures = [];
+
+            // Existing questionnaire advanced feature checks
+            const hasClinicalForms = /<clinicalforms\b/i.test(rawXmlText);
+            const hasStatuses = /<statuses\b/i.test(rawXmlText);
+            const hasSexAttr = /\bsex\s*=\s*['"]/i.test(rawXmlText);
+            const hasInformationStyle =
+              /<information\b[^>]*\bstyle\s*=\s*['"]/i.test(rawXmlText);
+
+            if (hasClinicalForms)
+              advancedFeatures.push('ClinicalForms tag detected');
+            if (hasStatuses) advancedFeatures.push('Statuses tag detected');
+            if (hasSexAttr) advancedFeatures.push('sex attribute detected');
             if (hasInformationStyle)
-              reasons.push('Information style attribute detected');
-            showWarning(
-              `Advanced Questionnaire Detected: ${reasons.join(
-                ' and '
-              )} - advanced features present; editing this questionnaire is destructive.`
-            );
+              advancedFeatures.push('Information style attribute detected');
+
+            // Check for advanced attributes in questionnaires
+            const advancedAttributes = [
+              'script',
+              'bind',
+              'readonly',
+              'show',
+              'editablebind',
+              'function',
+            ];
+            advancedAttributes.forEach((attr) => {
+              const regex = new RegExp(`\\b${attr}\\s*=\\s*['"]`, 'i');
+              if (regex.test(rawXmlText)) {
+                advancedFeatures.push(`${attr} attribute detected`);
+              }
+            });
+
+            // Check for unsupported questionnaire elements
+            const supportedQuestionnaireElements = [
+              'questionnaire',
+              'pages',
+              'page',
+              'question',
+              'field',
+              'group',
+              'information',
+              'table',
+              'column',
+              'text',
+              'answers',
+              'answer',
+              'visibility',
+              'condition',
+              'show',
+              'hide',
+            ];
+
+            // Parse XML to find all element types
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(rawXmlText, 'text/xml');
+            const allElements = xmlDoc.querySelectorAll('*');
+            const foundElements = new Set();
+
+            allElements.forEach((el) => {
+              const tagName = el.tagName.toLowerCase();
+              if (!supportedQuestionnaireElements.includes(tagName)) {
+                foundElements.add(tagName);
+              }
+            });
+
+            foundElements.forEach((tagName) => {
+              advancedFeatures.push(`unsupported element: ${tagName}`);
+            });
+
+            // Check for advanced visibility operators
+            const conditions = xmlDoc.querySelectorAll('Condition');
+            conditions.forEach((condEl) => {
+              const operator = condEl.getAttribute('operator');
+              const supportedOperators = [
+                'equals',
+                'not-equals',
+                'contains',
+                'not-contains',
+              ];
+              if (operator && !supportedOperators.includes(operator)) {
+                advancedFeatures.push(
+                  `unsupported visibility operator: ${operator}`
+                );
+              }
+            });
+
+            if (advancedFeatures.length > 0) {
+              showWarning(
+                `Advanced Questionnaire Detected: ${advancedFeatures.join(
+                  ', '
+                )} - advanced features present; editing this questionnaire is destructive.`
+              );
+            }
           }
         } catch {
           // Ignore parse errors
         }
       }
     },
-    [showWarning, saveToHistory]
+    [
+      showWarning,
+      saveToHistory,
+      builderMode,
+      resetCodeCounter,
+      updateCodeCounter,
+    ]
   );
 
   // Function to handle direct XML editing
@@ -747,7 +1030,7 @@ function App() {
 
   // Navigate from error panel to a specific item on canvas
   const navigateToItem = useCallback(
-    (id) => {
+    (id, options = {}) => {
       if (!id) return;
       // Expand ancestor page if collapsed
       const findPath = (items, targetId, path = []) => {
@@ -776,7 +1059,8 @@ function App() {
       requestAnimationFrame(() => {
         const el = document.querySelector(`[data-item-id="${id}"]`);
         if (el && typeof el.scrollIntoView === 'function') {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const scrollBlock = options.scrollToTop ? 'start' : 'center';
+          el.scrollIntoView({ behavior: 'smooth', block: scrollBlock });
           // Flash effect
           el.classList.add('ring', 'ring-2', 'ring-[#f03741]');
           setTimeout(() => {
@@ -920,39 +1204,135 @@ function App() {
     [droppedItems, focusId, normalizeSelection]
   );
 
-  // Recursive renderer (lost in refactor) to display items and nested children
+  // Helper function to group consecutive cf-panels for side-by-side display
+  const groupConsecutivePanels = useCallback((items) => {
+    const result = [];
+    let currentPanelGroup = [];
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+
+      if (item.type === 'cf-panel') {
+        currentPanelGroup.push(item);
+      } else {
+        // If we have accumulated panels, add them as a group
+        if (currentPanelGroup.length > 0) {
+          if (currentPanelGroup.length === 1) {
+            // Single panel, add normally
+            result.push(currentPanelGroup[0]);
+          } else {
+            // Multiple panels, group them
+            result.push({
+              type: 'cf-panel-group',
+              id: `panel-group-${currentPanelGroup.map((p) => p.id).join('-')}`,
+              panels: currentPanelGroup,
+            });
+          }
+          currentPanelGroup = [];
+        }
+
+        // Add the non-panel item
+        result.push(item);
+      }
+    }
+
+    // Handle any remaining panels at the end
+    if (currentPanelGroup.length > 0) {
+      if (currentPanelGroup.length === 1) {
+        result.push(currentPanelGroup[0]);
+      } else {
+        result.push({
+          type: 'cf-panel-group',
+          id: `panel-group-${currentPanelGroup.map((p) => p.id).join('-')}`,
+          panels: currentPanelGroup,
+        });
+      }
+    }
+
+    return result;
+  }, []);
+
+  // Recursive renderer to display items and nested children
   const renderItems = useCallback(
-    (items, parentType = 'root') =>
-      items.map((item) => {
-        const isPageCollapsed =
-          item.type === 'page' && collapsedPageIds.has(item.id);
+    (items, parentType = 'root') => {
+      const groupedItems = groupConsecutivePanels(items);
+
+      return groupedItems.map((item) => {
+        // Handle panel groups (multiple panels side by side)
+        if (item.type === 'cf-panel-group') {
+          return (
+            <div key={item.id} className="my-1.5 relative">
+              <div className="absolute -top-2 left-2 bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-medium shadow-sm z-10">
+                {item.panels.length} Panels (Side by Side)
+              </div>
+              <div className="flex gap-2 p-2 pt-4 bg-blue-50 border border-blue-200 rounded-lg">
+                {item.panels.map((panel) => {
+                  const isContainerCollapsed = collapsedPageIds.has(panel.id);
+                  return (
+                    <div key={panel.id} className="flex-1 min-w-0">
+                      <DroppableItem
+                        item={panel}
+                        onRemove={removeItem}
+                        onEdit={handleEditItem}
+                        isCollapsed={isContainerCollapsed}
+                        onToggleCollapse={() => togglePageCollapse(panel.id)}
+                        parentType={parentType}
+                        isSelected={selectedIds.has(panel.id)}
+                        onSelect={(e) => handleSelectItem(e, panel.id)}
+                        expandedAnswerIds={expandedAnswerIds}
+                      >
+                        {!isContainerCollapsed &&
+                          panel.children &&
+                          panel.children.length > 0 &&
+                          renderItems(panel.children, panel.type)}
+                      </DroppableItem>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        }
+
+        // Handle regular items (including single panels)
+        const isContainerCollapsed =
+          (item.type === 'page' ||
+            item.type === 'cf-group' ||
+            item.type === 'cf-panel' ||
+            item.type === 'cf-table') &&
+          collapsedPageIds.has(item.id);
         return (
           <DroppableItem
             key={item.id}
             item={item}
-            onRemove={showRemoveConfirmation}
+            onRemove={removeItem}
             onEdit={handleEditItem}
-            isCollapsed={isPageCollapsed}
+            isCollapsed={isContainerCollapsed}
             onToggleCollapse={
-              item.type === 'page'
+              item.type === 'page' ||
+              item.type === 'cf-group' ||
+              item.type === 'cf-panel' ||
+              item.type === 'cf-table'
                 ? () => togglePageCollapse(item.id)
                 : undefined
             }
             parentType={parentType}
-            selected={selectedIds.has(item.id)}
+            isSelected={selectedIds.has(item.id)}
             onSelect={(e) => handleSelectItem(e, item.id)}
             expandedAnswerIds={expandedAnswerIds}
           >
-            {!isPageCollapsed &&
+            {!isContainerCollapsed &&
               item.children &&
               item.children.length > 0 &&
               renderItems(item.children, item.type)}
           </DroppableItem>
         );
-      }),
+      });
+    },
     [
+      groupConsecutivePanels,
       collapsedPageIds,
-      showRemoveConfirmation,
+      removeItem,
       handleEditItem,
       togglePageCollapse,
       selectedIds,
@@ -1047,12 +1427,42 @@ function App() {
   const handlePaste = useCallback(() => {
     if (!clipboard) return;
 
-    // Root-level paste fallback: if no focus and clipboard contains only pages, append at root
+    // Root-level paste fallback: if no focus and clipboard contains valid root items, append at root
     if (!focusId) {
       const roots = clipboard.items;
       if (roots.length === 0) return;
-      const allPages = roots.every((n) => n.type === 'page');
-      if (!allPages) return; // need a focus context for non-page types
+
+      // Define clinical form component types
+      const clinicalFormTypes = [
+        'cf-button',
+        'cf-checkbox',
+        'cf-date',
+        'cf-future-date',
+        'cf-group',
+        'cf-info',
+        'cf-listbox',
+        'cf-notes',
+        'cf-notes-history',
+        'cf-panel',
+        'cf-patient-data',
+        'cf-patient-data-all',
+        'cf-provided-services',
+        'cf-radio',
+        'cf-snom-textbox',
+        'cf-table',
+        'cf-textbox',
+      ];
+
+      // Check if all items are valid for root level based on current mode
+      const allValidForRoot = roots.every((n) => {
+        if (builderMode === 'clinical') {
+          return clinicalFormTypes.includes(n.type);
+        } else {
+          return n.type === 'page';
+        }
+      });
+
+      if (!allValidForRoot) return; // need a focus context for non-root-level types
       const collectedIds = [];
       saveToHistory();
       setDroppedItems((prev) => {
@@ -1061,6 +1471,8 @@ function App() {
           : roots.map((n) => deepCloneWithNewIdsAndCollect(n, collectedIds));
         return [...prev, ...insertion];
       });
+      // Increment history index after the action completes
+      setHistoryIndex((prev) => prev + 1);
       const newIds = clipboard.isCut ? roots.map((r) => r.id) : collectedIds;
       setSelectedIds(new Set(newIds));
       setFocusId(newIds[newIds.length - 1] || null);
@@ -1083,7 +1495,7 @@ function App() {
     if (isContainer) {
       // Check if any clipboard item can be a child of this container
       const allowedInside = roots.filter((n) =>
-        canParentAccept(targetNode.type, n.type)
+        canParentAccept(targetNode.type, n.type, builderMode)
       );
       if (allowedInside.length > 0) {
         mode = 'append-children';
@@ -1097,7 +1509,8 @@ function App() {
       const allowed = [];
       const skipped = [];
       for (const node of roots) {
-        if (canParentAccept(targetNode.type, node.type)) allowed.push(node);
+        if (canParentAccept(targetNode.type, node.type, builderMode))
+          allowed.push(node);
         else skipped.push(node);
       }
       if (allowed.length === 0) {
@@ -1123,6 +1536,8 @@ function App() {
           });
         return update(prev);
       });
+      // Increment history index after the action completes
+      setHistoryIndex((prev) => prev + 1);
       const newIds = clipboard.isCut ? allowed.map((n) => n.id) : collectedIds;
       setSelectedIds(new Set(newIds));
       setFocusId(newIds[newIds.length - 1]);
@@ -1140,7 +1555,7 @@ function App() {
     const skipped = [];
     for (const node of roots) {
       const pt = parentId ? parentType : 'root';
-      if (canParentAccept(pt, node.type)) allowed.push(node);
+      if (canParentAccept(pt, node.type, builderMode)) allowed.push(node);
       else skipped.push(node);
     }
     if (allowed.length === 0) {
@@ -1175,6 +1590,8 @@ function App() {
         });
       return spliceInto(prev);
     });
+    // Increment history index after the action completes
+    setHistoryIndex((prev) => prev + 1);
     const newIds = clipboard.isCut ? allowed.map((n) => n.id) : collectedIds;
     setSelectedIds(new Set(newIds));
     setFocusId(newIds[newIds.length - 1]);
@@ -1292,6 +1709,25 @@ function App() {
       'text-box-tag',
       'notes-tag',
       'date-tag',
+      'cf-button-tag',
+      'cf-check-tag',
+      'cf-date-tag',
+      'cf-future-date-tag',
+      'cf-group-tag',
+      'cf-info-tag',
+      'cf-listbox-tag',
+      'cf-notes-tag',
+      'cf-notes-history-tag',
+      'cf-panel-tag',
+      'cf-patient-data-tag',
+      'cf-patient-data-all-tag',
+      'cf-prescription-tag',
+      'cf-provided-services-tag',
+      'cf-radio-tag',
+      'cf-snom-text-box',
+      'cf-table-tag',
+      'cf-table-field-tag',
+      'cf-textbox-tag',
     ].includes(draggedItemId);
 
     const getAllItemIds = (items) => {
@@ -1327,12 +1763,16 @@ function App() {
         overId,
         droppedItems,
         findItemById,
-        getParentContext
+        getParentContext,
+        builderMode
       );
       if (!validation.valid) {
         if (overId !== 'main-canvas') {
           const ctx = getParentContext(droppedItems, overId);
-          if (ctx && canParentAccept(ctx.parentType, draggedType)) {
+          if (
+            ctx &&
+            canParentAccept(ctx.parentType, draggedType, builderMode)
+          ) {
             setDroppedItems((prev) => insertItemBefore(prev, overId, newItem));
             setXmlTree((prev) => ({ ...prev, [newItem.id]: newItem }));
 
@@ -1394,13 +1834,17 @@ function App() {
       overId,
       droppedItems,
       findItemById,
-      getParentContext
+      getParentContext,
+      builderMode
     );
     if (!validation.valid) {
       // Try slot insertion (insert before overId among siblings of overId)
       if (overId !== 'main-canvas') {
         const ctx = getParentContext(droppedItems, overId);
-        if (ctx && canParentAccept(ctx.parentType, draggedItem.type)) {
+        if (
+          ctx &&
+          canParentAccept(ctx.parentType, draggedItem.type, builderMode)
+        ) {
           setDroppedItems((prev) => {
             const liveCtx = getParentContext(prev, overId); // recompute in current state
             if (!liveCtx) return prev;
@@ -1462,8 +1906,38 @@ function App() {
     }
 
     if (overId === 'main-canvas') {
-      if (draggedItem.type !== 'page') {
-        showWarning('Only pages can be moved to the root level');
+      // Define clinical form component types
+      const clinicalFormTypes = [
+        'cf-button',
+        'cf-checkbox',
+        'cf-date',
+        'cf-future-date',
+        'cf-group',
+        'cf-info',
+        'cf-listbox',
+        'cf-notes',
+        'cf-notes-history',
+        'cf-panel',
+        'cf-patient-data',
+        'cf-patient-data-all',
+        'cf-prescription',
+        'cf-provided-services',
+        'cf-radio',
+        'cf-snom-textbox',
+        'cf-table',
+        'cf-textbox',
+      ];
+
+      // Clinical forms: only CF components at root. Questionnaires: only pages at root.
+      const isValidForRoot =
+        builderMode === 'clinical'
+          ? clinicalFormTypes.includes(draggedItem.type)
+          : draggedItem.type === 'page';
+
+      if (!isValidForRoot) {
+        const modeText =
+          builderMode === 'clinical' ? 'clinical form components' : 'pages';
+        showWarning(`Only ${modeText} can be moved to the root level`);
         return;
       }
       setDroppedItems((prev) => moveItemToTopLevel(prev, draggedItemId));
@@ -1498,7 +1972,20 @@ function App() {
         {/* Header with export button */}
         <div className="px-4 py-2 border-b border-gray-300 bg-gray-50 flex-shrink-0 flex justify-between items-center w-full">
           <h1 className="m-0 text-2xl flex items-center gap-4 flex-1 justify-start whitespace-nowrap">
-            <span>Unofficial Questionnaire XML Builder</span>
+            <button
+              type="button"
+              onClick={handleModeSwitch}
+              className="px-4 py-2 rounded-lg border-2 border-[#f03741] bg-white hover:bg-[#f03741] hover:text-white transition-colors font-semibold text-lg"
+              title={`Switch to ${
+                builderMode === 'questionnaire'
+                  ? 'Clinical Form'
+                  : 'Questionnaire'
+              } Builder`}
+            >
+              {builderMode === 'questionnaire'
+                ? 'Unofficial Questionnaire XML Builder'
+                : 'Unofficial Clinical Form Builder'}
+            </button>
             <button
               type="button"
               onClick={() => setShowUserGuide(true)}
@@ -1521,12 +2008,20 @@ function App() {
             </button>
           </h1>
           <div className="flex items-center gap-3 justify-center">
-            <h1>Questionnaire Name:</h1>
+            <h1>
+              {builderMode === 'clinical'
+                ? 'Clinical Form Name:'
+                : 'Questionnaire Name:'}
+            </h1>
             <input
               type="text"
               value={questionnaireName}
               onChange={(e) => setQuestionnaireName(e.target.value)}
-              placeholder="Untitled Questionnaire"
+              placeholder={
+                builderMode === 'clinical'
+                  ? 'Untitled Clinical Form'
+                  : 'Untitled Questionnaire'
+              }
               className="text-base px-3 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white min-w-[200px]"
             />
           </div>
@@ -1634,9 +2129,9 @@ function App() {
 
             <XmlLoader
               ref={xmlLoaderRef}
-              onLoadXml={(items, raw, fileName) => {
+              onLoadXml={(items, raw, fileName, detectedMode) => {
                 setUploadMenuOpen(false);
-                handleLoadXml(items, raw, fileName);
+                handleLoadXml(items, raw, fileName, detectedMode);
               }}
             />
           </div>
@@ -1670,7 +2165,10 @@ function App() {
             <div className="block overflow-hidden">
               {/* Basic Components */}
               {/* Draggable Components (previously gated by basic mode) */}
-              <SidebarDraggableComponents isValidDrop={isValidDrop} />
+              <SidebarDraggableComponents
+                isValidDrop={isValidDrop}
+                builderMode={builderMode}
+              />
             </div>
           </div>
 
@@ -1704,7 +2202,30 @@ function App() {
                   disabled={
                     !clipboard ||
                     (!focusId &&
-                      !(clipboard.items || []).every((i) => i.type === 'page'))
+                      !(clipboard.items || []).every((i) =>
+                        builderMode === 'clinical'
+                          ? [
+                              'cf-button',
+                              'cf-checkbox',
+                              'cf-date',
+                              'cf-future-date',
+                              'cf-group',
+                              'cf-info',
+                              'cf-listbox',
+                              'cf-notes',
+                              'cf-notes-history',
+                              'cf-panel',
+                              'cf-patient-data',
+                              'cf-patient-data-all',
+                              'cf-prescription',
+                              'cf-provided-services',
+                              'cf-radio',
+                              'cf-snom-textbox',
+                              'cf-table',
+                              'cf-textbox',
+                            ].includes(i.type)
+                          : i.type === 'page'
+                      ))
                   }
                   onClick={handlePaste}
                   title="Paste After (Ctrl+V)"
@@ -1740,25 +2261,36 @@ function App() {
                 {/* Expand/Collapse Answers Button */}
                 {(() => {
                   // compute button label based on expandedAnswerIds
-                  const allQuestionIds = [];
+                  const allExpandableIds = [];
                   const walk = (list) => {
                     for (const itm of list) {
-                      if (itm.type === 'question') allQuestionIds.push(itm.id);
-                      if (itm.children && itm.children.length)
+                      // Include questionnaire questions and clinical form components with options
+                      if (
+                        itm.type === 'question' ||
+                        ((itm.type === 'cf-listbox' ||
+                          itm.type === 'cf-radio') &&
+                          itm.options &&
+                          itm.options.length > 0)
+                      ) {
+                        allExpandableIds.push(itm.id);
+                      }
+                      if (itm.children && itm.children.length) {
                         walk(itm.children);
+                      }
                     }
                   };
+
                   walk(droppedItems);
-                  const allCount = allQuestionIds.length;
+                  const allCount = allExpandableIds.length;
                   const alreadyAllOpen =
                     allCount > 0 &&
-                    allQuestionIds.every((id) => expandedAnswerIds.has(id));
+                    allExpandableIds.every((id) => expandedAnswerIds.has(id));
                   const label = alreadyAllOpen
                     ? 'Collapse Answers'
                     : 'Expand Answers';
                   const title = alreadyAllOpen
-                    ? 'Collapse all question answers'
-                    : 'Expand all question answers';
+                    ? 'Collapse all question answers and component options'
+                    : 'Expand all question answers and component options';
                   return (
                     <button
                       type="button"
@@ -1767,7 +2299,7 @@ function App() {
                         if (alreadyAllOpen) {
                           setExpandedAnswerIds(new Set());
                         } else {
-                          setExpandedAnswerIds(new Set(allQuestionIds));
+                          setExpandedAnswerIds(new Set(allExpandableIds));
                         }
                       }}
                       title={title}
@@ -1777,81 +2309,104 @@ function App() {
                   );
                 })()}
 
-                {/* Toggle Expand/Collapse All Pages */}
+                {/* Toggle Expand/Collapse All Containers */}
                 {(() => {
-                  const pageIds = [];
-                  const collectPages = (list) => {
+                  const containerIds = [];
+                  const collectContainers = (list) => {
                     for (const itm of list) {
-                      if (itm.type === 'page') pageIds.push(itm.id);
+                      if (
+                        itm.type === 'page' ||
+                        itm.type === 'cf-group' ||
+                        itm.type === 'cf-panel' ||
+                        itm.type === 'cf-table'
+                      )
+                        containerIds.push(itm.id);
                       if (itm.children && itm.children.length)
-                        collectPages(itm.children);
+                        collectContainers(itm.children);
                     }
                   };
-                  collectPages(droppedItems);
-                  const anyPages = pageIds.length > 0;
+                  collectContainers(droppedItems);
+                  const anyContainers = containerIds.length > 0;
                   const allExpanded =
-                    anyPages &&
-                    pageIds.every((id) => !collapsedPageIds.has(id));
+                    anyContainers &&
+                    containerIds.every((id) => !collapsedPageIds.has(id));
                   const nextActionExpand = !allExpanded; // if not all expanded, button expands; else collapses
+
+                  // Mode-specific labels
+                  const containerType =
+                    builderMode === 'questionnaire'
+                      ? 'Pages'
+                      : 'Groups, Panels & Tables';
+                  const containerTypeLower =
+                    builderMode === 'questionnaire'
+                      ? 'pages'
+                      : 'groups, panels and tables';
+
                   const label = nextActionExpand
-                    ? 'Expand Pages'
-                    : 'Collapse Pages';
+                    ? `Expand ${containerType}`
+                    : `Collapse ${containerType}`;
                   const title = nextActionExpand
-                    ? 'Expand all pages'
-                    : 'Collapse all pages';
+                    ? `Expand all ${containerTypeLower}`
+                    : `Collapse all ${containerTypeLower}`;
+                  const noContainersTitle =
+                    builderMode === 'questionnaire'
+                      ? 'No pages yet'
+                      : 'No groups, panels or tables yet';
                   return (
                     <button
                       type="button"
                       className="ml-2 px-3 py-1.5 text-xs rounded border bg-white hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={!anyPages}
+                      disabled={!anyContainers}
                       onClick={() => {
                         if (nextActionExpand) {
                           // expand all -> clear collapsed set
                           setCollapsedPageIds(new Set());
                         } else {
-                          // collapse all -> add all page ids
-                          setCollapsedPageIds(new Set(pageIds));
+                          // collapse all -> add all container ids
+                          setCollapsedPageIds(new Set(containerIds));
                         }
                       }}
-                      title={!anyPages ? 'No pages yet' : title}
+                      title={!anyContainers ? noContainersTitle : title}
                     >
                       {label}
                     </button>
                   );
                 })()}
 
-                {/* Advanced Features Toggle */}
-                <button
-                  type="button"
-                  onClick={() =>
-                    setShowAdvanced((v) => {
-                      const next = !v;
-                      try {
-                        // Broadcast change so other components (e.g., PreviewSection) can react immediately
-                        window.dispatchEvent(
-                          new CustomEvent('qb-advanced-toggle', {
-                            detail: next,
-                          })
-                        );
-                      } catch {
-                        // Ignore any errors when dispatching the event
-                      }
-                      return next;
-                    })
-                  }
-                  className={`ml-2 px-3 py-1.5 rounded text-xs font-semibold border transition-colors ${
-                    showAdvanced
-                      ? 'bg-white text-[#f03741] border-[#fbc5c8] hover:bg-[#fff5f5]'
-                      : 'bg-[#f03741] text-white border-[#f03741] hover:bg-[#d82f36]'
-                  }`}
-                  title={
-                    showAdvanced
-                      ? 'Hide advanced features'
-                      : 'Show advanced features'
-                  }
-                >
-                  {showAdvanced ? 'Hide Advanced' : 'Show Advanced'}
-                </button>
+                {/* Advanced Features Toggle - Only show for questionnaire mode */}
+                {builderMode === 'questionnaire' && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowAdvanced((v) => {
+                        const next = !v;
+                        try {
+                          // Broadcast change so other components (e.g., PreviewSection) can react immediately
+                          window.dispatchEvent(
+                            new CustomEvent('qb-advanced-toggle', {
+                              detail: next,
+                            })
+                          );
+                        } catch {
+                          // Ignore any errors when dispatching the event
+                        }
+                        return next;
+                      })
+                    }
+                    className={`ml-2 px-3 py-1.5 rounded text-xs font-semibold border transition-colors ${
+                      showAdvanced
+                        ? 'bg-white text-[#f03741] border-[#fbc5c8] hover:bg-[#fff5f5]'
+                        : 'bg-[#f03741] text-white border-[#f03741] hover:bg-[#d82f36]'
+                    }`}
+                    title={
+                      showAdvanced
+                        ? 'Hide advanced features'
+                        : 'Show advanced features'
+                    }
+                  >
+                    {showAdvanced ? 'Hide Advanced' : 'Show Advanced'}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1892,6 +2447,7 @@ function App() {
             droppedItems={droppedItems}
             currentXmlString={currentXmlString}
             currentHtmlString={currentHtmlString}
+            builderMode={builderMode}
             height={isPreviewCollapsed ? 36 : previewHeight}
             collapsed={isPreviewCollapsed}
             onToggleCollapse={() => setIsPreviewCollapsed((c) => !c)}
@@ -1924,6 +2480,7 @@ function App() {
         onItemUpdate={setEditingItem}
         droppedItems={droppedItems}
         showAdvanced={showAdvanced}
+        builderMode={builderMode}
       />
 
       {/* Warning Modal */}
@@ -1933,13 +2490,36 @@ function App() {
         onClose={closeWarning}
       />
 
-      {/* Remove Confirmation Modal */}
-      <RemoveConfirmationModal
-        isOpen={showConfirmModal}
-        itemToRemove={itemToRemove}
-        onConfirm={confirmRemove}
-        onCancel={closeRemoveConfirmation}
-      />
+      {/* Mode Switch Confirmation Modal */}
+      {showModeSwitch && (
+        <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Switch Builder Mode</h3>
+            <p className="text-gray-600 mb-6">
+              Switching to{' '}
+              {pendingBuilderMode === 'clinical'
+                ? 'Clinical Form'
+                : 'Questionnaire'}{' '}
+              Builder will remove all items currently on the canvas. This action
+              cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={cancelModeSwitch}
+                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmModeSwitch}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+              >
+                Continue & Clear Canvas
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* New XML Confirmation Modal */}
       <NewXmlModal
@@ -1952,11 +2532,15 @@ function App() {
       <UserGuideModal
         isOpen={showUserGuide}
         onClose={() => setShowUserGuide(false)}
+        builderMode={builderMode}
       />
       <PasteXmlModal
         isOpen={showPasteXml}
         onClose={() => setShowPasteXml(false)}
-        onLoadXml={(items, raw) => handleLoadXml(items, raw)}
+        onLoadXml={(items, raw, detectedMode) =>
+          handleLoadXml(items, raw, null, detectedMode)
+        }
+        builderMode={builderMode}
       />
     </DndContext>
   );

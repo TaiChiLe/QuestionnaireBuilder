@@ -1,6 +1,7 @@
 import React from 'react';
 
-const tips = [
+// Questionnaire mode guide content
+const questionnaireTips = [
   {
     title: 'Getting Started',
     body: 'Start by dragging a Page onto the canvas. All other components must be placed inside a Page to create your questionnaire structure.',
@@ -73,8 +74,57 @@ const tips = [
   },
 ];
 
-function UserGuideModal({ isOpen, onClose }) {
+// Clinical form mode guide content
+const clinicalTips = [
+  {
+    title: 'Getting Started',
+    body: 'Start by dragging a Clinical Form component (e.g. Group, Panel, Notes, Table) onto the canvas. These components sit at the root in clinical mode (no Pages).',
+  },
+  {
+    title: 'Groups vs Panels',
+    body: 'Groups provide a bordered container with a title. Panels render content inline and consecutive panels are automatically displayed side-by-side in the builder preview.',
+  },
+  {
+    title: 'Tables & Table Fields',
+    body: 'Add a Table, then drag clinical Table Field components into it. Each field supports data types like Text Box, Notes, Date, List Box or Checkbox.',
+  },
+  {
+    title: 'Codes',
+    body: 'Codes can reference SNOMED concepts or internal numeric identifiers. They must be unique in context. The Code field auto-increments to help you manage them.',
+  },
+  {
+    title: 'Keys',
+    body: 'Keys are optional identifiers mainly used for conditional visibility or when duplicate labels are required. Leave blank unless needed.',
+  },
+  {
+    title: 'Editing Items',
+    body: 'Double Click a component to edit. Edit on Drop (toggle in sidebar) will open the edit modal automatically after placing a new component.',
+  },
+  {
+    title: 'Side‑by‑Side Panels',
+    body: 'Two or more Panels placed consecutively will display side-by-side in the clinical preview for easier comparative layout.',
+  },
+  {
+    title: 'Provided Services & Prescription',
+    body: 'These specialised components include embedded action buttons or checkboxes that mimic typical clinical form behaviour.',
+  },
+  {
+    title: 'Copy, Cut & Paste',
+    body: 'Multi‑select with Ctrl+Click then use Ctrl+C / Ctrl+X / Ctrl+V. Pasting validates that the target container accepts the clinical component types.',
+  },
+  {
+    title: 'Errors',
+    body: 'Use the Errors tab to ensure codes and keys are unique and structural rules are enforced before exporting.',
+  },
+  {
+    title: 'Export',
+    body: 'Use Save to export the Clinical Form XML. The HTML preview panel reflects grouping & panel layout but is a work in progress.',
+  },
+];
+
+function UserGuideModal({ isOpen, onClose, builderMode = 'questionnaire' }) {
   if (!isOpen) return null;
+  const tips = builderMode === 'clinical' ? clinicalTips : questionnaireTips;
   return (
     <div
       className="fixed inset-0 bg-black/10 flex items-center justify-center z-[1200]"
@@ -85,7 +135,11 @@ function UserGuideModal({ isOpen, onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6 border-b flex items-center justify-between">
-          <h3 className="text-xl font-semibold text-gray-800">User Guide</h3>
+          <h3 className="text-xl font-semibold text-gray-800">
+            {builderMode === 'clinical'
+              ? 'Clinical Form Guide'
+              : 'Questionnaire Guide'}
+          </h3>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -121,8 +175,9 @@ function UserGuideModal({ isOpen, onClose }) {
             </div>
           ))}
           <div className="pt-2 text-gray-500 text-xs">
-            Tip: Check the Errors tab in the preview section to ensure all keys
-            are valid and unique.
+            Tip: Check the Errors tab in the preview section to ensure all{' '}
+            {builderMode === 'clinical' ? 'codes & keys' : 'keys'} are valid and
+            unique.
           </div>
         </div>
         <div className="px-6 py-4 border-t flex justify-end">
