@@ -7,6 +7,7 @@ const KeyPickerModal = ({
   onSelect,
   options = [],
   excludeKey,
+  isDarkMode = false,
 }) => {
   const [query, setQuery] = useState('');
 
@@ -29,16 +30,30 @@ const KeyPickerModal = ({
       onClick={onClose}
     >
       <div
-        className="bg-white w-[640px] max-w-[94vw] max-h-[80vh] rounded-lg shadow-2xl flex flex-col"
+        className={`w-[640px] max-w-[94vw] max-h-[80vh] rounded-lg shadow-2xl flex flex-col ${
+          isDarkMode ? 'bg-gray-800' : 'bg-white'
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-5 py-4 border-b flex items-center justify-between">
-          <h3 className="m-0 text-lg font-semibold text-gray-800">
+        <div
+          className={`px-5 py-4 border-b flex items-center justify-between ${
+            isDarkMode ? 'border-gray-600' : 'border-gray-200'
+          }`}
+        >
+          <h3
+            className={`m-0 text-lg font-semibold ${
+              isDarkMode ? 'text-gray-100' : 'text-gray-800'
+            }`}
+          >
             Select Record Key
           </h3>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 px-2 py-1 text-sm rounded"
+            className={`px-2 py-1 text-sm rounded ${
+              isDarkMode
+                ? 'text-gray-400 hover:text-gray-200'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
           >
             ✕
           </button>
@@ -50,9 +65,17 @@ const KeyPickerModal = ({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by key, label, or page..."
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${
+              isDarkMode
+                ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400'
+                : 'border-gray-300'
+            }`}
           />
-          <div className="text-xs text-gray-500 flex justify-between">
+          <div
+            className={`text-xs flex justify-between ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+            }`}
+          >
             <span>
               {filtered.length} / {options.length} keys
             </span>
@@ -60,10 +83,22 @@ const KeyPickerModal = ({
               Only Questions & Fields listed. Current component excluded.
             </span>
           </div>
-          <div className="border rounded-md overflow-hidden">
-            <div className="max-h-[40vh] overflow-auto divide-y">
+          <div
+            className={`border rounded-md overflow-hidden ${
+              isDarkMode ? 'border-gray-600' : 'border-gray-200'
+            }`}
+          >
+            <div
+              className={`max-h-[40vh] overflow-auto divide-y ${
+                isDarkMode ? 'divide-gray-600' : 'divide-gray-200'
+              }`}
+            >
               {filtered.length === 0 && (
-                <div className="p-6 text-center text-gray-400 text-sm">
+                <div
+                  className={`p-6 text-center text-sm ${
+                    isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                  }`}
+                >
                   No matches.
                 </div>
               )}
@@ -74,12 +109,22 @@ const KeyPickerModal = ({
                     onSelect(o.key);
                     onClose();
                   }}
-                  className="w-full text-left px-4 py-2 text-sm hover:bg-blue-50 focus:bg-blue-50 focus:outline-none flex flex-col"
+                  className={`w-full text-left px-4 py-2 text-sm focus:outline-none flex flex-col ${
+                    isDarkMode
+                      ? 'hover:bg-gray-700 focus:bg-gray-700'
+                      : 'hover:bg-blue-50 focus:bg-blue-50'
+                  }`}
                 >
-                  <span className="font-mono font-semibold text-gray-800 break-all">
+                  <span
+                    className={`font-mono font-semibold break-all ${
+                      isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                    }`}
+                  >
                     {o.key}
                   </span>
-                  <span className="text-gray-600">
+                  <span
+                    className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}
+                  >
                     {o.page ? o.page + ' · ' : ''}
                     {o.type}: {o.label}
                   </span>
@@ -87,10 +132,18 @@ const KeyPickerModal = ({
               ))}
             </div>
           </div>
-          <div className="flex justify-end gap-2 pt-2 border-t">
+          <div
+            className={`flex justify-end gap-2 pt-2 border-t ${
+              isDarkMode ? 'border-gray-600' : 'border-gray-200'
+            }`}
+          >
             <button
               onClick={onClose}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-sm border border-gray-300"
+              className={`px-4 py-2 rounded-md text-sm border ${
+                isDarkMode
+                  ? 'bg-gray-700 hover:bg-gray-600 text-gray-300 border-gray-600'
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300'
+              }`}
             >
               Close
             </button>
