@@ -272,7 +272,8 @@ const PreviewSection = ({
                       </div>
                     ) : (
                       droppedItems.length > 0 &&
-                      advancedEnabled && (
+                      advancedEnabled &&
+                      builderMode === 'questionnaire' && (
                         <button
                           onClick={handleUnlockEdit}
                           className="px-3 py-1.5 text-xs bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors flex items-center gap-2"

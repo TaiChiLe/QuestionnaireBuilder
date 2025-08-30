@@ -128,7 +128,6 @@ function generatePanelXML(item, indentLevel) {
 
     const attributes = [
         `class="ClinicalFormColumn"`,
-        `label="${escapeXML(item.label)}"`,
         getTagAttribute(item),
         item.width ? `width="${item.width}"` : '',
     ].filter(attr => attr).join(' ');
@@ -322,7 +321,7 @@ function generateCheckboxXML(item, indentLevel) {
         item.width ? `width="${item.width}"` : ''
     ].filter(attr => attr).join(' ');
 
-    return `${indent}<checkbox ${attributes} />`;
+    return `${indent}<check ${attributes} />`;
 }
 
 /**
@@ -364,7 +363,7 @@ function generateButtonXML(item, indentLevel) {
 
     const attributes = [
         getButtonActionAttribute(),
-        `required="${item.cfbuttonrequired}"`,
+        item.cfbuttonrequired !== undefined && item.cfbuttonrequired !== '' ? `required="${item.cfbuttonrequired}"` : '',
         `label="${escapeXML(item.label)}"`,
         item.parameters ? `parameters="${item.parameters}"` : ''
     ].filter(attr => attr).join(' ');
@@ -403,11 +402,8 @@ function generatePatientDataXML(item, indentLevel) {
 function generatePatientDataAllXML(item, indentLevel) {
     const indent = '  '.repeat(indentLevel);
 
-    const attributes = [
-        `label="${escapeXML(item.label)}"`,
-    ].filter(attr => attr).join(' ');
 
-    return `${indent}<metafields ${attributes} />`;
+    return `${indent}<metafields />`;
 }
 
 /**

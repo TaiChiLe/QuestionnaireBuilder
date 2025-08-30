@@ -321,7 +321,6 @@ export const createItemFromDraggedId = (draggedItemId) => {
       newItem = {
         id: generateId('cf-panel'),
         type: 'cf-panel',
-        label: 'Panel',
         children: [],
         tag: '[Inherit from parent]',
         width: '250',
@@ -345,7 +344,6 @@ export const createItemFromDraggedId = (draggedItemId) => {
       newItem = {
         id: generateId('cf-patient-data-all'),
         type: 'cf-patient-data-all',
-        label: 'Patient Data Fields (all)',
         children: [],
       };
       break;
