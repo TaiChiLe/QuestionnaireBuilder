@@ -3,10 +3,25 @@ import KeyPickerModal from './KeyPickerModal';
 import { getNextCodeNumber } from './utils/clinicalFormCodeManager';
 
 // Define reusable field components outside the main component to prevent re-creation
-const CodeField = ({ value, onChange, required = false }) => (
+const CodeField = ({
+  value,
+  onChange,
+  required = false,
+  isDarkMode = false,
+}) => (
   <div>
-    <label className="block mb-1 font-semibold text-gray-700">Code:</label>
-    <p className="text-sm text-gray-600 mb-2">
+    <label
+      className={`block mb-1 font-semibold ${
+        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+      }`}
+    >
+      Code:
+    </label>
+    <p
+      className={`text-sm ${
+        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+      } mb-2`}
+    >
       This can be a numeric SNOMED concept id or just a unique number within the
       context of this form.
     </p>
@@ -14,16 +29,35 @@ const CodeField = ({ value, onChange, required = false }) => (
       type="number"
       value={value || ''}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+        isDarkMode
+          ? 'bg-gray-700 border-gray-600 text-gray-100'
+          : 'border-gray-300'
+      }`}
       required={required}
     />
   </div>
 );
 
-const KeyField = ({ value, onChange, required = false }) => (
+const KeyField = ({
+  value,
+  onChange,
+  required = false,
+  isDarkMode = false,
+}) => (
   <div>
-    <label className="block mb-1 font-semibold text-gray-700">Key:</label>
-    <p className="text-sm text-gray-600 mb-2">
+    <label
+      className={`block mb-1 font-semibold ${
+        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+      }`}
+    >
+      Key:
+    </label>
+    <p
+      className={`text-sm ${
+        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+      } mb-2`}
+    >
       Leave this blank unless you need to have the same label on more than one
       item.
     </p>
@@ -31,23 +65,46 @@ const KeyField = ({ value, onChange, required = false }) => (
       type="text"
       value={value || ''}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+        isDarkMode
+          ? 'bg-gray-700 border-gray-600 text-gray-100'
+          : 'border-gray-300'
+      }`}
       required={required}
     />
   </div>
 );
 
-const TagField = ({ value, onChange, required = false }) => (
+const TagField = ({
+  value,
+  onChange,
+  required = false,
+  isDarkMode = false,
+}) => (
   <div>
-    <label className="block mb-1 font-semibold text-gray-700">Tag:</label>
-    <p className="text-sm text-gray-600 mb-2">
+    <label
+      className={`block mb-1 font-semibold ${
+        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+      }`}
+    >
+      Tag:
+    </label>
+    <p
+      className={`text-sm ${
+        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+      } mb-2`}
+    >
       Categorise questions to assist in filtering the medical history. Inherited
       tag is Consultation.
     </p>
     <select
       value={value || 'Outcome'}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+        isDarkMode
+          ? 'bg-gray-700 border-gray-600 text-gray-100'
+          : 'border-gray-300'
+      }`}
       required={required}
     >
       {/* Tags from image 2 */}
@@ -105,52 +162,95 @@ const TagField = ({ value, onChange, required = false }) => (
   </div>
 );
 
-const GlobalField = ({ value, onChange }) => (
+const GlobalField = ({ value, onChange, isDarkMode = false }) => (
   <div>
     <label className="flex items-center gap-2">
       <input
         type="checkbox"
         checked={value || false}
         onChange={(e) => onChange(e.target.checked)}
-        className="rounded border-gray-300 text-blue-600"
+        className={`rounded text-blue-600 ${
+          isDarkMode ? 'border-gray-500 bg-gray-700' : 'border-gray-300'
+        }`}
       />
-      <span className="font-semibold text-gray-700">Global</span>
+      <span
+        className={`font-semibold ${
+          isDarkMode ? 'text-gray-300' : 'text-gray-700'
+        }`}
+      >
+        Global
+      </span>
     </label>
-    <p className="text-sm text-gray-600 mt-1 ml-6">
+    <p
+      className={`text-sm ${
+        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+      } mt-1 ml-6`}
+    >
       This should be ticked when the answer to a question carries forward from
       one episode to the next.
     </p>
   </div>
 );
 
-const RequiredCheckboxField = ({ value, onChange }) => (
+const RequiredCheckboxField = ({ value, onChange, isDarkMode = false }) => (
   <div>
     <label className="flex items-center gap-2">
       <input
         type="checkbox"
         checked={value || false}
         onChange={(e) => onChange(e.target.checked)}
-        className="rounded border-gray-300 text-blue-600"
+        className={`rounded text-blue-600 ${
+          isDarkMode ? 'border-gray-500 bg-gray-700' : 'border-gray-300'
+        }`}
       />
-      <span className="font-semibold text-gray-700">Required</span>
+      <span
+        className={`font-semibold ${
+          isDarkMode ? 'text-gray-300' : 'text-gray-700'
+        }`}
+      >
+        Required
+      </span>
     </label>
-    <p className="text-sm text-gray-600 mt-1 ml-6">
+    <p
+      className={`text-sm ${
+        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+      } mt-1 ml-6`}
+    >
       This should be ticked when a question must be answered.
     </p>
   </div>
 );
 
-const WidthField = ({ value, onChange, required = false }) => (
+const WidthField = ({
+  value,
+  onChange,
+  required = false,
+  isDarkMode = false,
+}) => (
   <div>
-    <label className="block mb-1 font-semibold text-gray-700">Width:</label>
-    <p className="text-sm text-gray-600 mb-2">
+    <label
+      className={`block mb-1 font-semibold ${
+        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+      }`}
+    >
+      Width:
+    </label>
+    <p
+      className={`text-sm ${
+        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+      } mb-2`}
+    >
       Width of the control in pixels. Leave blank to use the default width.
     </p>
     <input
       type="number"
       value={value || ''}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+        isDarkMode
+          ? 'bg-gray-700 border-gray-600 text-gray-100'
+          : 'border-gray-300'
+      }`}
       required={required}
       min="1"
     />
@@ -614,25 +714,30 @@ const EditModal = ({
               {editingItem.type === 'cf-button' && (
                 <>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Label:
                     </label>
-                    <input
-                      type="text"
-                      value={editingItem.label || ''}
-                      onChange={(e) => {
-                        const newLabel = e.target.value;
+                    {renderInput(
+                      editingItem.label,
+                      (e) =>
                         onItemUpdate((prev) => ({
                           ...prev,
-                          label: newLabel,
-                        }));
-                      }}
-                      ref={firstFieldRef}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                          label: e.target.value,
+                        })),
+                      'Enter button label...',
+                      firstFieldRef
+                    )}
                   </div>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Action:
                     </label>
                     <select
@@ -643,7 +748,11 @@ const EditModal = ({
                           action: e.target.value,
                         }))
                       }
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        isDarkMode
+                          ? 'bg-gray-700 border-gray-600 text-gray-100'
+                          : 'border-gray-300'
+                      }`}
                     >
                       <option value="Add Extra Services">
                         Add Extra Services
@@ -688,7 +797,11 @@ const EditModal = ({
                     </select>
                   </div>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Required:
                     </label>
                     <select
@@ -699,7 +812,11 @@ const EditModal = ({
                           cfbuttonrequired: e.target.value,
                         }))
                       }
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        isDarkMode
+                          ? 'bg-gray-700 border-gray-600 text-gray-100'
+                          : 'border-gray-300'
+                      }`}
                     >
                       <option value="Ignore">Ignore</option>
                       <option value="Warn">Warn</option>
@@ -711,22 +828,23 @@ const EditModal = ({
               {editingItem.type === 'cf-checkbox' && (
                 <>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Label:
                     </label>
-                    <input
-                      type="text"
-                      value={editingItem.label || ''}
-                      onChange={(e) => {
-                        const newLabel = e.target.value;
+                    {renderInput(
+                      editingItem.label,
+                      (e) =>
                         onItemUpdate((prev) => ({
                           ...prev,
-                          label: newLabel,
-                        }));
-                      }}
-                      ref={firstFieldRef}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                          label: e.target.value,
+                        })),
+                      'Enter checkbox label...',
+                      firstFieldRef
+                    )}
                   </div>
                   <CodeField
                     value={editingItem.code}
@@ -736,6 +854,7 @@ const EditModal = ({
                         code: value,
                       }))
                     }
+                    isDarkMode={isDarkMode}
                   />
                   <KeyField
                     value={editingItem.keyField}
@@ -745,6 +864,7 @@ const EditModal = ({
                         keyField: value,
                       }))
                     }
+                    isDarkMode={isDarkMode}
                   />
                   <TagField
                     value={editingItem.tag}
@@ -754,6 +874,7 @@ const EditModal = ({
                         tag: value,
                       }))
                     }
+                    isDarkMode={isDarkMode}
                   />
                   <GlobalField
                     value={editingItem.global}
@@ -763,6 +884,7 @@ const EditModal = ({
                         global: value,
                       }))
                     }
+                    isDarkMode={isDarkMode}
                   />
                   <RequiredCheckboxField
                     value={editingItem.cfrequired}
@@ -772,6 +894,7 @@ const EditModal = ({
                         cfrequired: value,
                       }))
                     }
+                    isDarkMode={isDarkMode}
                   />
                   <WidthField
                     value={editingItem.width}
@@ -781,30 +904,33 @@ const EditModal = ({
                         width: value,
                       }))
                     }
+                    isDarkMode={isDarkMode}
                   />
                 </>
               )}
               {editingItem.type === 'cf-date' && (
                 <>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Label:
                     </label>
-                    <input
-                      type="text"
-                      value={editingItem.label || ''}
-                      onChange={(e) => {
-                        const newLabel = e.target.value;
+                    {renderInput(
+                      editingItem.label,
+                      (e) =>
                         onItemUpdate((prev) => ({
                           ...prev,
-                          label: newLabel,
-                        }));
-                      }}
-                      ref={firstFieldRef}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                          label: e.target.value,
+                        })),
+                      'Enter date label...',
+                      firstFieldRef
+                    )}
                   </div>
                   <CodeField
+                    isDarkMode={isDarkMode}
                     value={editingItem.code}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -814,6 +940,7 @@ const EditModal = ({
                     }
                   />
                   <KeyField
+                    isDarkMode={isDarkMode}
                     value={editingItem.key}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -823,6 +950,7 @@ const EditModal = ({
                     }
                   />
                   <TagField
+                    isDarkMode={isDarkMode}
                     value={editingItem.tag}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -832,6 +960,7 @@ const EditModal = ({
                     }
                   />
                   <GlobalField
+                    isDarkMode={isDarkMode}
                     value={editingItem.global}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -841,6 +970,7 @@ const EditModal = ({
                     }
                   />
                   <RequiredCheckboxField
+                    isDarkMode={isDarkMode}
                     value={editingItem.cfrequired}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -850,6 +980,7 @@ const EditModal = ({
                     }
                   />
                   <WidthField
+                    isDarkMode={isDarkMode}
                     value={editingItem.width}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -863,24 +994,26 @@ const EditModal = ({
               {editingItem.type === 'cf-future-date' && (
                 <>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Label:
                     </label>
-                    <input
-                      type="text"
-                      value={editingItem.label || ''}
-                      onChange={(e) => {
-                        const newLabel = e.target.value;
+                    {renderInput(
+                      editingItem.label,
+                      (e) =>
                         onItemUpdate((prev) => ({
                           ...prev,
-                          label: newLabel,
-                        }));
-                      }}
-                      ref={firstFieldRef}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                          label: e.target.value,
+                        })),
+                      'Enter future date label...',
+                      firstFieldRef
+                    )}
                   </div>
                   <CodeField
+                    isDarkMode={isDarkMode}
                     value={editingItem.code}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -890,6 +1023,7 @@ const EditModal = ({
                     }
                   />
                   <KeyField
+                    isDarkMode={isDarkMode}
                     value={editingItem.key}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -899,6 +1033,7 @@ const EditModal = ({
                     }
                   />
                   <TagField
+                    isDarkMode={isDarkMode}
                     value={editingItem.tag}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -908,6 +1043,7 @@ const EditModal = ({
                     }
                   />
                   <GlobalField
+                    isDarkMode={isDarkMode}
                     value={editingItem.global}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -917,6 +1053,7 @@ const EditModal = ({
                     }
                   />
                   <RequiredCheckboxField
+                    isDarkMode={isDarkMode}
                     value={editingItem.cfrequired}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -926,6 +1063,7 @@ const EditModal = ({
                     }
                   />
                   <WidthField
+                    isDarkMode={isDarkMode}
                     value={editingItem.width}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -939,24 +1077,26 @@ const EditModal = ({
               {editingItem.type === 'cf-group' && (
                 <>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Label:
                     </label>
-                    <input
-                      type="text"
-                      value={editingItem.label || ''}
-                      onChange={(e) => {
-                        const newLabel = e.target.value;
+                    {renderInput(
+                      editingItem.label,
+                      (e) =>
                         onItemUpdate((prev) => ({
                           ...prev,
-                          label: newLabel,
-                        }));
-                      }}
-                      ref={firstFieldRef}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                          label: e.target.value,
+                        })),
+                      'Enter group label...',
+                      firstFieldRef
+                    )}
                   </div>
                   <TagField
+                    isDarkMode={isDarkMode}
                     value={editingItem.tag}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -970,46 +1110,49 @@ const EditModal = ({
               {editingItem.type === 'cf-info' && (
                 <>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Label:
                     </label>
-                    <input
-                      type="text"
-                      value={editingItem.label || ''}
-                      onChange={(e) => {
-                        const newLabel = e.target.value;
+                    {renderInput(
+                      editingItem.label,
+                      (e) =>
                         onItemUpdate((prev) => ({
                           ...prev,
-                          label: newLabel,
-                        }));
-                      }}
-                      ref={firstFieldRef}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                          label: e.target.value,
+                        })),
+                      'Enter info label...',
+                      firstFieldRef
+                    )}
                   </div>
                 </>
               )}
               {editingItem.type === 'cf-listbox' && (
                 <>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Label:
                     </label>
-                    <input
-                      type="text"
-                      value={editingItem.label || ''}
-                      onChange={(e) => {
-                        const newLabel = e.target.value;
+                    {renderInput(
+                      editingItem.label,
+                      (e) =>
                         onItemUpdate((prev) => ({
                           ...prev,
-                          label: newLabel,
-                        }));
-                      }}
-                      ref={firstFieldRef}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                          label: e.target.value,
+                        })),
+                      'Enter listbox label...',
+                      firstFieldRef
+                    )}
                   </div>
                   <CodeField
+                    isDarkMode={isDarkMode}
                     value={editingItem.code}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1019,6 +1162,7 @@ const EditModal = ({
                     }
                   />
                   <KeyField
+                    isDarkMode={isDarkMode}
                     value={editingItem.key}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1028,6 +1172,7 @@ const EditModal = ({
                     }
                   />
                   <TagField
+                    isDarkMode={isDarkMode}
                     value={editingItem.tag}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1037,6 +1182,7 @@ const EditModal = ({
                     }
                   />
                   <GlobalField
+                    isDarkMode={isDarkMode}
                     value={editingItem.global}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1046,6 +1192,7 @@ const EditModal = ({
                     }
                   />
                   <RequiredCheckboxField
+                    isDarkMode={isDarkMode}
                     value={editingItem.cfrequired}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1055,6 +1202,7 @@ const EditModal = ({
                     }
                   />
                   <WidthField
+                    isDarkMode={isDarkMode}
                     value={editingItem.width}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1064,17 +1212,29 @@ const EditModal = ({
                     }
                   />
                   <div>
-                    <label className="block mb-2 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-2 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Answer Options:
                     </label>
                     <div className="flex gap-2 mb-2">
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-600 mb-1">
+                        <label
+                          className={`block text-sm font-medium ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                          } mb-1`}
+                        >
                           Label
                         </label>
                       </div>
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-600 mb-1">
+                        <label
+                          className={`block text-sm font-medium ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                          } mb-1`}
+                        >
                           Code
                         </label>
                       </div>
@@ -1101,7 +1261,11 @@ const EditModal = ({
                                 options: newOptions,
                               }));
                             }}
-                            className="w-full p-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className={`w-full p-1.5 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                              isDarkMode
+                                ? 'border-gray-600 bg-gray-700 text-white'
+                                : 'border-gray-300 bg-white text-gray-900'
+                            }`}
                             placeholder="Label"
                           />
                         </div>
@@ -1122,7 +1286,11 @@ const EditModal = ({
                                 options: newOptions,
                               }));
                             }}
-                            className="w-full p-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className={`w-full p-1.5 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                              isDarkMode
+                                ? 'border-gray-600 bg-gray-700 text-white'
+                                : 'border-gray-300 bg-white text-gray-900'
+                            }`}
                             placeholder="Code"
                           />
                         </div>
@@ -1137,7 +1305,11 @@ const EditModal = ({
                               options: newOptions,
                             }));
                           }}
-                          className="px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-md hover:bg-red-100 cursor-pointer"
+                          className={`px-3 py-1.5 border rounded-md hover:cursor-pointer ${
+                            isDarkMode
+                              ? 'bg-red-900 text-red-200 border-red-700 hover:bg-red-800'
+                              : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                          }`}
                         >
                           Remove
                         </button>
@@ -1158,7 +1330,11 @@ const EditModal = ({
                           options: [...(prev.options || []), newOption],
                         }));
                       }}
-                      className="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 cursor-pointer"
+                      className={`px-4 py-2 border rounded-md hover:cursor-pointer ${
+                        isDarkMode
+                          ? 'bg-blue-900 text-blue-200 border-blue-700 hover:bg-blue-800'
+                          : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+                      }`}
                     >
                       Add Answer Option
                     </button>
@@ -1168,24 +1344,26 @@ const EditModal = ({
               {editingItem.type === 'cf-notes' && (
                 <>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Label:
                     </label>
-                    <input
-                      type="text"
-                      value={editingItem.label || ''}
-                      onChange={(e) => {
-                        const newLabel = e.target.value;
+                    {renderInput(
+                      editingItem.label,
+                      (e) =>
                         onItemUpdate((prev) => ({
                           ...prev,
-                          label: newLabel,
-                        }));
-                      }}
-                      ref={firstFieldRef}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                          label: e.target.value,
+                        })),
+                      'Enter notes label...',
+                      firstFieldRef
+                    )}
                   </div>
                   <CodeField
+                    isDarkMode={isDarkMode}
                     value={editingItem.code}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1195,6 +1373,7 @@ const EditModal = ({
                     }
                   />
                   <KeyField
+                    isDarkMode={isDarkMode}
                     value={editingItem.key}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1204,6 +1383,7 @@ const EditModal = ({
                     }
                   />
                   <TagField
+                    isDarkMode={isDarkMode}
                     value={editingItem.tag}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1213,6 +1393,7 @@ const EditModal = ({
                     }
                   />
                   <GlobalField
+                    isDarkMode={isDarkMode}
                     value={editingItem.global}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1222,6 +1403,7 @@ const EditModal = ({
                     }
                   />
                   <RequiredCheckboxField
+                    isDarkMode={isDarkMode}
                     value={editingItem.cfrequired}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1231,6 +1413,7 @@ const EditModal = ({
                     }
                   />
                   <WidthField
+                    isDarkMode={isDarkMode}
                     value={editingItem.width}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1244,24 +1427,26 @@ const EditModal = ({
               {editingItem.type === 'cf-notes-history' && (
                 <>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Label:
                     </label>
-                    <input
-                      type="text"
-                      value={editingItem.label || ''}
-                      onChange={(e) => {
-                        const newLabel = e.target.value;
+                    {renderInput(
+                      editingItem.label,
+                      (e) =>
                         onItemUpdate((prev) => ({
                           ...prev,
-                          label: newLabel,
-                        }));
-                      }}
-                      ref={firstFieldRef}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                          label: e.target.value,
+                        })),
+                      'Enter notes history label...',
+                      firstFieldRef
+                    )}
                   </div>
                   <CodeField
+                    isDarkMode={isDarkMode}
                     value={editingItem.code}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1271,6 +1456,7 @@ const EditModal = ({
                     }
                   />
                   <KeyField
+                    isDarkMode={isDarkMode}
                     value={editingItem.key}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1280,6 +1466,7 @@ const EditModal = ({
                     }
                   />
                   <TagField
+                    isDarkMode={isDarkMode}
                     value={editingItem.tag}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1289,6 +1476,7 @@ const EditModal = ({
                     }
                   />
                   <GlobalField
+                    isDarkMode={isDarkMode}
                     value={editingItem.global}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1298,6 +1486,7 @@ const EditModal = ({
                     }
                   />
                   <RequiredCheckboxField
+                    isDarkMode={isDarkMode}
                     value={editingItem.cfrequired}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1307,6 +1496,7 @@ const EditModal = ({
                     }
                   />
                   <WidthField
+                    isDarkMode={isDarkMode}
                     value={editingItem.width}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1320,6 +1510,7 @@ const EditModal = ({
               {editingItem.type === 'cf-panel' && (
                 <>
                   <TagField
+                    isDarkMode={isDarkMode}
                     value={editingItem.tag}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1329,6 +1520,7 @@ const EditModal = ({
                     }
                   />
                   <WidthField
+                    isDarkMode={isDarkMode}
                     value={editingItem.width}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1342,24 +1534,26 @@ const EditModal = ({
               {editingItem.type === 'cf-patient-data' && (
                 <>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Label:
                     </label>
-                    <input
-                      type="text"
-                      value={editingItem.label || ''}
-                      onChange={(e) => {
-                        const newLabel = e.target.value;
+                    {renderInput(
+                      editingItem.label,
+                      (e) =>
                         onItemUpdate((prev) => ({
                           ...prev,
-                          label: newLabel,
-                        }));
-                      }}
-                      ref={firstFieldRef}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                          label: e.target.value,
+                        })),
+                      'Enter patient data label...',
+                      firstFieldRef
+                    )}
                   </div>
                   <RequiredCheckboxField
+                    isDarkMode={isDarkMode}
                     value={editingItem.cfrequired}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1372,8 +1566,18 @@ const EditModal = ({
               )}
               {editingItem.type === 'cf-patient-data-all' && (
                 <>
-                  <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
-                    <p className="text-gray-600 text-center italic">
+                  <div
+                    className={`p-4 rounded-md ${
+                      isDarkMode
+                        ? 'bg-gray-700 border-gray-600'
+                        : 'bg-gray-50 border-gray-200'
+                    } border`}
+                  >
+                    <p
+                      className={`${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                      } text-center italic`}
+                    >
                       There are no settings for this control
                     </p>
                   </div>
@@ -1381,8 +1585,18 @@ const EditModal = ({
               )}
               {editingItem.type === 'cf-prescription' && (
                 <>
-                  <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
-                    <p className="text-gray-600 text-center italic">
+                  <div
+                    className={`p-4 rounded-md ${
+                      isDarkMode
+                        ? 'bg-gray-700 border-gray-600'
+                        : 'bg-gray-50 border-gray-200'
+                    } border`}
+                  >
+                    <p
+                      className={`${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                      } text-center italic`}
+                    >
                       There are no settings for this control
                     </p>
                   </div>
@@ -1390,8 +1604,18 @@ const EditModal = ({
               )}
               {editingItem.type === 'cf-provided-services' && (
                 <>
-                  <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
-                    <p className="text-gray-600 text-center italic">
+                  <div
+                    className={`p-4 rounded-md ${
+                      isDarkMode
+                        ? 'bg-gray-700 border-gray-600'
+                        : 'bg-gray-50 border-gray-200'
+                    } border`}
+                  >
+                    <p
+                      className={`${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                      } text-center italic`}
+                    >
                       There are no settings for this control
                     </p>
                   </div>
@@ -1400,24 +1624,26 @@ const EditModal = ({
               {editingItem.type === 'cf-radio' && (
                 <>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Label:
                     </label>
-                    <input
-                      type="text"
-                      value={editingItem.label || ''}
-                      onChange={(e) => {
-                        const newLabel = e.target.value;
+                    {renderInput(
+                      editingItem.label,
+                      (e) =>
                         onItemUpdate((prev) => ({
                           ...prev,
-                          label: newLabel,
-                        }));
-                      }}
-                      ref={firstFieldRef}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                          label: e.target.value,
+                        })),
+                      'Enter radio label...',
+                      firstFieldRef
+                    )}
                   </div>
                   <CodeField
+                    isDarkMode={isDarkMode}
                     value={editingItem.code}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1427,6 +1653,7 @@ const EditModal = ({
                     }
                   />
                   <KeyField
+                    isDarkMode={isDarkMode}
                     value={editingItem.key}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1436,6 +1663,7 @@ const EditModal = ({
                     }
                   />
                   <TagField
+                    isDarkMode={isDarkMode}
                     value={editingItem.tag}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1445,6 +1673,7 @@ const EditModal = ({
                     }
                   />
                   <GlobalField
+                    isDarkMode={isDarkMode}
                     value={editingItem.global}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1454,6 +1683,7 @@ const EditModal = ({
                     }
                   />
                   <RequiredCheckboxField
+                    isDarkMode={isDarkMode}
                     value={editingItem.cfrequired}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1463,6 +1693,7 @@ const EditModal = ({
                     }
                   />
                   <WidthField
+                    isDarkMode={isDarkMode}
                     value={editingItem.width}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1472,17 +1703,29 @@ const EditModal = ({
                     }
                   />
                   <div>
-                    <label className="block mb-2 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-2 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Options:
                     </label>
                     <div className="flex gap-2 mb-2">
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-600 mb-1">
+                        <label
+                          className={`block text-sm font-medium mb-1 ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                          }`}
+                        >
                           Label
                         </label>
                       </div>
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-600 mb-1">
+                        <label
+                          className={`block text-sm font-medium mb-1 ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                          }`}
+                        >
                           Code
                         </label>
                       </div>
@@ -1509,7 +1752,11 @@ const EditModal = ({
                                 options: newOptions,
                               }));
                             }}
-                            className="w-full p-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className={`w-full p-1.5 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                              isDarkMode
+                                ? 'border-gray-600 bg-gray-700 text-white'
+                                : 'border-gray-300 bg-white text-gray-900'
+                            }`}
                             placeholder="Label"
                           />
                         </div>
@@ -1530,7 +1777,11 @@ const EditModal = ({
                                 options: newOptions,
                               }));
                             }}
-                            className="w-full p-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className={`w-full p-1.5 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                              isDarkMode
+                                ? 'border-gray-600 bg-gray-700 text-white'
+                                : 'border-gray-300 bg-white text-gray-900'
+                            }`}
                             placeholder="Code"
                           />
                         </div>
@@ -1545,7 +1796,11 @@ const EditModal = ({
                               options: newOptions,
                             }));
                           }}
-                          className="px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-md hover:bg-red-100 cursor-pointer"
+                          className={`px-3 py-1.5 border rounded-md hover:cursor-pointer ${
+                            isDarkMode
+                              ? 'bg-red-900 text-red-200 border-red-700 hover:bg-red-800'
+                              : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                          }`}
                         >
                           Remove
                         </button>
@@ -1566,7 +1821,11 @@ const EditModal = ({
                           options: [...(prev.options || []), newOption],
                         }));
                       }}
-                      className="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 cursor-pointer"
+                      className={`px-4 py-2 border rounded-md cursor-pointer ${
+                        isDarkMode
+                          ? 'bg-blue-900 text-blue-200 border-blue-700 hover:bg-blue-800'
+                          : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+                      }`}
                     >
                       Add Answer Option
                     </button>
@@ -1576,24 +1835,26 @@ const EditModal = ({
               {editingItem.type === 'cf-snom-textbox' && (
                 <>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Label:
                     </label>
-                    <input
-                      type="text"
-                      value={editingItem.label || ''}
-                      onChange={(e) => {
-                        const newLabel = e.target.value;
+                    {renderInput(
+                      editingItem.label,
+                      (e) =>
                         onItemUpdate((prev) => ({
                           ...prev,
-                          label: newLabel,
-                        }));
-                      }}
-                      ref={firstFieldRef}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                          label: e.target.value,
+                        })),
+                      'Enter SNOM textbox label...',
+                      firstFieldRef
+                    )}
                   </div>
                   <CodeField
+                    isDarkMode={isDarkMode}
                     value={editingItem.code}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1603,6 +1864,7 @@ const EditModal = ({
                     }
                   />
                   <KeyField
+                    isDarkMode={isDarkMode}
                     value={editingItem.key}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1612,6 +1874,7 @@ const EditModal = ({
                     }
                   />
                   <TagField
+                    isDarkMode={isDarkMode}
                     value={editingItem.tag}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1621,6 +1884,7 @@ const EditModal = ({
                     }
                   />
                   <GlobalField
+                    isDarkMode={isDarkMode}
                     value={editingItem.global}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1630,10 +1894,18 @@ const EditModal = ({
                     }
                   />
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Subset:
                     </label>
-                    <p className="text-sm text-gray-600 mb-2">
+                    <p
+                      className={`text-sm mb-2 ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                      }`}
+                    >
                       This will be a numeric SNOMED concept id for the subset.
                     </p>
                     <input
@@ -1645,11 +1917,16 @@ const EditModal = ({
                           subset: e.target.value,
                         }))
                       }
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        isDarkMode
+                          ? 'bg-gray-700 border-gray-600 text-gray-100'
+                          : 'border-gray-300'
+                      }`}
                       placeholder="Enter SNOMED concept id"
                     />
                   </div>
                   <WidthField
+                    isDarkMode={isDarkMode}
                     value={editingItem.width}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1663,24 +1940,26 @@ const EditModal = ({
               {editingItem.type === 'cf-table' && (
                 <>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Label:
                     </label>
-                    <input
-                      type="text"
-                      value={editingItem.label || ''}
-                      onChange={(e) => {
-                        const newLabel = e.target.value;
+                    {renderInput(
+                      editingItem.label,
+                      (e) =>
                         onItemUpdate((prev) => ({
                           ...prev,
-                          label: newLabel,
-                        }));
-                      }}
-                      ref={firstFieldRef}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                          label: e.target.value,
+                        })),
+                      'Enter table label...',
+                      firstFieldRef
+                    )}
                   </div>
                   <CodeField
+                    isDarkMode={isDarkMode}
                     value={editingItem.code}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1690,6 +1969,7 @@ const EditModal = ({
                     }
                   />
                   <KeyField
+                    isDarkMode={isDarkMode}
                     value={editingItem.key}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1699,6 +1979,7 @@ const EditModal = ({
                     }
                   />
                   <TagField
+                    isDarkMode={isDarkMode}
                     value={editingItem.tag}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1708,6 +1989,7 @@ const EditModal = ({
                     }
                   />
                   <GlobalField
+                    isDarkMode={isDarkMode}
                     value={editingItem.global}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1717,6 +1999,7 @@ const EditModal = ({
                     }
                   />
                   <RequiredCheckboxField
+                    isDarkMode={isDarkMode}
                     value={editingItem.cfrequired}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -1730,25 +2013,30 @@ const EditModal = ({
               {editingItem.type === 'cf-table-field' && (
                 <>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Label:
                     </label>
-                    <input
-                      type="text"
-                      value={editingItem.label || ''}
-                      onChange={(e) => {
-                        const newLabel = e.target.value;
+                    {renderInput(
+                      editingItem.label,
+                      (e) =>
                         onItemUpdate((prev) => ({
                           ...prev,
-                          label: newLabel,
-                        }));
-                      }}
-                      ref={firstFieldRef}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                          label: e.target.value,
+                        })),
+                      'Enter table field label...',
+                      firstFieldRef
+                    )}
                   </div>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Data Type:
                     </label>
                     <select
@@ -1759,7 +2047,11 @@ const EditModal = ({
                           dataType: e.target.value,
                         }))
                       }
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        isDarkMode
+                          ? 'bg-gray-700 border-gray-600 text-gray-100'
+                          : 'border-gray-300'
+                      }`}
                     >
                       <option value="textbox">Text Box</option>
                       <option value="cf-checkbox">Checkbox</option>
@@ -1778,6 +2070,7 @@ const EditModal = ({
                     editingItem.dataType === 'textbox') && (
                     <>
                       <CodeField
+                        isDarkMode={isDarkMode}
                         value={editingItem.code}
                         onChange={(value) =>
                           onItemUpdate((prev) => ({
@@ -1787,6 +2080,7 @@ const EditModal = ({
                         }
                       />
                       <KeyField
+                        isDarkMode={isDarkMode}
                         value={editingItem.key}
                         onChange={(value) =>
                           onItemUpdate((prev) => ({
@@ -1796,6 +2090,7 @@ const EditModal = ({
                         }
                       />
                       <TagField
+                        isDarkMode={isDarkMode}
                         value={editingItem.tag}
                         onChange={(value) =>
                           onItemUpdate((prev) => ({
@@ -1805,6 +2100,7 @@ const EditModal = ({
                         }
                       />
                       <GlobalField
+                        isDarkMode={isDarkMode}
                         value={editingItem.global}
                         onChange={(value) =>
                           onItemUpdate((prev) => ({
@@ -1814,6 +2110,7 @@ const EditModal = ({
                         }
                       />
                       <WidthField
+                        isDarkMode={isDarkMode}
                         value={editingItem.width}
                         onChange={(value) =>
                           onItemUpdate((prev) => ({
@@ -1829,6 +2126,7 @@ const EditModal = ({
                     editingItem.dataType === 'cf-radio') && (
                     <>
                       <CodeField
+                        isDarkMode={isDarkMode}
                         value={editingItem.code}
                         onChange={(value) =>
                           onItemUpdate((prev) => ({
@@ -1838,6 +2136,7 @@ const EditModal = ({
                         }
                       />
                       <KeyField
+                        isDarkMode={isDarkMode}
                         value={editingItem.key}
                         onChange={(value) =>
                           onItemUpdate((prev) => ({
@@ -1847,6 +2146,7 @@ const EditModal = ({
                         }
                       />
                       <TagField
+                        isDarkMode={isDarkMode}
                         value={editingItem.tag}
                         onChange={(value) =>
                           onItemUpdate((prev) => ({
@@ -1856,6 +2156,7 @@ const EditModal = ({
                         }
                       />
                       <GlobalField
+                        isDarkMode={isDarkMode}
                         value={editingItem.global}
                         onChange={(value) =>
                           onItemUpdate((prev) => ({
@@ -1865,6 +2166,7 @@ const EditModal = ({
                         }
                       />
                       <RequiredCheckboxField
+                        isDarkMode={isDarkMode}
                         value={editingItem.cfrequired}
                         onChange={(value) =>
                           onItemUpdate((prev) => ({
@@ -1874,6 +2176,7 @@ const EditModal = ({
                         }
                       />
                       <WidthField
+                        isDarkMode={isDarkMode}
                         value={editingItem.width}
                         onChange={(value) =>
                           onItemUpdate((prev) => ({
@@ -1883,7 +2186,11 @@ const EditModal = ({
                         }
                       />
                       <div>
-                        <label className="block mb-2 font-semibold text-gray-700">
+                        <label
+                          className={`block mb-2 font-semibold ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                          }`}
+                        >
                           {editingItem.dataType === 'cf-listbox' && (
                             <span>Answer </span>
                           )}
@@ -1891,12 +2198,20 @@ const EditModal = ({
                         </label>
                         <div className="flex gap-2 mb-2">
                           <div className="flex-1">
-                            <label className="block text-sm font-medium text-gray-600 mb-1">
+                            <label
+                              className={`block text-sm font-medium mb-1 ${
+                                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                              }`}
+                            >
                               Label
                             </label>
                           </div>
                           <div className="flex-1">
-                            <label className="block text-sm font-medium text-gray-600 mb-1">
+                            <label
+                              className={`block text-sm font-medium mb-1 ${
+                                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                              }`}
+                            >
                               Code
                             </label>
                           </div>
@@ -1923,7 +2238,11 @@ const EditModal = ({
                                     options: newOptions,
                                   }));
                                 }}
-                                className="w-full p-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                className={`w-full p-1.5 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                  isDarkMode
+                                    ? 'border-gray-600 bg-gray-700 text-white'
+                                    : 'border-gray-300 bg-white text-gray-900'
+                                }`}
                                 placeholder="Label"
                               />
                             </div>
@@ -1944,7 +2263,11 @@ const EditModal = ({
                                     options: newOptions,
                                   }));
                                 }}
-                                className="w-full p-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                className={`w-full p-1.5 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                  isDarkMode
+                                    ? 'border-gray-600 bg-gray-700 text-white'
+                                    : 'border-gray-300 bg-white text-gray-900'
+                                }`}
                                 placeholder="Code"
                               />
                             </div>
@@ -1959,7 +2282,11 @@ const EditModal = ({
                                   options: newOptions,
                                 }));
                               }}
-                              className="px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-md hover:bg-red-100 cursor-pointer"
+                              className={`px-3 py-1.5 border rounded-md hover:cursor-pointer ${
+                                isDarkMode
+                                  ? 'bg-red-900 text-red-200 border-red-700 hover:bg-red-800'
+                                  : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                              }`}
                             >
                               Remove
                             </button>
@@ -1980,7 +2307,11 @@ const EditModal = ({
                               options: [...(prev.options || []), newOption],
                             }));
                           }}
-                          className="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 cursor-pointer"
+                          className={`px-4 py-2 border rounded-md cursor-pointer ${
+                            isDarkMode
+                              ? 'bg-blue-900 text-blue-200 border-blue-700 hover:bg-blue-800'
+                              : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+                          }`}
                         >
                           Add Answer Option
                         </button>
@@ -1991,6 +2322,7 @@ const EditModal = ({
                   {editingItem.dataType === 'cf-snom-textbox' && (
                     <>
                       <CodeField
+                        isDarkMode={isDarkMode}
                         value={editingItem.code}
                         onChange={(value) =>
                           onItemUpdate((prev) => ({
@@ -2000,6 +2332,7 @@ const EditModal = ({
                         }
                       />
                       <KeyField
+                        isDarkMode={isDarkMode}
                         value={editingItem.key}
                         onChange={(value) =>
                           onItemUpdate((prev) => ({
@@ -2009,6 +2342,7 @@ const EditModal = ({
                         }
                       />
                       <TagField
+                        isDarkMode={isDarkMode}
                         value={editingItem.tag}
                         onChange={(value) =>
                           onItemUpdate((prev) => ({
@@ -2018,6 +2352,7 @@ const EditModal = ({
                         }
                       />
                       <GlobalField
+                        isDarkMode={isDarkMode}
                         value={editingItem.global}
                         onChange={(value) =>
                           onItemUpdate((prev) => ({
@@ -2027,10 +2362,18 @@ const EditModal = ({
                         }
                       />
                       <div>
-                        <label className="block mb-1 font-semibold text-gray-700">
+                        <label
+                          className={`block mb-1 font-semibold ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                          }`}
+                        >
                           Subset:
                         </label>
-                        <p className="text-sm text-gray-600 mb-2">
+                        <p
+                          className={`text-sm mb-2 ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                          }`}
+                        >
                           This will be a numeric SNOMED concept id for the
                           subset.
                         </p>
@@ -2043,11 +2386,16 @@ const EditModal = ({
                               subset: e.target.value,
                             }))
                           }
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className={`w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            isDarkMode
+                              ? 'bg-gray-700 border-gray-600 text-gray-100'
+                              : 'border-gray-300'
+                          }`}
                           placeholder="Enter SNOMED concept id"
                         />
                       </div>
                       <WidthField
+                        isDarkMode={isDarkMode}
                         value={editingItem.width}
                         onChange={(value) =>
                           onItemUpdate((prev) => ({
@@ -2063,24 +2411,26 @@ const EditModal = ({
               {editingItem.type === 'cf-textbox' && (
                 <>
                   <div>
-                    <label className="block mb-1 font-semibold text-gray-700">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
                       Label:
                     </label>
-                    <input
-                      type="text"
-                      value={editingItem.label || ''}
-                      onChange={(e) => {
-                        const newLabel = e.target.value;
+                    {renderInput(
+                      editingItem.label,
+                      (e) =>
                         onItemUpdate((prev) => ({
                           ...prev,
-                          label: newLabel,
-                        }));
-                      }}
-                      ref={firstFieldRef}
-                      className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
+                          label: e.target.value,
+                        })),
+                      'Enter textbox label...',
+                      firstFieldRef
+                    )}
                   </div>
                   <CodeField
+                    isDarkMode={isDarkMode}
                     value={editingItem.code}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -2090,6 +2440,7 @@ const EditModal = ({
                     }
                   />
                   <KeyField
+                    isDarkMode={isDarkMode}
                     value={editingItem.key}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -2099,6 +2450,7 @@ const EditModal = ({
                     }
                   />
                   <TagField
+                    isDarkMode={isDarkMode}
                     value={editingItem.tag}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -2108,6 +2460,7 @@ const EditModal = ({
                     }
                   />
                   <GlobalField
+                    isDarkMode={isDarkMode}
                     value={editingItem.global}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -2117,6 +2470,7 @@ const EditModal = ({
                     }
                   />
                   <RequiredCheckboxField
+                    isDarkMode={isDarkMode}
                     value={editingItem.cfrequired}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({
@@ -2126,6 +2480,7 @@ const EditModal = ({
                     }
                   />
                   <WidthField
+                    isDarkMode={isDarkMode}
                     value={editingItem.width}
                     onChange={(value) =>
                       onItemUpdate((prev) => ({

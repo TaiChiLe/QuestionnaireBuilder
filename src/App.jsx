@@ -166,8 +166,6 @@ function App() {
     // Update both states atomically
     setHistoryStack(finalStack);
     setHistoryIndex(newIndex);
-
-    console.log('saveToHistory:', { newIndex, stackLength: finalStack.length });
   }, [droppedItems, xmlTree, historyIndex, historyStack, maxHistorySize]);
 
   // Save to history after drag operations complete
@@ -1298,6 +1296,7 @@ function App() {
                         isSelected={selectedIds.has(panel.id)}
                         onSelect={(e) => handleSelectItem(e, panel.id)}
                         expandedAnswerIds={expandedAnswerIds}
+                        isDarkMode={isDarkMode}
                       >
                         {!isContainerCollapsed &&
                           panel.children &&
@@ -2005,7 +2004,11 @@ function App() {
             <button
               type="button"
               onClick={handleModeSwitch}
-              className="px-4 py-2 rounded-lg border-2 border-[#f03741] bg-white hover:bg-[#f03741] hover:text-white transition-colors font-semibold text-lg"
+              className={`px-4 py-2 rounded-lg border-2 border-[#f03741] ${
+                isDarkMode
+                  ? 'bg-gray-800 text-white hover:bg-[#f03741]'
+                  : 'bg-white text-gray-900 hover:bg-[#f03741] hover:text-white'
+              } transition-colors font-semibold text-lg`}
               title={`Switch to ${
                 builderMode === 'questionnaire'
                   ? 'Clinical Form'
@@ -2079,7 +2082,11 @@ function App() {
                   }`}
                 >
                   <div
-                    className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
+                    className={`absolute top-[2px] left-[2px] ${
+                      isDarkMode ? 'bg-gray-200' : 'bg-white'
+                    } ${
+                      isDarkMode ? 'border-gray-500' : 'border-gray-300'
+                    } border rounded-full h-5 w-5 transition-transform ${
                       isDarkMode ? 'translate-x-full' : 'translate-x-0'
                     }`}
                   ></div>
@@ -2096,7 +2103,9 @@ function App() {
             <button
               type="button"
               onClick={handleNewXml}
-              className="px-3 py-2 bg-[#f03741] text-white border border-gray-300 rounded cursor-pointer text-sm hover:bg-red-600 transition-colors flex items-center gap-2"
+              className={`px-3 py-2 bg-[#f03741] text-white ${
+                isDarkMode ? 'border-gray-600' : 'border-gray-300'
+              } border rounded cursor-pointer text-sm hover:bg-red-600 transition-colors flex items-center gap-2`}
               title="New Questionnaire"
             >
               <svg
@@ -2266,6 +2275,7 @@ function App() {
               <SidebarDraggableComponents
                 isValidDrop={isValidDrop}
                 builderMode={builderMode}
+                isDarkMode={isDarkMode}
               />
             </div>
           </div>
@@ -2354,7 +2364,11 @@ function App() {
                 </button>
 
                 {/* Separator */}
-                <div className="mx-2 h-4 w-px bg-gray-300" />
+                <div
+                  className={`mx-2 h-4 w-px ${
+                    isDarkMode ? 'bg-gray-600' : 'bg-gray-300'
+                  }`}
+                />
 
                 <button
                   type="button"
@@ -2384,7 +2398,11 @@ function App() {
                 </button>
 
                 {/* Separator */}
-                <div className="mx-2 h-4 w-px bg-gray-300" />
+                <div
+                  className={`mx-2 h-4 w-px ${
+                    isDarkMode ? 'bg-gray-600' : 'bg-gray-300'
+                  }`}
+                />
 
                 {/* Expand/Collapse Answers Button */}
                 {(() => {
@@ -2428,7 +2446,7 @@ function App() {
                         isDarkMode
                           ? 'bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-200'
                           : 'bg-white hover:bg-gray-100 border-gray-300 text-gray-800'
-                      } transition-colors`}
+                      } transition-colors disabled:opacity-50`}
                       onClick={() => {
                         if (isDisabled) return;
                         if (alreadyAllOpen) {
@@ -2497,8 +2515,8 @@ function App() {
                         isDarkMode
                           ? 'bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-200'
                           : 'bg-white hover:bg-gray-100 border-gray-300 text-gray-800'
-                      } transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
-                      disabled={!anyPages}
+                      } transition-colors disabled:opacity-50 `}
+                      disabled={!anyContainers}
                       onClick={() => {
                         if (nextActionExpand) {
                           // expand all -> clear collapsed set
@@ -2588,7 +2606,13 @@ function App() {
               isPreviewCollapsed ? 'pointer-events-none opacity-0' : ''
             }`}
           >
-            <div className="w-40 h-1 rounded bg-gray-400 group-hover:bg-gray-600 transition-colors" />
+            <div
+              className={`w-40 h-1 rounded transition-colors ${
+                isDarkMode
+                  ? 'bg-gray-600 group-hover:bg-gray-500'
+                  : 'bg-gray-400 group-hover:bg-gray-600'
+              }`}
+            />
           </div>
           <PreviewSection
             droppedItems={droppedItems}
@@ -2610,7 +2634,11 @@ function App() {
           <div
             className={`p-2.5 my-1 border rounded text-sm flex items-center gap-2 min-w-20 shadow-2xl opacity-90 ${
               isValidDrop === false
-                ? 'bg-red-50 border-red-300 text-red-700'
+                ? isDarkMode
+                  ? 'bg-red-900 border-red-600 text-red-300'
+                  : 'bg-red-50 border-red-300 text-red-700'
+                : isDarkMode
+                ? 'bg-blue-900 border-blue-600 text-blue-200'
                 : 'bg-blue-50 border-blue-300 text-gray-800'
             }`}
           >
@@ -2643,9 +2671,23 @@ function App() {
       {/* Mode Switch Confirmation Modal */}
       {showModeSwitch && (
         <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Switch Builder Mode</h3>
-            <p className="text-gray-600 mb-6">
+          <div
+            className={`${
+              isDarkMode ? 'bg-gray-800' : 'bg-white'
+            } rounded-lg p-6 max-w-md w-full mx-4`}
+          >
+            <h3
+              className={`text-lg font-semibold mb-4 ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}
+            >
+              Switch Builder Mode
+            </h3>
+            <p
+              className={`mb-6 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-600'
+              }`}
+            >
               Switching to{' '}
               {pendingBuilderMode === 'clinical'
                 ? 'Clinical Form'
@@ -2656,7 +2698,11 @@ function App() {
             <div className="flex justify-end gap-3">
               <button
                 onClick={cancelModeSwitch}
-                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                className={`px-4 py-2 ${
+                  isDarkMode
+                    ? 'border-gray-600 hover:bg-gray-700 text-gray-200'
+                    : 'border-gray-300 hover:bg-gray-50 text-gray-900'
+                } border rounded transition-colors`}
               >
                 Cancel
               </button>
@@ -2670,15 +2716,6 @@ function App() {
           </div>
         </div>
       )}
-
-      {/* Remove Confirmation Modal */}
-      <RemoveConfirmationModal
-        isOpen={showConfirmModal}
-        itemToRemove={itemToRemove}
-        onConfirm={confirmRemove}
-        onCancel={closeRemoveConfirmation}
-        isDarkMode={isDarkMode}
-      />
 
       {/* New XML Confirmation Modal */}
       <NewXmlModal

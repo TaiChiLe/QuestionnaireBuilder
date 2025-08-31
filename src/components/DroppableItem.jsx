@@ -233,7 +233,7 @@ function DroppableItem({
               />
             </svg>
           )}
-          <span className="min-w-0 break-after-auto">
+          <span className="min-w-0">
             {item.type === 'page' ? item.title || 'Page' : item.label}
           </span>
           {(item.required || item.cfrequired) && (
@@ -302,67 +302,115 @@ function DroppableItem({
           )}
           {/* Clinical Form component data types */}
           {item.type === 'cf-button' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+            <span
+              className={`text-xs ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              } ml-2 font-normal mr-2`}
+            >
               [Button]
             </span>
           )}
           {item.type === 'cf-checkbox' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+            <span
+              className={`text-xs ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              } ml-2 font-normal mr-2`}
+            >
               [Checkbox]
             </span>
           )}
           {item.type === 'cf-date' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+            <span
+              className={`text-xs ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              } ml-2 font-normal mr-2`}
+            >
               [Date]
             </span>
           )}
           {item.type === 'cf-future-date' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+            <span
+              className={`text-xs ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              } ml-2 font-normal mr-2`}
+            >
               [Future Date]
             </span>
           )}
           {item.type === 'cf-group' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+            <span
+              className={`text-xs ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              } ml-2 font-normal mr-2`}
+            >
               [Group]
             </span>
           )}
           {item.type === 'cf-info' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+            <span
+              className={`text-xs ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              } ml-2 font-normal mr-2`}
+            >
               [Info]
             </span>
           )}
           {item.type === 'cf-listbox' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+            <span
+              className={`text-xs ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              } ml-2 font-normal mr-2`}
+            >
               [Listbox]
             </span>
           )}
           {item.type === 'cf-notes' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+            <span
+              className={`text-xs ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              } ml-2 font-normal mr-2`}
+            >
               [Notes]
             </span>
           )}
           {item.type === 'cf-notes-history' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+            <span
+              className={`text-xs ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              } ml-2 font-normal mr-2`}
+            >
               [Notes History]
             </span>
           )}
           {item.type === 'cf-panel' && (
             <>
               <span className="font-bold">Panel</span>
-              <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              <span
+                className={`text-xs ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                } ml-2 font-normal mr-2`}
+              >
                 [Panel]
               </span>
             </>
           )}
           {item.type === 'cf-patient-data' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+            <span
+              className={`text-xs ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              } ml-2 font-normal mr-2`}
+            >
               [Patient Data]
             </span>
           )}
           {item.type === 'cf-patient-data-all' && (
             <>
               <span className="font-bold">Patient Data All</span>
-              <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              <span
+                className={`text-xs ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                } ml-2 font-normal mr-2`}
+              >
                 [Patient Data All]
               </span>
             </>
@@ -370,7 +418,11 @@ function DroppableItem({
           {item.type === 'cf-prescription' && (
             <>
               <span className="font-bold">Prescription</span>
-              <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              <span
+                className={`text-xs ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                } ml-2 font-normal mr-2`}
+              >
                 [Prescription]
               </span>
             </>
@@ -378,33 +430,57 @@ function DroppableItem({
           {item.type === 'cf-provided-services' && (
             <>
               <span className="font-bold">Provided Services</span>
-              <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+              <span
+                className={`text-xs ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                } ml-2 font-normal mr-2`}
+              >
                 [Provided Services]
               </span>
             </>
           )}
           {item.type === 'cf-radio' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+            <span
+              className={`text-xs ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              } ml-2 font-normal mr-2`}
+            >
               [Radio]
             </span>
           )}
           {item.type === 'cf-snom-textbox' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+            <span
+              className={`text-xs ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              } ml-2 font-normal mr-2`}
+            >
               [SNOM Textbox]
             </span>
           )}
           {item.type === 'cf-table' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+            <span
+              className={`text-xs ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              } ml-2 font-normal mr-2`}
+            >
               [Table]
             </span>
           )}
           {item.type === 'cf-table-field' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+            <span
+              className={`text-xs ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              } ml-2 font-normal mr-2`}
+            >
               [{item.dataType ? item.dataType : 'CF Table Field'}]
             </span>
           )}
           {item.type === 'cf-textbox' && (
-            <span className="text-xs text-gray-500 ml-2 font-normal mr-2">
+            <span
+              className={`text-xs ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              } ml-2 font-normal mr-2`}
+            >
               [Textbox]
             </span>
           )}
@@ -522,7 +598,9 @@ function DroppableItem({
                 ? item.answers?.map((ans) => (
                     <li
                       key={ans.id}
-                      className="text-xs text-gray-700 break-all"
+                      className={`text-xs ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      } break-all`}
                     >
                       {ans.text || '(empty)'}
                     </li>
@@ -530,11 +608,17 @@ function DroppableItem({
                 : item.options?.map((opt) => (
                     <li
                       key={opt.id}
-                      className="text-xs text-gray-700 break-all"
+                      className={`text-xs ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      } break-all`}
                     >
                       {opt.text || '(empty)'}
                       {opt.value && opt.value !== opt.text && (
-                        <span className="text-gray-500 ml-1">
+                        <span
+                          className={`${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                          } ml-1`}
+                        >
                           [code: {opt.value}]
                         </span>
                       )}

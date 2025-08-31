@@ -11,10 +11,6 @@ import DraggableItem from './DraggableItem';
 const SidebarDraggableComponents = ({
   isValidDrop,
   builderMode = 'questionnaire',
-}) => {
-const SidebarDraggableComponents = ({
-  isValidDrop,
-  builderMode = 'questionnaire',
   isDarkMode,
 }) => {
   // Questionnaire builder components
@@ -138,7 +134,11 @@ const SidebarDraggableComponents = ({
       </div>
 
       <div className="mb-2">
-        <DraggableItem id="multi-select-tag" isValidDrop={isValidDrop}>
+        <DraggableItem
+          id="multi-select-tag"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -192,7 +192,11 @@ const SidebarDraggableComponents = ({
       </div>
 
       <div className="mb-2">
-        <DraggableItem id="radio-buttons-tag" isValidDrop={isValidDrop}>
+        <DraggableItem
+          id="radio-buttons-tag"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -307,7 +311,11 @@ const SidebarDraggableComponents = ({
     <>
       {/* Structure Elements - Most fundamental */}
       <div className="mb-2">
-        <DraggableItem id="cf-group-tag" isValidDrop={isValidDrop}>
+        <DraggableItem
+          id="cf-group-tag"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -317,7 +325,9 @@ const SidebarDraggableComponents = ({
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
+              className={`w-5 h-5 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}
             >
               <rect x="3" y="6" width="18" height="12" rx="2" />
               <path d="M7 10h10" />
@@ -329,7 +339,11 @@ const SidebarDraggableComponents = ({
       </div>
 
       <div className="mb-2">
-        <DraggableItem id="cf-panel-tag" isValidDrop={isValidDrop}>
+        <DraggableItem
+          id="cf-panel-tag"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -339,7 +353,9 @@ const SidebarDraggableComponents = ({
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
+              className={`w-5 h-5 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}
             >
               <rect x="3" y="4" width="18" height="16" rx="2" />
               <path d="M3 10h18" />
@@ -351,7 +367,11 @@ const SidebarDraggableComponents = ({
 
       {/* Most Common Input - Text Box */}
       <div className="mb-2">
-        <DraggableItem id="cf-textbox-tag" isValidDrop={isValidDrop}>
+        <DraggableItem
+          id="cf-textbox-tag"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -361,7 +381,9 @@ const SidebarDraggableComponents = ({
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
+              className={`w-5 h-5 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}
             >
               <rect x="4" y="6" width="16" height="4" rx="1" />
               <path d="M6 8h12" />
@@ -372,7 +394,11 @@ const SidebarDraggableComponents = ({
       </div>
 
       <div className="mb-2">
-        <DraggableItem id="cf-info-tag" isValidDrop={isValidDrop}>
+        <DraggableItem
+          id="cf-info-tag"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -382,7 +408,9 @@ const SidebarDraggableComponents = ({
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
+              className={`w-5 h-5 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}
             >
               <circle cx="12" cy="12" r="10" />
               <path d="M12 8h.01" />
@@ -395,7 +423,11 @@ const SidebarDraggableComponents = ({
 
       {/* Common Basic Inputs */}
       <div className="mb-2">
-        <DraggableItem id="cf-check-tag" isValidDrop={isValidDrop}>
+        <DraggableItem
+          id="cf-check-tag"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -405,7 +437,9 @@ const SidebarDraggableComponents = ({
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
+              className={`w-5 h-5 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}
             >
               <rect x="3" y="5" width="6" height="6" rx="1" />
               <path d="M21 7L13 15l-3-3" />
@@ -416,7 +450,11 @@ const SidebarDraggableComponents = ({
       </div>
 
       <div className="mb-2">
-        <DraggableItem id="cf-date-tag" isValidDrop={isValidDrop}>
+        <DraggableItem
+          id="cf-date-tag"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -426,7 +464,9 @@ const SidebarDraggableComponents = ({
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
+              className={`w-5 h-5 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}
             >
               <rect x="3" y="4" width="18" height="18" rx="2" />
               <line x1="16" y1="2" x2="16" y2="6" />
@@ -440,7 +480,11 @@ const SidebarDraggableComponents = ({
 
       {/* Extended Date and Advanced Elements */}
       <div className="mb-2">
-        <DraggableItem id="cf-future-date-tag" isValidDrop={isValidDrop}>
+        <DraggableItem
+          id="cf-future-date-tag"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -450,7 +494,9 @@ const SidebarDraggableComponents = ({
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
+              className={`w-5 h-5 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}
             >
               <rect x="3" y="4" width="18" height="18" rx="2" />
               <line x1="16" y1="2" x2="16" y2="6" />
@@ -464,7 +510,11 @@ const SidebarDraggableComponents = ({
       </div>
 
       <div className="mb-2">
-        <DraggableItem id="cf-listbox-tag" isValidDrop={isValidDrop}>
+        <DraggableItem
+          id="cf-listbox-tag"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -474,7 +524,9 @@ const SidebarDraggableComponents = ({
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
+              className={`w-5 h-5 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}
             >
               <rect x="3" y="6" width="18" height="12" rx="2" />
               <path d="M7 9h10" />
@@ -487,7 +539,11 @@ const SidebarDraggableComponents = ({
       </div>
 
       <div className="mb-2">
-        <DraggableItem id="cf-radio-tag" isValidDrop={isValidDrop}>
+        <DraggableItem
+          id="cf-radio-tag"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -497,7 +553,9 @@ const SidebarDraggableComponents = ({
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
+              className={`w-5 h-5 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}
             >
               <circle cx="7" cy="7" r="3" />
               <circle cx="7" cy="17" r="3" />
@@ -510,7 +568,11 @@ const SidebarDraggableComponents = ({
       </div>
 
       <div className="mb-2">
-        <DraggableItem id="cf-notes-tag" isValidDrop={isValidDrop}>
+        <DraggableItem
+          id="cf-notes-tag"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -520,7 +582,9 @@ const SidebarDraggableComponents = ({
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
+              className={`w-5 h-5 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}
             >
               <rect x="4" y="4" width="16" height="16" rx="2" />
               <path d="M8 8h8" />
@@ -534,7 +598,11 @@ const SidebarDraggableComponents = ({
 
       {/* Tables and Advanced Inputs */}
       <div className="mb-2">
-        <DraggableItem id="cf-table-tag" isValidDrop={isValidDrop}>
+        <DraggableItem
+          id="cf-table-tag"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -544,7 +612,9 @@ const SidebarDraggableComponents = ({
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
+              className={`w-5 h-5 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}
             >
               <rect x="3" y="6" width="18" height="12" rx="2" />
               <path d="M3 10h18" />
@@ -557,7 +627,11 @@ const SidebarDraggableComponents = ({
       </div>
 
       <div className="mb-2">
-        <DraggableItem id="cf-table-field-tag" isValidDrop={isValidDrop}>
+        <DraggableItem
+          id="cf-table-field-tag"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -567,7 +641,9 @@ const SidebarDraggableComponents = ({
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
+              className={`w-5 h-5 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}
             >
               <rect x="4" y="4" width="16" height="16" rx="2" />
               <path d="M4 9h16" />
@@ -579,7 +655,11 @@ const SidebarDraggableComponents = ({
       </div>
 
       <div className="mb-2">
-        <DraggableItem id="cf-button-tag" isValidDrop={isValidDrop}>
+        <DraggableItem
+          id="cf-button-tag"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -589,7 +669,9 @@ const SidebarDraggableComponents = ({
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
+              className={`w-5 h-5 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}
             >
               <rect x="3" y="8" width="18" height="8" rx="2" />
               <path d="M12 12h.01" />
@@ -601,7 +683,11 @@ const SidebarDraggableComponents = ({
 
       {/* Clinical-specific Elements */}
       <div className="mb-2">
-        <DraggableItem id="cf-patient-data-tag" isValidDrop={isValidDrop}>
+        <DraggableItem
+          id="cf-patient-data-tag"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -611,7 +697,9 @@ const SidebarDraggableComponents = ({
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
+              className={`w-5 h-5 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}
             >
               <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
             </svg>
@@ -621,7 +709,11 @@ const SidebarDraggableComponents = ({
       </div>
 
       <div className="mb-2">
-        <DraggableItem id="cf-patient-data-all-tag" isValidDrop={isValidDrop}>
+        <DraggableItem
+          id="cf-patient-data-all-tag"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -631,7 +723,9 @@ const SidebarDraggableComponents = ({
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
+              className={`w-5 h-5 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}
             >
               <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
               <path d="M2 20h20" />
@@ -642,7 +736,11 @@ const SidebarDraggableComponents = ({
       </div>
 
       <div className="mb-2">
-        <DraggableItem id="cf-prescription-tag" isValidDrop={isValidDrop}>
+        <DraggableItem
+          id="cf-prescription-tag"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -652,7 +750,9 @@ const SidebarDraggableComponents = ({
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
+              className={`w-5 h-5 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}
             >
               <rect x="3" y="4" width="18" height="18" rx="2" />
               <path d="M8 8h8" />
@@ -667,7 +767,11 @@ const SidebarDraggableComponents = ({
       </div>
 
       <div className="mb-2">
-        <DraggableItem id="cf-provided-services-tag" isValidDrop={isValidDrop}>
+        <DraggableItem
+          id="cf-provided-services-tag"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -677,7 +781,9 @@ const SidebarDraggableComponents = ({
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
+              className={`w-5 h-5 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}
             >
               <rect x="3" y="8" width="18" height="4" rx="1" />
               <path d="M12 8v13" />
@@ -689,7 +795,11 @@ const SidebarDraggableComponents = ({
       </div>
 
       <div className="mb-2">
-        <DraggableItem id="cf-notes-history-tag" isValidDrop={isValidDrop}>
+        <DraggableItem
+          id="cf-notes-history-tag"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -699,7 +809,9 @@ const SidebarDraggableComponents = ({
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
+              className={`w-5 h-5 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}
             >
               <rect x="4" y="4" width="16" height="16" rx="2" />
               <path d="M8 8h8" />
@@ -714,7 +826,11 @@ const SidebarDraggableComponents = ({
 
       {/* Specialized Elements - Less commonly used */}
       <div className="mb-2">
-        <DraggableItem id="cf-snom-text-box" isValidDrop={isValidDrop}>
+        <DraggableItem
+          id="cf-snom-text-box"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
           <span className="inline-flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -724,7 +840,9 @@ const SidebarDraggableComponents = ({
               strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="w-5 h-5 text-gray-600"
+              className={`w-5 h-5 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}
             >
               <rect x="4" y="6" width="16" height="4" rx="1" />
               <path d="M6 8h12" />
