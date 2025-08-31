@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import KeyPickerModal from './KeyPickerModal';
 import { getNextCodeNumber } from './utils/clinicalFormCodeManager';
 
@@ -107,7 +107,6 @@ const TagField = ({
       }`}
       required={required}
     >
-      {/* Tags from image 2 */}
       <option value="[Inherit from parent]">[Inherit from parent]</option>
       <option value="Allergy">Allergy</option>
       <option value="Administrative">Administrative</option>
@@ -128,8 +127,6 @@ const TagField = ({
       <option value="Investigation">Investigation</option>
       <option value="Numerical Data">Numerical Data</option>
       <option value="Observation">Observation</option>
-
-      {/* Tags from image 1 */}
       <option value="Outcome">Outcome</option>
       <option value="Pathology Result">Pathology Result</option>
       <option value="Past Medical History">Past Medical History</option>
@@ -145,8 +142,6 @@ const TagField = ({
       <option value="Referral (outbound)">Referral (outbound)</option>
       <option value="Screening">Screening</option>
       <option value="Appointment Service">Appointment Service</option>
-
-      {/* Tags from image 3 */}
       <option value="Social History">Social History</option>
       <option value="Snapshot">Snapshot</option>
       <option value="Stock Dispensed">Stock Dispensed</option>
