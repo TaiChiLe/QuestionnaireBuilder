@@ -438,6 +438,7 @@ function App() {
       'date-tag',
       // Clinical Form components
       'cf-button-tag',
+      'cf-chart-tag',
       'cf-check-tag',
       'cf-date-tag',
       'cf-future-date-tag',
@@ -480,6 +481,7 @@ function App() {
 
       // Clinical Form components
       if (active.id === 'cf-button-tag') draggedType = 'cf-button';
+      if (active.id === 'cf-chart-tag') draggedType = 'cf-chart';
       if (active.id === 'cf-check-tag') draggedType = 'cf-checkbox';
       if (active.id === 'cf-date-tag') draggedType = 'cf-date';
       if (active.id === 'cf-future-date-tag') draggedType = 'cf-future-date';
@@ -1466,6 +1468,7 @@ function App() {
       // Define clinical form component types
       const clinicalFormTypes = [
         'cf-button',
+        'cf-chart',
         'cf-checkbox',
         'cf-date',
         'cf-future-date',
@@ -1741,6 +1744,7 @@ function App() {
       'notes-tag',
       'date-tag',
       'cf-button-tag',
+      'cf-chart-tag',
       'cf-check-tag',
       'cf-date-tag',
       'cf-future-date-tag',
@@ -1940,6 +1944,7 @@ function App() {
       // Define clinical form component types
       const clinicalFormTypes = [
         'cf-button',
+        'cf-chart',
         'cf-checkbox',
         'cf-date',
         'cf-future-date',

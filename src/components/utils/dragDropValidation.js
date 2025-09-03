@@ -7,7 +7,7 @@
  * Clinical form component types (can be placed at root level)
  */
 const CLINICAL_FORM_TYPES = [
-  'cf-button', 'cf-checkbox', 'cf-date', 'cf-future-date', 'cf-group',
+  'cf-button', 'cf-chart', 'cf-checkbox', 'cf-date', 'cf-future-date', 'cf-group',
   'cf-info', 'cf-listbox', 'cf-notes', 'cf-notes-history', 'cf-panel',
   'cf-patient-data', 'cf-patient-data-all', 'cf-prescription', 'cf-provided-services',
   'cf-radio', 'cf-snom-textbox', 'cf-table', 'cf-textbox'
@@ -168,7 +168,7 @@ const validateDropClinical = (draggedType, targetId, droppedItems, findItemById,
 
   // Rule 6: Self-contained CF components cannot accept children
   const selfContained = [
-    'cf-button', 'cf-checkbox', 'cf-date', 'cf-future-date', 'cf-info',
+    'cf-button', 'cf-chart', 'cf-checkbox', 'cf-date', 'cf-future-date', 'cf-info',
     'cf-listbox', 'cf-notes', 'cf-notes-history',
     'cf-patient-data', 'cf-patient-data-all', 'cf-prescription',
     'cf-provided-services', 'cf-radio', 'cf-snom-textbox', 'cf-table-field', 'cf-textbox'

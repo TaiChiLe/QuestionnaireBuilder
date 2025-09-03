@@ -13,7 +13,7 @@ export function generateClinicalFormXML(droppedItems) {
         return '<?xml version="1.0" encoding="utf-8"?>\n<form tag="cons">\n</form>';
     }
 
-    const xmlContent = generateItemsXML(droppedItems, 1);
+    const xmlContent = generateItemsXML(droppedItems, 1, droppedItems);
     return `<?xml version="1.0" encoding="utf-8"?>\n<form tag="cons">\n${xmlContent}\n</form>`;
 }
 
@@ -21,30 +21,35 @@ export function generateClinicalFormXML(droppedItems) {
  * Generate XML for a list of items
  * @param {Array} items - Array of items to generate XML for
  * @param {number} indentLevel - Current indentation level
+ * @param {Array} allItems - Complete array of all items for reference
  * @returns {string} Generated XML string for the items
  */
-function generateItemsXML(items, indentLevel = 0) {
-    return items.map(item => generateItemXML(item, indentLevel)).join('\n');
+function generateItemsXML(items, indentLevel = 0, allItems = []) {
+    return items.map(item => generateItemXML(item, indentLevel, allItems)).join('\n');
 }
 
 /**
  * Generate XML for a single item
  * @param {Object} item - Item to generate XML for
  * @param {number} indentLevel - Current indentation level
+ * @param {Array} allItems - Complete array of all items for reference
  * @returns {string} Generated XML string for the item
  */
-function generateItemXML(item, indentLevel = 0) {
+function generateItemXML(item, indentLevel = 0, allItems = []) {
     const indent = '  '.repeat(indentLevel);
 
     switch (item.type) {
         case 'cf-group':
-            return generateGroupXML(item, indentLevel);
+            return generateGroupXML(item, indentLevel, allItems);
 
         case 'cf-panel':
-            return generatePanelXML(item, indentLevel);
+            return generatePanelXML(item, indentLevel, allItems);
 
         case 'cf-table':
-            return generateTableXML(item, indentLevel);
+            return generateTableXML(item, indentLevel, allItems);
+
+        case 'cf-chart':
+            return generateChartXML(item, indentLevel);
 
         case 'cf-textbox':
             return generateTextboxXML(item, indentLevel);
@@ -77,7 +82,7 @@ function generateItemXML(item, indentLevel = 0) {
             return generateInfoXML(item, indentLevel);
 
         case 'cf-patient-data':
-            return generatePatientDataXML(item, indentLevel);
+            return generatePatientDataXML(item, indentLevel, allItems);
 
         case 'cf-patient-data-all':
             return generatePatientDataAllXML(item, indentLevel);
@@ -102,7 +107,7 @@ function generateItemXML(item, indentLevel = 0) {
 /**
  * Generate XML for cf-group
  */
-function generateGroupXML(item, indentLevel) {
+function generateGroupXML(item, indentLevel, allItems = []) {
     const indent = '  '.repeat(indentLevel);
 
     const attributes = `label="${escapeXML(item.label)}"${getTagAttribute(item)}`;
@@ -113,17 +118,17 @@ function generateGroupXML(item, indentLevel) {
     }
 
     // If has children, use opening and closing tags
-    const childrenXML = '\n' + generateItemsXML(item.children, indentLevel + 1) + '\n' + indent;
+    const childrenXML = '\n' + generateItemsXML(item.children, indentLevel + 1, allItems) + '\n' + indent;
     return `${indent}<group ${attributes}>${childrenXML}</group>`;
 }
 
 /**
  * Generate XML for cf-panel
  */
-function generatePanelXML(item, indentLevel) {
+function generatePanelXML(item, indentLevel, allItems = []) {
     const indent = '  '.repeat(indentLevel);
     const childrenXML = item.children && item.children.length > 0
-        ? '\n' + generateItemsXML(item.children, indentLevel + 1) + '\n' + indent
+        ? '\n' + generateItemsXML(item.children, indentLevel + 1, allItems) + '\n' + indent
         : '';
 
     const attributes = [
@@ -138,10 +143,10 @@ function generatePanelXML(item, indentLevel) {
 /**
  * Generate XML for cf-table
  */
-function generateTableXML(item, indentLevel) {
+function generateTableXML(item, indentLevel, allItems = []) {
     const indent = '  '.repeat(indentLevel);
     const childrenXML = item.children && item.children.length > 0
-        ? '\n' + generateItemsXML(item.children, indentLevel + 1) + '\n' + indent
+        ? '\n' + generateItemsXML(item.children, indentLevel + 1, allItems) + '\n' + indent
         : '';
 
     const attributes = [
@@ -154,6 +159,39 @@ function generateTableXML(item, indentLevel) {
     ].filter(attr => attr).join(' ');
 
     return `${indent}<table ${attributes}>${childrenXML}</table>`;
+}
+
+/**
+ * Generate XML for cf-chart
+ */
+function generateChartXML(item, indentLevel) {
+    const indent = '  '.repeat(indentLevel);
+    const childIndent = '  '.repeat(indentLevel + 1);
+    const paramIndent = '  '.repeat(indentLevel + 2);
+
+    const attributes = [
+        `name="${escapeXML(item.label)}"`
+    ].filter(attr => attr).join(' ');
+
+    // For Gauge and Stack charts, include parameters
+    if (item.chartType === 'Gauge' || item.chartType === 'Stack') {
+        const metaFieldName = item.chartMetaFields && item.chartMetaFields.length > 0
+            ? (typeof item.chartMetaFields[0] === 'string' ? item.chartMetaFields[0] : item.chartMetaFields[0].name || 'MetaField')
+            : 'MetaField';
+
+        let xml = `${indent}<chart ${attributes}>\n`;
+        xml += `${childIndent}<parameters>\n`;
+        xml += `${paramIndent}<parameter name="const" value="10" />\n`;
+        xml += `${paramIndent}<parameter name="source" value="${escapeXML(metaFieldName)}" />\n`;
+        xml += `${paramIndent}<parameter name="label" value="${escapeXML(metaFieldName)}" />\n`;
+        xml += `${childIndent}</parameters>\n`;
+        xml += `${indent}</chart>`;
+
+        return xml;
+    }
+
+    // For Line and Bar charts, use simple format
+    return `${indent}<chart ${attributes}></chart>`;
 }
 
 /**
@@ -384,13 +422,17 @@ function generateInfoXML(item, indentLevel) {
 /**
  * Generate XML for cf-patient-data
  */
-function generatePatientDataXML(item, indentLevel) {
+function generatePatientDataXML(item, indentLevel, allItems = []) {
     const indent = '  '.repeat(indentLevel);
+
+    // Check if there's a chart with matching meta field name
+    const hasMatchingChart = checkForMatchingChartMetaField(item, allItems);
 
     const attributes = [
         `label="${escapeXML(item.label)}"`,
         item.fieldName ? `field="${item.fieldName}"` : '',
         getRequiredAttribute(item),
+        hasMatchingChart ? 'history="true"' : ''
     ].filter(attr => attr).join(' ');
 
     return `${indent}<metafield ${attributes} />`;
@@ -615,6 +657,58 @@ function getTagAttribute(item) {
 
     const mappedTag = tagMap[item.tag] || item.tag;
     return mappedTag ? ` tag="${mappedTag}"` : '';
+}
+
+/**
+ * Helper function to check if there's a chart with matching meta field name
+ * @param {Object} patientDataItem - The patient data item to check
+ * @param {Array} allItems - Complete array of all items to search through
+ * @returns {boolean} True if there's a matching chart meta field
+ */
+function checkForMatchingChartMetaField(patientDataItem, allItems) {
+    // Get the field name from the patient data item
+    const patientFieldName = patientDataItem.fieldName || patientDataItem.label;
+
+    if (!patientFieldName) {
+        return false;
+    }
+
+    // Recursively search through all items for charts
+    const findChartsWithMetaFields = (items) => {
+        const charts = [];
+
+        for (const item of items) {
+            if (item.type === 'cf-chart' && item.chartMetaFields && item.chartMetaFields.length > 0) {
+                charts.push(item);
+            }
+
+            // Recursively check children
+            if (item.children && item.children.length > 0) {
+                charts.push(...findChartsWithMetaFields(item.children));
+            }
+        }
+
+        return charts;
+    };
+
+    const charts = findChartsWithMetaFields(allItems);
+
+    // Check if any chart has a matching meta field (excluding Gauge and Stack charts)
+    for (const chart of charts) {
+        // Skip Gauge and Stack charts - they don't need history="true"
+        if (chart.chartType === 'Gauge' || chart.chartType === 'Stack') {
+            continue;
+        }
+
+        for (const metaField of chart.chartMetaFields) {
+            const metaFieldName = typeof metaField === 'string' ? metaField : metaField.name;
+            if (metaFieldName === patientFieldName) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 /**

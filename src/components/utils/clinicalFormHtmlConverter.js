@@ -90,6 +90,15 @@ export const convertClinicalFormToHtml = (items, level = 0) => {
                     html += `${indent}</div>\n`;
                     break;
 
+                case 'cf-chart':
+                    html = `${indent}<div style="margin: 10px 0; padding: 8px; border: 1px solid #ddd; background-color: #f9f9f9; border-radius: 4px;" data-id="${item.id}">\n`;
+                    html += `${indent}  <div style="font-size: 11px; color: #333; font-weight: bold; margin-bottom: 4px;">${item.label}</div>\n`;
+                    html += `${indent}  <div style="height: 150px; background-color: #ffffff; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; color: #888; font-size: 10px;">\n`;
+                    html += `${indent}    [Chart Preview]\n`;
+                    html += `${indent}  </div>\n`;
+                    html += `${indent}</div>\n`;
+                    break;
+
                 case 'cf-date':
                 case 'cf-future-date':
                     html = `${indent}<div style="margin: 6px 0; display: flex; align-items: center;" data-id="${item.id}">\n`;
