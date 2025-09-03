@@ -1,4 +1,5 @@
 import { generateId } from './id';
+import { getNextCodeNumber } from './clinicalFormCodeManager';
 
 /**
  * Item Factory Utility
@@ -93,7 +94,6 @@ export const createItemFromDraggedId = (draggedItemId) => {
       };
       break;
 
-    // Basic Question components
     case 'list-box-tag':
       draggedType = 'question';
       newItem = {
@@ -139,7 +139,6 @@ export const createItemFromDraggedId = (draggedItemId) => {
       };
       break;
 
-    // Basic Field components
     case 'text-box-tag':
       draggedType = 'field';
       newItem = {
@@ -176,6 +175,281 @@ export const createItemFromDraggedId = (draggedItemId) => {
         dataType: 'Date',
         keyField: '',
         required: false,
+      };
+      break;
+
+    // Clinical Form (CF) Cases
+    case 'cf-button-tag':
+      draggedType = 'cf-button';
+      newItem = {
+        id: generateId('cf-button'),
+        type: 'cf-button',
+        label: 'Button',
+        children: [],
+        action: 'Print',
+        cfbuttonrequired: 'Ignore',
+      };
+      break;
+
+    case 'cf-check-tag':
+      draggedType = 'cf-checkbox';
+      newItem = {
+        id: generateId('cf-checkbox'),
+        type: 'cf-checkbox',
+        label: 'Checkbox',
+        children: [],
+        code: `${getNextCodeNumber()}`,
+        tag: '[Inherit from parent]',
+        global: false,
+        key: '',
+        cfrequired: false,
+        width: '',
+      };
+      break;
+
+    case 'cf-date-tag':
+      draggedType = 'cf-date';
+      newItem = {
+        id: generateId('cf-date'),
+        type: 'cf-date',
+        label: 'Date',
+        children: [],
+        dataType: 'Date',
+        keyField: '',
+        tag: '[Inherit from parent]',
+        cfrequired: false,
+        width: '',
+        code: `${getNextCodeNumber()}`,
+      };
+      break;
+
+    case 'cf-future-date-tag':
+      draggedType = 'cf-future-date';
+      newItem = {
+        id: generateId('cf-future-date'),
+        type: 'cf-future-date',
+        label: 'Future Date',
+        children: [],
+        dataType: 'Future Date',
+        keyField: '',
+        code: `${getNextCodeNumber()}`,
+        tag: '[Inherit from parent]',
+        global: false,
+        cfrequired: false,
+        minDate: 'today',
+        dateFormat: 'MM/DD/YYYY',
+        width: '',
+      };
+      break;
+
+    case 'cf-group-tag':
+      draggedType = 'cf-group';
+      newItem = {
+        id: generateId('cf-group'),
+        type: 'cf-group',
+        label: 'Group',
+        children: [],
+        tag: '[Inherit from parent]',
+      };
+      break;
+
+    case 'cf-info-tag':
+      draggedType = 'cf-info';
+      newItem = {
+        id: generateId('cf-info'),
+        type: 'cf-info',
+        label: 'Information',
+        children: [],
+      };
+      break;
+
+    case 'cf-listbox-tag':
+      draggedType = 'cf-listbox';
+      newItem = {
+        id: generateId('cf-listbox'),
+        type: 'cf-listbox',
+        label: 'List Box',
+        children: [],
+        dataType: 'List Box',
+        keyField: '',
+        code: `${getNextCodeNumber()}`,
+        tag: '[Inherit from parent]',
+        global: false,
+        cfrequired: false,
+        width: '',
+        options: [{ id: generateId('option'), text: 'Option 1', value: `${getNextCodeNumber()}` }],
+      };
+      break;
+
+    case 'cf-notes-tag':
+      draggedType = 'cf-notes';
+      newItem = {
+        id: generateId('cf-notes'),
+        type: 'cf-notes',
+        label: 'Notes',
+        children: [],
+        dataType: 'Text Area',
+        keyField: '',
+        code: `${getNextCodeNumber()}`,
+        tag: '[Inherit from parent]',
+        global: false,
+        cfrequired: false,
+        width: '',
+      };
+      break;
+
+    case 'cf-notes-history-tag':
+      draggedType = 'cf-notes-history';
+      newItem = {
+        id: generateId('cf-notes-history'),
+        type: 'cf-notes-history',
+        label: 'Notes with History',
+        children: [],
+        dataType: 'Text Area',
+        keyField: '',
+        code: `${getNextCodeNumber()}`,
+        tag: '[Inherit from parent]',
+        global: false,
+        cfrequired: false,
+        width: '',
+        showHistory: true,
+      };
+      break;
+
+    case 'cf-panel-tag':
+      draggedType = 'cf-panel';
+      newItem = {
+        id: generateId('cf-panel'),
+        type: 'cf-panel',
+        children: [],
+        tag: '[Inherit from parent]',
+        width: '250',
+      };
+      break;
+
+    case 'cf-patient-data-tag':
+      draggedType = 'cf-patient-data';
+      newItem = {
+        id: generateId('cf-patient-data'),
+        type: 'cf-patient-data',
+        label: 'Patient Data Field',
+        children: [],
+        fieldName: '',
+        cfrequired: false,
+      };
+      break;
+
+    case 'cf-patient-data-all-tag':
+      draggedType = 'cf-patient-data-all';
+      newItem = {
+        id: generateId('cf-patient-data-all'),
+        type: 'cf-patient-data-all',
+        children: [],
+      };
+      break;
+
+    case 'cf-prescription-tag':
+      draggedType = 'cf-prescription';
+      newItem = {
+        id: generateId('cf-prescription'),
+        type: 'cf-prescription',
+        children: [],
+      };
+      break;
+
+    case 'cf-provided-services-tag':
+      draggedType = 'cf-provided-services';
+      newItem = {
+        id: generateId('cf-provided-services'),
+        type: 'cf-provided-services',
+        children: [],
+      };
+      break;
+
+    case 'cf-radio-tag':
+      draggedType = 'cf-radio';
+      newItem = {
+        id: generateId('cf-radio'),
+        type: 'cf-radio',
+        label: 'Radio Button',
+        children: [],
+        dataType: 'Radio Buttons',
+        keyField: '',
+        cfrequired: false,
+        code: `${getNextCodeNumber()}`,
+        options: [
+          { id: generateId('option'), text: 'Option 1', value: `${getNextCodeNumber()}` },
+          { id: generateId('option'), text: 'Option 2', value: `${getNextCodeNumber()}` }
+        ],
+      };
+      break;
+
+    case 'cf-snom-text-box':
+      draggedType = 'cf-snom-textbox';
+      newItem = {
+        id: generateId('cf-snom-textbox'),
+        type: 'cf-snom-textbox',
+        label: 'SNOMED Text Box',
+        children: [],
+        code: `${getNextCodeNumber()}`,
+        key: '',
+        tag: '[Inherit from parent]',
+        global: 'false',
+        subset: '',
+        width: '',
+        cfrequired: false,
+      };
+      break;
+
+    case 'cf-table-tag':
+      draggedType = 'cf-table';
+      newItem = {
+        id: generateId('cf-table'),
+        type: 'cf-table',
+        label: 'Table',
+        children: [],
+        code: `${getNextCodeNumber()}`,
+        key: '',
+        tag: '[Inherit from parent]',
+        global: '',
+        cfrequired: false,
+        columns: [
+          { header: 'Column 1', dataType: 'Text Box', required: false },
+        ],
+      };
+      break;
+
+    case 'cf-table-field-tag':
+      draggedType = 'cf-table-field';
+      newItem = {
+        id: generateId('cf-table-field'),
+        type: 'cf-table-field',
+        label: 'Table Field',
+        children: [],
+        dataType: 'textbox',
+        // Common fields that might be needed based on datatype
+        code: `${getNextCodeNumber()}`,
+        key: '',
+        tag: '[Inherit from parent]',
+        global: '',
+        subset: '', // for cf-snom-textbox
+        width: '',
+        options: [], // for cf-listbox and cf-radio
+      };
+      break;
+
+    case 'cf-textbox-tag':
+      draggedType = 'cf-textbox';
+      newItem = {
+        id: generateId('cf-textbox'),
+        type: 'cf-textbox',
+        label: 'Text Box',
+        children: [],
+        code: `${getNextCodeNumber()}`,
+        key: '',
+        tag: '[Inherit from parent]',
+        global: '',
+        width: '',
       };
       break;
 
