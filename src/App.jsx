@@ -842,6 +842,8 @@ function App() {
               'textbox',
               'textarea',
               'chart',
+              'parameters',
+              'parameter',
               'form_button',
               'notes',
               'notes_with_history',

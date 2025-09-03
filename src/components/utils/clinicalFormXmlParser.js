@@ -204,7 +204,7 @@ const parseXmlElement = (element, generateIdFn) => {
             };
 
         case 'chart':
-            return {
+            const chartItem = {
                 id: generateIdFn('cf-chart'),
                 type: 'cf-chart',
                 label: element.getAttribute('name') || 'Chart',
@@ -213,6 +213,25 @@ const parseXmlElement = (element, generateIdFn) => {
                 width: element.getAttribute('width') || '',
                 height: element.getAttribute('height') || ''
             };
+
+            // Parse parameters if they exist
+            const parametersElement = element.querySelector('parameters');
+            if (parametersElement) {
+                const parameterElements = parametersElement.querySelectorAll('parameter');
+                parameterElements.forEach(paramEl => {
+                    const paramName = paramEl.getAttribute('name');
+                    const paramValue = paramEl.getAttribute('value');
+
+                    if (paramName === 'source' || paramName === 'label') {
+                        // Add the source/label value as a meta field if it's not already there
+                        if (paramValue && !chartItem.chartMetaFields.includes(paramValue)) {
+                            chartItem.chartMetaFields.push(paramValue);
+                        }
+                    }
+                });
+            }
+
+            return chartItem;
 
         case 'form_button':
             return {
@@ -421,6 +440,11 @@ const parseXmlElement = (element, generateIdFn) => {
             }
             // If not in a table, handle as regular components (fallback)
             break;
+
+        case 'parameters':
+        case 'parameter':
+            // These are handled within their parent chart element, skip standalone instances
+            return null;
 
         default:
             console.warn(`Unknown clinical form element: ${tagName}`);
