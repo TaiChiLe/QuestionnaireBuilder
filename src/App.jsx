@@ -1278,10 +1278,22 @@ function App() {
         if (item.type === 'cf-panel-group') {
           return (
             <div key={item.id} className="my-1.5 relative">
-              <div className="absolute -top-2 left-2 bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-medium shadow-sm z-10">
+              <div
+                className={`absolute -top-2 left-2 text-xs px-2 py-1 rounded-full font-medium shadow-sm z-10 ${
+                  isDarkMode
+                    ? 'bg-blue-800 text-blue-200'
+                    : 'bg-blue-100 text-blue-700'
+                }`}
+              >
                 {item.panels.length} Panels (Side by Side)
               </div>
-              <div className="flex gap-2 p-2 pt-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div
+                className={`flex gap-2 p-2 pt-4 rounded-lg ${
+                  isDarkMode
+                    ? 'bg-blue-900/30 border border-blue-600'
+                    : 'bg-blue-50 border border-blue-200'
+                }`}
+              >
                 {item.panels.map((panel) => {
                   const isContainerCollapsed = collapsedPageIds.has(panel.id);
                   return (
