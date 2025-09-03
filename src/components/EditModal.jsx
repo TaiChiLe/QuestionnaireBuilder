@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import KeyPickerModal from './KeyPickerModal';
+import ChartDefinitionModal from './ChartDefinitionModal';
 import { getNextCodeNumber } from './utils/clinicalFormCodeManager';
 
 // Define reusable field components outside the main component to prevent re-creation
@@ -267,6 +268,11 @@ const EditModal = ({
     conditionIndex: null,
   });
 
+  // Chart-related modal states
+  const [showChartDefinitionModal, setShowChartDefinitionModal] =
+    useState(false);
+  const [newMetaFieldName, setNewMetaFieldName] = useState('');
+
   // Track whether to use textarea based on initial content length when modal opens
   const [useTextareaForLabel, setUseTextareaForLabel] = useState(false);
 
@@ -459,6 +465,8 @@ const EditModal = ({
                   ? 'Future Date'
                   : editingItem.type === 'cf-group'
                   ? 'Group'
+                  : editingItem.type === 'cf-chart'
+                  ? 'Chart'
                   : editingItem.type === 'cf-info'
                   ? 'Information'
                   : editingItem.type === 'cf-listbox'
@@ -1122,6 +1130,250 @@ const EditModal = ({
                       'Enter info label...',
                       firstFieldRef
                     )}
+                  </div>
+                </>
+              )}
+              {editingItem.type === 'cf-chart' && (
+                <>
+                  <div>
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
+                      Chart Name:
+                    </label>
+                    {renderInput(
+                      editingItem.label,
+                      (e) =>
+                        onItemUpdate((prev) => ({
+                          ...prev,
+                          label: e.target.value,
+                        })),
+                      'Enter chart name...',
+                      firstFieldRef
+                    )}
+                  </div>
+
+                  <div className="mt-4">
+                    <label
+                      className={`block mb-1 font-semibold ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
+                      Chart Type:
+                    </label>
+                    <select
+                      value={editingItem.chartType || 'Gauge'}
+                      onChange={(e) =>
+                        onItemUpdate((prev) => ({
+                          ...prev,
+                          chartType: e.target.value,
+                        }))
+                      }
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDarkMode
+                          ? 'bg-gray-700 border-gray-600 text-white'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
+                    >
+                      <option value="Gauge">Gauge</option>
+                      <option value="Stack">Stack</option>
+                      <option value="Line">Line</option>
+                      <option value="Bar">Bar</option>
+                    </select>
+                  </div>
+
+                  {/* Chart Meta Fields Section */}
+                  <div className="mt-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <label
+                        className={`font-semibold ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                        }`}
+                      >
+                        Chart Meta Fields
+                      </label>
+                      <span
+                        className={`text-xs ${
+                          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                        }`}
+                      >
+                        {editingItem.chartMetaFields?.length || 0} field(s)
+                      </span>
+                    </div>
+
+                    {/* Display existing meta fields */}
+                    {editingItem.chartMetaFields &&
+                      editingItem.chartMetaFields.length > 0 && (
+                        <div className="space-y-2 mb-3">
+                          {editingItem.chartMetaFields.map((field, index) => (
+                            <div
+                              key={index}
+                              className={`p-3 border rounded-md ${
+                                isDarkMode
+                                  ? 'bg-gray-700 border-gray-600'
+                                  : 'bg-gray-50 border-gray-200'
+                              }`}
+                            >
+                              <div className="flex justify-between items-center">
+                                <div
+                                  className={`font-medium ${
+                                    isDarkMode
+                                      ? 'text-gray-200'
+                                      : 'text-gray-800'
+                                  }`}
+                                >
+                                  {field.name || field}
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newFields = [
+                                      ...(editingItem.chartMetaFields || []),
+                                    ];
+                                    newFields.splice(index, 1);
+                                    onItemUpdate((prev) => ({
+                                      ...prev,
+                                      chartMetaFields: newFields,
+                                    }));
+                                  }}
+                                  className={`p-1 rounded transition-colors ${
+                                    isDarkMode
+                                      ? 'hover:bg-red-600 text-red-400'
+                                      : 'hover:bg-red-100 text-red-600'
+                                  }`}
+                                  title="Remove field"
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                    {/* Add new meta field input */}
+                    <div className="flex gap-2 mb-2">
+                      <input
+                        type="text"
+                        value={newMetaFieldName}
+                        onChange={(e) => setNewMetaFieldName(e.target.value)}
+                        placeholder="Enter meta field name..."
+                        className={`flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          isDarkMode
+                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                        }`}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && newMetaFieldName.trim()) {
+                            const isRestrictedChart =
+                              editingItem.chartType === 'Gauge' ||
+                              editingItem.chartType === 'Stack';
+                            const currentFields =
+                              editingItem.chartMetaFields || [];
+
+                            if (
+                              isRestrictedChart &&
+                              currentFields.length >= 1
+                            ) {
+                              alert(
+                                `${editingItem.chartType} charts can only have 1 Chart Meta Field`
+                              );
+                              return;
+                            }
+
+                            const newFields = [
+                              ...currentFields,
+                              newMetaFieldName.trim(),
+                            ];
+                            onItemUpdate((prev) => ({
+                              ...prev,
+                              chartMetaFields: newFields,
+                            }));
+                            setNewMetaFieldName('');
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!newMetaFieldName.trim()) return;
+
+                          const isRestrictedChart =
+                            editingItem.chartType === 'Gauge' ||
+                            editingItem.chartType === 'Stack';
+                          const currentFields =
+                            editingItem.chartMetaFields || [];
+
+                          if (isRestrictedChart && currentFields.length >= 1) {
+                            alert(
+                              `${editingItem.chartType} charts can only have 1 Chart Meta Field`
+                            );
+                            return;
+                          }
+
+                          const newFields = [
+                            ...currentFields,
+                            newMetaFieldName.trim(),
+                          ];
+                          onItemUpdate((prev) => ({
+                            ...prev,
+                            chartMetaFields: newFields,
+                          }));
+                          setNewMetaFieldName('');
+                        }}
+                        disabled={!newMetaFieldName.trim()}
+                        className={`px-4 py-2 border rounded-md font-medium transition-colors ${
+                          newMetaFieldName.trim()
+                            ? isDarkMode
+                              ? 'bg-blue-700 border-blue-600 text-blue-200 hover:bg-blue-600'
+                              : 'bg-blue-600 border-blue-600 text-white hover:bg-blue-700'
+                            : isDarkMode
+                            ? 'bg-gray-700 border-gray-600 text-gray-500 cursor-not-allowed'
+                            : 'bg-gray-200 border-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
+                      >
+                        Add
+                      </button>
+                    </div>
+
+                    <p
+                      className={`text-xs ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                      }`}
+                    >
+                      {editingItem.chartType === 'Gauge' ||
+                      editingItem.chartType === 'Stack'
+                        ? 'Gauge and Stack charts can only have 1 Chart Meta Field'
+                        : 'Line and Bar charts can have multiple Chart Meta Fields'}
+                    </p>
+                  </div>
+
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowChartDefinitionModal(true)}
+                      className={`w-full px-4 py-2 border rounded-md font-medium transition-colors ${
+                        isDarkMode
+                          ? 'bg-blue-700 border-blue-600 text-blue-200 hover:bg-blue-600'
+                          : 'bg-blue-100 border-blue-300 text-blue-700 hover:bg-blue-200'
+                      }`}
+                    >
+                      View Chart Definition
+                    </button>
                   </div>
                 </>
               )}
@@ -3003,6 +3255,14 @@ const EditModal = ({
           };
           onItemUpdate((prev) => ({ ...prev, conditions: newConditions }));
         }}
+        isDarkMode={isDarkMode}
+      />
+
+      {/* Chart Definition Modal */}
+      <ChartDefinitionModal
+        isOpen={showChartDefinitionModal}
+        onClose={() => setShowChartDefinitionModal(false)}
+        chartItem={editingItem}
         isDarkMode={isDarkMode}
       />
     </div>

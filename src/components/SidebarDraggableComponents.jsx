@@ -656,6 +656,37 @@ const SidebarDraggableComponents = ({
 
       <div className="mb-2">
         <DraggableItem
+          id="cf-chart-tag"
+          isValidDrop={isValidDrop}
+          isDarkMode={isDarkMode}
+        >
+          <span className="inline-flex items-center gap-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`w-5 h-5 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}
+            >
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M7 16l4-4 4 4 4-8" />
+              <circle cx="7" cy="16" r="1" />
+              <circle cx="11" cy="12" r="1" />
+              <circle cx="15" cy="16" r="1" />
+              <circle cx="19" cy="8" r="1" />
+            </svg>
+            <span>Chart</span>
+          </span>
+        </DraggableItem>
+      </div>
+
+      <div className="mb-2">
+        <DraggableItem
           id="cf-button-tag"
           isValidDrop={isValidDrop}
           isDarkMode={isDarkMode}

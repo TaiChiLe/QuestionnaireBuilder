@@ -205,10 +205,11 @@ const parseXmlElement = (element, generateIdFn) => {
 
         case 'chart':
             return {
-                id: generateIdFn('cf-info'), // Map chart to info component for now
-                type: 'cf-info',
-                label: `Chart: ${element.getAttribute('name') || 'Chart'}`,
-                chartName: element.getAttribute('name') || '',
+                id: generateIdFn('cf-chart'),
+                type: 'cf-chart',
+                label: element.getAttribute('name') || 'Chart',
+                chartType: 'Gauge', // Default to Gauge since original XML doesn't specify
+                chartMetaFields: [], // Initialize empty meta fields array
                 width: element.getAttribute('width') || '',
                 height: element.getAttribute('height') || ''
             };

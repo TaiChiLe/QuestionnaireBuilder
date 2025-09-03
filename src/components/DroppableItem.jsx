@@ -99,6 +99,7 @@ function DroppableItem({
             item.type === 'table-field' ||
             // Clinical Form components
             item.type === 'cf-button' ||
+            item.type === 'cf-chart' ||
             item.type === 'cf-checkbox' ||
             item.type === 'cf-date' ||
             item.type === 'cf-future-date' ||
@@ -346,6 +347,15 @@ function DroppableItem({
               [Group]
             </span>
           )}
+          {item.type === 'cf-chart' && (
+            <span
+              className={`text-xs ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              } ml-2 font-normal mr-2`}
+            >
+              [Chart]
+            </span>
+          )}
           {item.type === 'cf-info' && (
             <span
               className={`text-xs ${
@@ -519,6 +529,7 @@ function DroppableItem({
                   item.type === 'table-field' ||
                   // Clinical Form components
                   item.type === 'cf-button' ||
+                  item.type === 'cf-chart' ||
                   item.type === 'cf-checkbox' ||
                   item.type === 'cf-date' ||
                   item.type === 'cf-future-date' ||

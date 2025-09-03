@@ -438,6 +438,18 @@ export const createItemFromDraggedId = (draggedItemId) => {
       };
       break;
 
+    case 'cf-chart-tag':
+      draggedType = 'cf-chart';
+      newItem = {
+        id: generateId('cf-chart'),
+        type: 'cf-chart',
+        label: 'Chart',
+        chartType: 'Gauge',
+        chartMetaFields: [],
+        children: [],
+      };
+      break;
+
     case 'cf-textbox-tag':
       draggedType = 'cf-textbox';
       newItem = {
