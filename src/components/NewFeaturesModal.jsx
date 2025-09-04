@@ -107,7 +107,7 @@ const NewFeaturesModal = ({ isOpen, onClose, isDarkMode = false }) => {
                 <span className="text-green-500 font-bold">✓</span>
                 <span>
                   <strong>Clinical-Specific Components:</strong> Patient data
-                  fields, calculations, charts, and more
+                  fields, charts, and more
                 </span>
               </li>
               <li className="flex items-start gap-2">
