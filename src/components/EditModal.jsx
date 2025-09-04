@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import KeyPickerModal from './KeyPickerModal';
 import ChartDefinitionModal from './ChartDefinitionModal';
+import DataPointsModal from './DataPointsModal';
 import { getNextCodeNumber } from './utils/clinicalFormCodeManager';
 
 // Define reusable field components outside the main component to prevent re-creation
@@ -271,6 +272,7 @@ const EditModal = ({
   // Chart-related modal states
   const [showChartDefinitionModal, setShowChartDefinitionModal] =
     useState(false);
+  const [showDataPointsModal, setShowDataPointsModal] = useState(false);
   const [newMetaFieldName, setNewMetaFieldName] = useState('');
 
   // Track whether to use textarea based on initial content length when modal opens
@@ -1165,12 +1167,19 @@ const EditModal = ({
                     </label>
                     <select
                       value={editingItem.chartType || 'Gauge'}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const newChartType = e.target.value;
                         onItemUpdate((prev) => ({
                           ...prev,
-                          chartType: e.target.value,
-                        }))
-                      }
+                          chartType: newChartType,
+                          // Keep chart meta fields for all chart types since they're needed
+                          // Clear data points for Line and Bar charts since they use meta fields instead
+                          dataPoints:
+                            newChartType === 'Line' || newChartType === 'Bar'
+                              ? []
+                              : prev.dataPoints,
+                        }));
+                      }}
                       className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         isDarkMode
                           ? 'bg-gray-700 border-gray-600 text-white'
@@ -1184,7 +1193,7 @@ const EditModal = ({
                     </select>
                   </div>
 
-                  {/* Chart Meta Fields Section */}
+                  {/* Chart Meta Fields Section - Show for all chart types */}
                   <div className="mt-4">
                     <div className="flex justify-between items-center mb-2">
                       <label
@@ -1355,12 +1364,53 @@ const EditModal = ({
                         isDarkMode ? 'text-gray-400' : 'text-gray-500'
                       }`}
                     >
-                      {editingItem.chartType === 'Gauge' ||
-                      editingItem.chartType === 'Stack'
-                        ? 'Gauge and Stack charts can only have 1 Chart Meta Field'
-                        : 'Line and Bar charts can have multiple Chart Meta Fields'}
+                      Chart Meta Fields define data sources for all chart types
                     </p>
                   </div>
+
+                  {/* Data Points Management for Gauge and Stack charts */}
+                  {(editingItem.chartType === 'Gauge' ||
+                    editingItem.chartType === 'Stack') && (
+                    <div className="mt-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <label
+                          className={`font-semibold ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                          }`}
+                        >
+                          Data Points
+                        </label>
+                        <span
+                          className={`text-xs ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                          }`}
+                        >
+                          {editingItem.dataPoints?.length || 0} point(s)
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowDataPointsModal(true)}
+                        className={`w-full px-4 py-2 border rounded-md font-medium transition-colors ${
+                          isDarkMode
+                            ? 'bg-green-700 border-green-600 text-green-200 hover:bg-green-600'
+                            : 'bg-green-100 border-green-300 text-green-700 hover:bg-green-200'
+                        }`}
+                      >
+                        Manage Data Points
+                      </button>
+
+                      <p
+                        className={`text-xs mt-2 ${
+                          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                        }`}
+                      >
+                        Define value ranges with labels, min/max values, and
+                        colors
+                      </p>
+                    </div>
+                  )}
 
                   <div className="mt-4">
                     <button
@@ -3263,6 +3313,20 @@ const EditModal = ({
         isOpen={showChartDefinitionModal}
         onClose={() => setShowChartDefinitionModal(false)}
         chartItem={editingItem}
+        isDarkMode={isDarkMode}
+      />
+
+      {/* Data Points Modal */}
+      <DataPointsModal
+        isOpen={showDataPointsModal}
+        onClose={() => setShowDataPointsModal(false)}
+        dataPoints={editingItem?.dataPoints || []}
+        onSave={(dataPoints) => {
+          onItemUpdate((prev) => ({
+            ...prev,
+            dataPoints: dataPoints,
+          }));
+        }}
         isDarkMode={isDarkMode}
       />
     </div>
