@@ -23,6 +23,7 @@ import {
 } from './components/utils/xmlParser';
 import UserGuideModal from './components/UserGuideModal';
 import PasteXmlModal from './components/PasteXmlModal';
+import NewFeaturesModal from './components/NewFeaturesModal';
 import { generateId } from './components/utils/id';
 import { generateHtmlPreview } from './components/utils/htmlConverter';
 import { generateClinicalFormHtmlDocument } from './components/utils/clinicalFormHtmlConverter';
@@ -49,6 +50,7 @@ function App() {
   const [showUserGuide, setShowUserGuide] = useState(false);
   const [showPasteXml, setShowPasteXml] = useState(false);
   const [showModeSwitch, setShowModeSwitch] = useState(false);
+  const [showNewFeatures, setShowNewFeatures] = useState(false);
   const [pendingBuilderMode, setPendingBuilderMode] = useState(null);
   // Builder mode toggle - 'questionnaire' or 'clinical'
   const [builderMode, setBuilderMode] = useState('questionnaire');
@@ -115,6 +117,20 @@ function App() {
       // Ignore localStorage errors
     }
   }, [isDarkMode]);
+
+  // Check if this is the user's first visit and show new features modal
+  useEffect(() => {
+    try {
+      const hasSeenNewFeatures = localStorage.getItem(
+        'qb_seen_new_features_v1'
+      );
+      if (!hasSeenNewFeatures) {
+        setShowNewFeatures(true);
+      }
+    } catch {
+      // If localStorage fails, don't show the modal to avoid errors
+    }
+  }, []);
 
   // Undo/Redo functionality
   const [historyStack, setHistoryStack] = useState([]);
@@ -2753,6 +2769,14 @@ function App() {
         builderMode={builderMode}
         isDarkMode={isDarkMode}
       />
+
+      {/* New Features Modal */}
+      <NewFeaturesModal
+        isOpen={showNewFeatures}
+        onClose={() => setShowNewFeatures(false)}
+        isDarkMode={isDarkMode}
+      />
+      {/* Paste XML Modal */}
       <PasteXmlModal
         isOpen={showPasteXml}
         onClose={() => setShowPasteXml(false)}
