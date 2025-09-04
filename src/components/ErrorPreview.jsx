@@ -82,6 +82,8 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem, builderMode }) => {
       list.push({ ...ctx, errorType: 'empty-cf-options', targetId: ctx.id });
     const pushEmptyCfContainer = (ctx) =>
       list.push({ ...ctx, errorType: 'empty-cf-container', targetId: ctx.id });
+    const pushChartWithoutPatientData = (ctx) =>
+      list.push({ ...ctx, errorType: 'chart-without-patient-data', targetId: ctx.id });
 
     const walk = (items, ancestorPages) => {
       items.forEach((item) => {
@@ -293,6 +295,54 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem, builderMode }) => {
 
     walk(droppedItems, []);
 
+    // Check for charts without patient data fields in clinical form mode
+    if (builderMode === 'clinical') {
+      const hasCharts = [];
+      const hasPatientDataFields = [];
+
+      const findChartsAndPatientData = (items, ancestorPages) => {
+        items.forEach((item) => {
+          const newAncestors = 
+            item.type === 'page'
+              ? [...ancestorPages, item.title || item.label || 'Untitled Page']
+              : ancestorPages;
+
+          // Check for chart components
+          if (item.type === 'cf-chart') {
+            hasCharts.push({
+              id: item.id,
+              path: newAncestors,
+              label: item.label || '(chart)',
+              type: item.type,
+            });
+          }
+
+          // Check for patient data field components
+          if (item.type === 'cf-patient-data' || item.type === 'cf-patient-data-all') {
+            hasPatientDataFields.push({
+              id: item.id,
+              path: newAncestors,
+              label: item.label || '(patient data)',
+              type: item.type,
+            });
+          }
+
+          if (item.children && item.children.length > 0) {
+            findChartsAndPatientData(item.children, newAncestors);
+          }
+        });
+      };
+
+      findChartsAndPatientData(droppedItems, []);
+
+      // If there are charts but no patient data fields, add errors for each chart
+      if (hasCharts.length > 0 && hasPatientDataFields.length === 0) {
+        hasCharts.forEach((chart) => {
+          pushChartWithoutPatientData(chart);
+        });
+      }
+    }
+
     // Add duplicate key errors (only if key appears >1) - for questionnaire mode
     if (builderMode !== 'clinical') {
       Object.entries(keyUsage).forEach(([key, arr]) => {
@@ -347,6 +397,7 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem, builderMode }) => {
           const isInvalidCode = err.errorType === 'invalid-code-format';
           const isEmptyCfOptions = err.errorType === 'empty-cf-options';
           const isEmptyCfContainer = err.errorType === 'empty-cf-container';
+          const isChartWithoutPatientData = err.errorType === 'chart-without-patient-data';
 
           const isWarning =
             isEmptyQuestion || isEmptyCfOptions || isEmptyCfContainer; // classify warnings
@@ -405,6 +456,7 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem, builderMode }) => {
                 {isInvalidCode && `Invalid Code (${err.code})`}
                 {isEmptyCfOptions && 'Empty Options'}
                 {isEmptyCfContainer && 'Empty Container'}
+                {isChartWithoutPatientData && 'Chart Requires Patient Data Field'}
               </span>
               {isMissing && (
                 <span className="text-red-700">
@@ -468,6 +520,11 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem, builderMode }) => {
               {isEmptyCfContainer && (
                 <span className="text-orange-700">
                   Add child components or remove this empty container.
+                </span>
+              )}
+              {isChartWithoutPatientData && (
+                <span className="text-red-700">
+                  Charts require at least one Patient Data field to display data. Add a Patient Data field component.
                 </span>
               )}
             </li>
