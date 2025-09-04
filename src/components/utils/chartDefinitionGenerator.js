@@ -45,7 +45,7 @@ function generateChartDefinitionContent(chartName, chartType, metaFields = [], d
             (typeof metaFields[0] === 'string' ? metaFields[0] : metaFields[0].name || 'MetaField') :
             'MetaField';
 
-        let xml = `<chartDefinition label="${escapeXML(chartName)}" type="${chartType.toLowerCase()}" source="${escapeXML(source)}">\n`;
+        let xml = `<chartDefinition label="${escapeXML(chartName)}" type="${chartType.toLowerCase()}">\n`;
         xml += `${indent}<dataPoints>\n`;
 
         if (dataPoints.length > 0) {
@@ -90,7 +90,7 @@ function generateChartDefinitionContent(chartName, chartType, metaFields = [], d
     }
 
     // Fallback for unknown chart types
-    let xml = `<chartDefinition label="${escapeXML(chartName)}" type="gauge" source="MetaField">\n`;
+    let xml = `<chartDefinition label="${escapeXML(chartName)}" type="gauge">\n`;
     xml += `${indent}<dataPoints>\n`;
     xml += `${indent}${indent}<dataPoint label="Default" min="0" max="100" colour="#3B82F6" />\n`;
     xml += `${indent}</dataPoints>\n`;
@@ -104,7 +104,7 @@ function generateChartDefinitionContent(chartName, chartType, metaFields = [], d
  * Generate empty chart definition for fallback
  */
 function generateEmptyChartDefinition() {
-    return `<chartDefinition label="Chart" type="gauge" source="MetaField">
+    return `<chartDefinition label="Chart" type="gauge">
   <dataPoints>
     <dataPoint label="Default" min="0" max="100" colour="#3B82F6" />
   </dataPoints>
