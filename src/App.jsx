@@ -330,6 +330,7 @@ function App() {
       // Canvas is empty, switch directly and clear history
       setBuilderMode(newMode);
       setClipboard(null); // Clear clipboard as it may contain incompatible items
+      setQuestionnaireName(''); // Reset filename when switching modes
 
       // Reset clinical form code counter when switching to clinical mode
       if (newMode === 'clinical') {
@@ -355,6 +356,7 @@ function App() {
       setSelectedIds(new Set());
       setFocusId(null);
       setClipboard(null); // Clear clipboard as it may contain incompatible items
+      setQuestionnaireName(''); // Reset filename when switching modes
       setBuilderMode(pendingBuilderMode);
       setPendingBuilderMode(null);
 
