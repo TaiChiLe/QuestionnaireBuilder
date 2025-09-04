@@ -92,6 +92,15 @@ const ChartDefinitionModal = ({ isOpen, onClose, chartItem, isDarkMode }) => {
             Copy the chart definition XML below to use in your chart
             implementation.
           </p>
+          <p
+            className={`text-sm mt-2 ${
+              isDarkMode ? 'text-red-400' : 'text-red-600'
+            }`}
+          >
+            <strong>Note:</strong> When saving the Chart Definition, the
+            definition name must be identical to Chart Name:{' '}
+            <strong>{chartItem?.label}</strong>.
+          </p>
         </div>
 
         {/* Content */}
