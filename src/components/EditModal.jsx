@@ -1364,7 +1364,8 @@ const EditModal = ({
                         isDarkMode ? 'text-gray-400' : 'text-gray-500'
                       }`}
                     >
-                      Chart Meta Fields define data sources for all chart types
+                      Chart Meta Fields define data sources for all chart types.
+                      Gauge and Stack charts can only have 1 Chart Meta Field.
                     </p>
                   </div>
 
