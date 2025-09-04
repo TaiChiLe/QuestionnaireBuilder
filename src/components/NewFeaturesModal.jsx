@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 
 const NewFeaturesModal = ({ isOpen, onClose, isDarkMode = false }) => {
+  const [isShaking, setIsShaking] = useState(false);
+  const buttonRef = useRef(null);
+
   if (!isOpen) return null;
 
   const handleClose = () => {
@@ -12,6 +15,11 @@ const NewFeaturesModal = ({ isOpen, onClose, isDarkMode = false }) => {
     onClose();
   };
 
+  const handleNoFeatures = () => {
+    setIsShaking(true);
+    // Don't close the modal - they're stuck with features! 🎉
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div
@@ -19,6 +27,46 @@ const NewFeaturesModal = ({ isOpen, onClose, isDarkMode = false }) => {
           isDarkMode ? 'bg-gray-800' : 'bg-white'
         } rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto`}
       >
+        <style jsx>{`
+          @keyframes shake {
+            0%,
+            100% {
+              transform: translateX(0);
+            }
+            10%,
+            30%,
+            50%,
+            70%,
+            90% {
+              transform: translateX(-10px);
+            }
+            20%,
+            40%,
+            60%,
+            80% {
+              transform: translateX(10px);
+            }
+          }
+
+          @keyframes fallOff {
+            0% {
+              transform: translateY(0) rotate(0deg);
+              opacity: 1;
+            }
+            30% {
+              transform: translateY(20px) rotate(15deg);
+              opacity: 0.8;
+            }
+            100% {
+              transform: translateY(500px) rotate(180deg);
+              opacity: 0;
+            }
+          }
+
+          .shake-and-fall {
+            animation: shake 0.5s ease-in-out, fallOff 1s ease-in 0.5s forwards;
+          }
+        `}</style>
         <div className="flex justify-between items-start mb-6">
           <h2
             className={`text-2xl font-bold ${
@@ -302,8 +350,11 @@ const NewFeaturesModal = ({ isOpen, onClose, isDarkMode = false }) => {
 
         <div className="flex justify-end gap-3 mt-6">
           <button
-            onClick={handleClose}
-            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+            ref={buttonRef}
+            onClick={handleNoFeatures}
+            className={`px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium relative ${
+              isShaking ? 'shake-and-fall' : ''
+            }`}
           >
             No!, don't give me new features
           </button>
