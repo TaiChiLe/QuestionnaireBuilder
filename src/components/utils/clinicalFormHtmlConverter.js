@@ -91,11 +91,110 @@ export const convertClinicalFormToHtml = (items, level = 0) => {
                     break;
 
                 case 'cf-chart':
-                    html = `${indent}<div style="margin: 10px 0; padding: 8px; border: 1px solid #ddd; background-color: #f9f9f9; border-radius: 4px;" data-id="${item.id}">\n`;
-                    html += `${indent}  <div style="font-size: 11px; color: #333; font-weight: bold; margin-bottom: 4px;">${item.label}</div>\n`;
-                    html += `${indent}  <div style="height: 150px; background-color: #ffffff; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; color: #888; font-size: 10px;">\n`;
-                    html += `${indent}    [Chart Preview]\n`;
-                    html += `${indent}  </div>\n`;
+                    const chartType = item.chartType || 'Gauge';
+                    const dataPoints = item.dataPoints || [];
+                    const metaFields = item.chartMetaFields || [];
+
+                    html = `${indent}<div style="margin: 10px 0; padding: 12px; border: 1px solid #ddd; background-color: #f9f9f9; border-radius: 4px;" data-id="${item.id}">\n`;
+                    html += `${indent}  <div style="font-size: 12px; color: #333; font-weight: bold; margin-bottom: 8px;">${item.label} (${chartType} Chart)</div>\n`;
+
+                    if (chartType === 'Gauge') {
+                        // Gauge Chart Preview (Semi-circle)
+                        html += `${indent}  <div style="height: 120px; background-color: #ffffff; border: 1px solid #ccc; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; position: relative; border-radius: 4px; padding: 12px;">\n`;
+                        html += `${indent}    <div style="width: 140px; height: 75px; position: relative; overflow: hidden; margin-bottom: 8px;">\n`;
+                        html += `${indent}      <div style="width: 140px; height: 140px; border-radius: 50%; background: conic-gradient(from 180deg, #a020f0 0deg, #33cc33 36deg, #ffcd56 72deg, #ff6384 108deg, #8b0000 180deg); position: relative;">\n`;
+                        html += `${indent}        <div style="width: 100px; height: 100px; background-color: white; border-radius: 50%; position: absolute; top: 20px; left: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: bold; color: #666;">23</div>\n`;
+                        html += `${indent}        <div style="position: absolute; top: 45px; left: 70px; width: 2px; height: 30px; background-color: #333; transform-origin: bottom center; transform: rotate(30deg);"></div>\n`;
+                        html += `${indent}      </div>\n`;
+                        html += `${indent}    </div>\n`;
+                        html += `${indent}    <div style="margin-top: 8px; font-size: 10px; color: #666;">BMI Gauge</div>\n`;
+                        if (dataPoints.length > 0) {
+                            html += `${indent}    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; font-size: 9px;">\n`;
+                            dataPoints.slice(0, 3).forEach(point => {
+                                html += `${indent}      <span style="background-color: ${point.colour || '#ccc'}; color: white; padding: 2px 6px; border-radius: 2px;">${point.label} (${point.min}-${point.max})</span>\n`;
+                            });
+                            if (dataPoints.length > 3) {
+                                html += `${indent}      <span style="color: #666;">+${dataPoints.length - 3} more</span>\n`;
+                            }
+                            html += `${indent}    </div>\n`;
+                        }
+                        html += `${indent}  </div>\n`;
+                    } else if (chartType === 'Stack') {
+                        // Stack Chart Preview
+                        html += `${indent}  <div style="height: 160px; background-color: #ffffff; border: 1px solid #ccc; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 4px; padding: 12px;">\n`;
+                        html += `${indent}    <div style="width: 100%; height: 30px; background: linear-gradient(90deg, #a020f0 0% 18%, #33cc33 18% 25%, #ffcd56 25% 30%, #d3d3d3 30% 100%); border-radius: 4px; position: relative; display: flex; align-items: center;">\n`;
+                        html += `${indent}      <div style="position: absolute; left: 22%; top: -25px; font-size: 9px; color: #333; background: white; padding: 1px 3px; border: 1px solid #ccc; border-radius: 2px;">✓ 24.9</div>\n`;
+                        html += `${indent}    </div>\n`;
+                        html += `${indent}    <div style="margin-top: 12px; font-size: 10px; color: #666;">BMI Stack Chart</div>\n`;
+                        if (dataPoints.length > 0) {
+                            html += `${indent}    <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-size: 8px;">\n`;
+                            dataPoints.slice(0, 4).forEach(point => {
+                                html += `${indent}      <span style="background-color: ${point.colour || '#ccc'}; color: white; padding: 1px 4px; border-radius: 2px;">${point.label}</span>\n`;
+                            });
+                            if (dataPoints.length > 4) {
+                                html += `${indent}      <span style="color: #666;">+${dataPoints.length - 4} more</span>\n`;
+                            }
+                            html += `${indent}    </div>\n`;
+                        }
+                        html += `${indent}  </div>\n`;
+                    } else if (chartType === 'Line') {
+                        // Line Chart Preview
+                        html += `${indent}  <div style="height: 160px; background-color: #ffffff; border: 1px solid #ccc; display: flex; flex-direction: column; justify-content: center; border-radius: 4px; padding: 12px; position: relative;">\n`;
+                        html += `${indent}    <div style="font-size: 10px; color: #666; margin-bottom: 8px;">Line Chart - Patient History</div>\n`;
+                        html += `${indent}    <svg width="100%" height="80" viewBox="0 0 200 80" style="border: 1px solid #eee;">\n`;
+                        html += `${indent}      <defs><linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#5B9BD5;stop-opacity:1" /><stop offset="100%" style="stop-color:#FF6B6B;stop-opacity:1" /></linearGradient></defs>\n`;
+                        html += `${indent}      <polyline points="10,60 30,45 50,40 70,35 90,30 110,32 130,28 150,25 170,30 190,28" style="fill:none;stroke:#5B9BD5;stroke-width:2" />\n`;
+                        html += `${indent}      <polyline points="10,70 30,65 50,62 70,58 90,55 110,57 130,52 150,48 170,53 190,50" style="fill:none;stroke:#FF6B6B;stroke-width:2" />\n`;
+                        html += `${indent}      <text x="10" y="15" font-size="8" fill="#666">BMI & Weight Over Time</text>\n`;
+                        html += `${indent}    </svg>\n`;
+                        if (metaFields.length > 0) {
+                            html += `${indent}    <div style="display: flex; gap: 8px; margin-top: 4px; font-size: 8px;">\n`;
+                            metaFields.slice(0, 2).forEach((field, index) => {
+                                const colors = ['#5B9BD5', '#FF6B6B'];
+                                const fieldName = typeof field === 'string' ? field : field.name || 'MetaField';
+                                html += `${indent}      <span style="color: ${colors[index] || '#666'};">■ ${fieldName}</span>\n`;
+                            });
+                            if (metaFields.length > 2) {
+                                html += `${indent}      <span style="color: #666;">+${metaFields.length - 2} more</span>\n`;
+                            }
+                            html += `${indent}    </div>\n`;
+                        }
+                        html += `${indent}  </div>\n`;
+                    } else if (chartType === 'Bar') {
+                        // Bar Chart Preview
+                        html += `${indent}  <div style="height: 160px; background-color: #ffffff; border: 1px solid #ccc; display: flex; flex-direction: column; justify-content: center; border-radius: 4px; padding: 12px;">\n`;
+                        html += `${indent}    <div style="font-size: 10px; color: #666; margin-bottom: 8px;">Bar Chart - Field Comparison</div>\n`;
+                        html += `${indent}    <svg width="100%" height="80" viewBox="0 0 200 80" style="border: 1px solid #eee;">\n`;
+                        html += `${indent}      <rect x="10" y="30" width="8" height="40" fill="#5B9BD5" />\n`;
+                        html += `${indent}      <rect x="20" y="35" width="8" height="35" fill="#FF6B6B" />\n`;
+                        html += `${indent}      <rect x="35" y="25" width="8" height="45" fill="#5B9BD5" />\n`;
+                        html += `${indent}      <rect x="45" y="30" width="8" height="40" fill="#FF6B6B" />\n`;
+                        html += `${indent}      <rect x="60" y="20" width="8" height="50" fill="#5B9BD5" />\n`;
+                        html += `${indent}      <rect x="70" y="28" width="8" height="42" fill="#FF6B6B" />\n`;
+                        html += `${indent}      <rect x="85" y="22" width="8" height="48" fill="#5B9BD5" />\n`;
+                        html += `${indent}      <rect x="95" y="25" width="8" height="45" fill="#FF6B6B" />\n`;
+                        html += `${indent}      <text x="10" y="15" font-size="8" fill="#666">BMI & Weight Data Points</text>\n`;
+                        html += `${indent}    </svg>\n`;
+                        if (metaFields.length > 0) {
+                            html += `${indent}    <div style="display: flex; gap: 8px; margin-top: 4px; font-size: 8px;">\n`;
+                            metaFields.slice(0, 2).forEach((field, index) => {
+                                const colors = ['#5B9BD5', '#FF6B6B'];
+                                const fieldName = typeof field === 'string' ? field : field.name || 'MetaField';
+                                html += `${indent}      <span style="color: ${colors[index] || '#666'};">■ ${fieldName}</span>\n`;
+                            });
+                            if (metaFields.length > 2) {
+                                html += `${indent}      <span style="color: #666;">+${metaFields.length - 2} more</span>\n`;
+                            }
+                            html += `${indent}    </div>\n`;
+                        }
+                        html += `${indent}  </div>\n`;
+                    } else {
+                        // Fallback for unknown chart types
+                        html += `${indent}  <div style="height: 120px; background-color: #ffffff; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; color: #888; font-size: 10px; border-radius: 4px;">\n`;
+                        html += `${indent}    [${chartType} Chart Preview]\n`;
+                        html += `${indent}  </div>\n`;
+                    }
+
                     html += `${indent}</div>\n`;
                     break;
 

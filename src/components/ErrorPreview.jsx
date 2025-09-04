@@ -83,7 +83,11 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem, builderMode }) => {
     const pushEmptyCfContainer = (ctx) =>
       list.push({ ...ctx, errorType: 'empty-cf-container', targetId: ctx.id });
     const pushChartWithoutPatientData = (ctx) =>
-      list.push({ ...ctx, errorType: 'chart-without-patient-data', targetId: ctx.id });
+      list.push({
+        ...ctx,
+        errorType: 'chart-without-patient-data',
+        targetId: ctx.id,
+      });
 
     const walk = (items, ancestorPages) => {
       items.forEach((item) => {
@@ -302,7 +306,7 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem, builderMode }) => {
 
       const findChartsAndPatientData = (items, ancestorPages) => {
         items.forEach((item) => {
-          const newAncestors = 
+          const newAncestors =
             item.type === 'page'
               ? [...ancestorPages, item.title || item.label || 'Untitled Page']
               : ancestorPages;
@@ -318,7 +322,10 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem, builderMode }) => {
           }
 
           // Check for patient data field components
-          if (item.type === 'cf-patient-data' || item.type === 'cf-patient-data-all') {
+          if (
+            item.type === 'cf-patient-data' ||
+            item.type === 'cf-patient-data-all'
+          ) {
             hasPatientDataFields.push({
               id: item.id,
               path: newAncestors,
@@ -397,7 +404,8 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem, builderMode }) => {
           const isInvalidCode = err.errorType === 'invalid-code-format';
           const isEmptyCfOptions = err.errorType === 'empty-cf-options';
           const isEmptyCfContainer = err.errorType === 'empty-cf-container';
-          const isChartWithoutPatientData = err.errorType === 'chart-without-patient-data';
+          const isChartWithoutPatientData =
+            err.errorType === 'chart-without-patient-data';
 
           const isWarning =
             isEmptyQuestion || isEmptyCfOptions || isEmptyCfContainer; // classify warnings
@@ -456,7 +464,8 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem, builderMode }) => {
                 {isInvalidCode && `Invalid Code (${err.code})`}
                 {isEmptyCfOptions && 'Empty Options'}
                 {isEmptyCfContainer && 'Empty Container'}
-                {isChartWithoutPatientData && 'Chart Requires Patient Data Field'}
+                {isChartWithoutPatientData &&
+                  'Chart Requires Patient Data Field'}
               </span>
               {isMissing && (
                 <span className="text-red-700">
@@ -524,7 +533,8 @@ const ErrorPreview = ({ droppedItems, onNavigateToItem, builderMode }) => {
               )}
               {isChartWithoutPatientData && (
                 <span className="text-red-700">
-                  Charts require at least one Patient Data field to display data. Add a Patient Data field component.
+                  Charts require at least one Patient Data field to display
+                  data. Add a Patient Data field component.
                 </span>
               )}
             </li>
